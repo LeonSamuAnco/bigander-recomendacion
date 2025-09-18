@@ -1,0 +1,354 @@
+// Schema de Prisma limpio para CookSync
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Tabla de roles del sistema
+model Role {
+  id          Int      @id @default(autoincrement())
+  codigo      String   @unique @db.VarChar(20)
+  nombre      String   @unique @db.VarChar(50)
+  descripcion String?  @db.Text
+  permisos    String?  @db.LongText
+  esActivo    Boolean  @default(true) @map("es_activo") @db.TinyInt
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  usuarios User[]
+
+  @@map("roles")
+}
+
+// Tabla de tipos de documento
+model DocumentType {
+  id                Int      @id @default(autoincrement())
+  codigo            String   @unique @db.VarChar(10)
+  nombre            String   @unique @db.VarChar(50)
+  longitudMinima    Int      @default(8) @map("longitud_minima")
+  longitudMaxima    Int      @default(11) @map("longitud_maxima")
+  patronValidacion  String?  @map("patron_validacion") @db.VarChar(100)
+  esActivo          Boolean  @default(true) @map("es_activo") @db.TinyInt
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  usuarios User[]
+
+  @@map("tipos_documento")
+}
+
+// Tabla de planes de cliente
+model ClientPlan {
+  id                      Int      @id @default(autoincrement())
+  codigo                  String   @unique @db.VarChar(20)
+  nombre                  String   @db.VarChar(50)
+  descripcion             String?  @db.Text
+  precioMensual           Decimal  @default(0.00) @map("precio_mensual") @db.Decimal(8, 2)
+  precioAnual             Decimal? @map("precio_anual") @db.Decimal(10, 2)
+  incluyeRecetas          Boolean  @default(false) @map("incluye_recetas") @db.TinyInt
+  limiteIngredientes      Int      @default(0) @map("limite_ingredientes")
+  limiteRecetasFavoritas  Int      @default(0) @map("limite_recetas_favoritas")
+  funcionalidades         String?  @db.LongText
+  esActivo                Boolean  @default(true) @map("es_activo") @db.TinyInt
+  ordenMostrar            Int      @default(1) @map("orden_mostrar")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  // Relaciones
+  clientes Client[]
+
+  @@map("planes_cliente")
+}
+
+// Tabla principal de usuarios
+model User {
+  id                    Int          @id @default(autoincrement())
+  email                 String       @unique @db.VarChar(255)
+  passwordHash          String       @map("password_hash") @db.VarChar(255)
+  rolId                 Int          @map("rol_id")
+  tipoDocumentoId       Int          @map("tipo_documento_id")
+  numeroDocumento       String       @map("numero_documento") @db.VarChar(20)
+  nombres               String       @db.VarChar(100)
+  apellidos             String       @db.VarChar(100)
+  telefono              String?      @db.VarChar(20)
+  fechaNacimiento       DateTime?    @map("fecha_nacimiento") @db.Date
+  genero                Gender       @default(O)
+  fotoPerfil            String?      @map("foto_perfil") @db.VarChar(500)
+  emailVerificado       Boolean      @default(false) @map("email_verificado") @db.TinyInt
+  telefonoVerificado    Boolean      @default(false) @map("telefono_verificado") @db.TinyInt
+  tokenVerificacion     String?      @map("token_verificacion") @db.VarChar(100)
+  tokenRecuperacion     String?      @map("token_recuperacion") @db.VarChar(100)
+  fechaTokenExpira      DateTime?    @map("fecha_token_expira")
+  intentosLogin         Int          @default(0) @map("intentos_login")
+  bloqueadoHasta        DateTime?    @map("bloqueado_hasta")
+  aceptaTerminos        Boolean      @default(false) @map("acepta_terminos") @db.TinyInt
+  aceptaMarketing       Boolean      @default(false) @map("acepta_marketing") @db.TinyInt
+  esActivo              Boolean      @default(true) @map("es_activo") @db.TinyInt
+  ultimoAcceso          DateTime?    @map("ultimo_acceso")
+  ipUltimoAcceso        String?      @map("ip_ultimo_acceso") @db.VarChar(45)
+  createdAt             DateTime     @default(now()) @map("created_at")
+  updatedAt             DateTime     @updatedAt @map("updated_at")
+
+  // Relaciones
+  rol           Role         @relation(fields: [rolId], references: [id])
+  tipoDocumento DocumentType @relation(fields: [tipoDocumentoId], references: [id])
+  cliente       Client?
+
+  @@unique([tipoDocumentoId, numeroDocumento], name: "uk_documento")
+  @@map("usuarios")
+}
+
+// Tabla de clientes (extiende usuarios)
+model Client {
+  id                      Int         @id @default(autoincrement())
+  usuarioId               Int         @unique @map("usuario_id")
+  planClienteId           Int?        @default(1) @map("plan_cliente_id")
+  fechaRegistro           DateTime    @map("fecha_registro") @db.Date
+  fechaInicioPlan         DateTime?   @map("fecha_inicio_plan") @db.Date
+  fechaFinPlan            DateTime?   @map("fecha_fin_plan") @db.Date
+  preferenciasNotificacion String?    @map("preferencias_notificacion") @db.LongText
+  limiteCredito           Decimal     @default(0.00) @map("limite_credito") @db.Decimal(10, 2)
+  creditoUsado            Decimal     @default(0.00) @map("credito_usado") @db.Decimal(10, 2)
+  puntosFidelidad         Int         @default(0) @map("puntos_fidelidad")
+  nivelCliente            ClientLevel @default(BRONCE) @map("nivel_cliente")
+  descuentoPersonalizado  Decimal     @default(0.00) @map("descuento_personalizado") @db.Decimal(5, 2)
+  notasInternas           String?     @map("notas_internas") @db.Text
+  createdAt               DateTime    @default(now()) @map("created_at")
+  updatedAt               DateTime    @updatedAt @map("updated_at")
+
+  // Relaciones
+  usuario User        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  plan    ClientPlan? @relation(fields: [planClienteId], references: [id])
+
+  @@map("clientes")
+}
+
+// Enums
+enum Gender {
+  M
+  F
+  O
+}
+
+enum ClientLevel {
+  BRONCE
+  PLATA
+  ORO
+  PLATINO
+}
+
+// ========================================
+// MÓDULO DE RECETAS
+// ========================================
+
+// Tabla de categorías de recetas
+model RecipeCategory {
+  id               Int      @id @default(autoincrement())
+  nombre           String   @unique @db.VarChar(100)
+  descripcion      String?  @db.Text
+  icono            String?  @db.VarChar(50)
+  color            String?  @db.VarChar(7)
+  imagenCategoria  String?  @map("imagen_categoria") @db.VarChar(500)
+  ordenMostrar     Int      @default(1) @map("orden_mostrar")
+  esActivo         Boolean  @default(true) @map("es_activo")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  recetas Recipe[]
+
+  @@map("categorias_receta")
+}
+
+// Tabla de dificultad de recetas
+model RecipeDifficulty {
+  id          Int      @id @default(autoincrement())
+  nivel       String   @unique @db.VarChar(20)
+  descripcion String   @db.VarChar(100)
+  orden       Int
+  color       String?  @db.VarChar(7)
+  icono       String?  @db.VarChar(50)
+
+  // Relaciones
+  recetas Recipe[]
+
+  @@map("dificultad_receta")
+}
+
+// Tabla de unidades de medida
+model MeasurementUnit {
+  id                    Int                @id @default(autoincrement())
+  codigo                String             @unique @db.VarChar(10)
+  nombre                String             @unique @db.VarChar(50)
+  abreviatura           String             @db.VarChar(10)
+  tipo                  MeasurementType
+  factorConversionBase  Decimal            @default(1.000000) @map("factor_conversion_base") @db.Decimal(10, 6)
+  esActivo              Boolean            @default(true) @map("es_activo")
+  createdAt             DateTime           @default(now()) @map("created_at")
+
+  // Relaciones
+  ingredientesMaestros  MasterIngredient[]
+  recetaIngredientes    RecipeIngredient[]
+
+  @@map("unidades_medida")
+}
+
+// Tabla de ingredientes maestros
+model MasterIngredient {
+  id                        Int                      @id @default(autoincrement())
+  nombre                    String                   @unique @db.VarChar(100)
+  nombreAlternativo         String?                  @map("nombre_alternativo") @db.VarChar(100)
+  nombresRegionales         String?                  @map("nombres_regionales") @db.LongText
+  categoriaProductoId       Int?                     @map("categoria_producto_id")
+  unidadMedidaBaseId        Int                      @map("unidad_medida_base_id")
+  caloriasPor100g           Decimal?                 @map("calorias_por_100g") @db.Decimal(6, 2)
+  proteinasPor100g          Decimal?                 @map("proteinas_por_100g") @db.Decimal(6, 2)
+  carbohidratosPor100g      Decimal?                 @map("carbohidratos_por_100g") @db.Decimal(6, 2)
+  grasasPor100g             Decimal?                 @map("grasas_por_100g") @db.Decimal(6, 2)
+  fibraPor100g              Decimal?                 @map("fibra_por_100g") @db.Decimal(6, 2)
+  descripcion               String?                  @db.Text
+  imagenUrl                 String?                  @map("imagen_url") @db.VarChar(500)
+  esPerecedero              Boolean                  @default(false) @map("es_perecedero")
+  tiempoVidaDias            Int?                     @map("tiempo_vida_dias")
+  temperaturaAlmacenamiento StorageTemperature       @default(AMBIENTE) @map("temperatura_almacenamiento")
+  esBasico                  Boolean                  @default(false) @map("es_basico")
+  esCondimento              Boolean                  @default(false) @map("es_condimento")
+  esEspecia                 Boolean                  @default(false) @map("es_especia")
+  origenPais                String?                  @map("origen_pais") @db.VarChar(50)
+  temporadaDisponible       String?                  @map("temporada_disponible") @db.LongText
+  sustitutos                String?                  @db.LongText
+  alergenos                 String?                  @db.VarChar(500)
+  beneficiosSalud           String?                  @map("beneficios_salud") @db.Text
+  vecesUsado                Int                      @default(0) @map("veces_usado")
+  esActivo                  Boolean                  @default(true) @map("es_activo")
+  createdAt                 DateTime                 @default(now()) @map("created_at")
+  updatedAt                 DateTime                 @default(now()) @map("updated_at")
+
+  // Relaciones
+  unidadMedidaBase     MeasurementUnit    @relation(fields: [unidadMedidaBaseId], references: [id])
+  recetaIngredientes   RecipeIngredient[]
+
+  @@index([esActivo], map: "idx_activo")
+  @@index([esBasico], map: "idx_basico")
+  @@index([categoriaProductoId], map: "idx_categoria")
+  @@index([nombre], map: "idx_nombre")
+  @@index([esPerecedero], map: "idx_perecedero")
+  @@index([unidadMedidaBaseId], map: "idx_unidad")
+  @@map("ingredientes_maestros")
+}
+
+// Tabla principal de recetas
+model Recipe {
+  id                   Int                @id @default(autoincrement())
+  nombre               String             @db.VarChar(200)
+  descripcion          String?            @db.Text
+  categoriaRecetaId    Int                @map("categoria_receta_id")
+  dificultadId         Int                @map("dificultad_id")
+  tiempoPreparacion    Int                @map("tiempo_preparacion")
+  tiempoCoccion        Int                @default(0) @map("tiempo_coccion")
+  tiempoTotal          Int?               @map("tiempo_total")
+  porciones            Int                @default(1)
+  caloriasAproximadas  Int?               @map("calorias_aproximadas")
+  costoAproximado      Decimal?           @map("costo_aproximado") @db.Decimal(8, 2)
+  instrucciones        String             @db.LongText
+  imagenPrincipal      String?            @map("imagen_principal") @db.VarChar(500)
+  imagenesPasos        String?            @map("imagenes_pasos") @db.LongText
+  videoUrl             String?            @map("video_url") @db.VarChar(500)
+  tipsCocina           String?            @map("tips_cocina") @db.Text
+  origenPais           String             @default("Perú") @map("origen_pais") @db.VarChar(50)
+  regionOrigen         String?            @map("region_origen") @db.VarChar(100)
+  temporada            RecipeSeason       @default(TODO_ANO)
+  ocasion              String?            @db.LongText
+  esVegetariana        Boolean            @default(false) @map("es_vegetariana")
+  esVegana             Boolean            @default(false) @map("es_vegana")
+  sinGluten            Boolean            @default(false) @map("sin_gluten")
+  sinLactosa           Boolean            @default(false) @map("sin_lactosa")
+  esSaludable          Boolean            @default(false) @map("es_saludable")
+  esTradicional        Boolean            @default(false) @map("es_tradicional")
+  popularidad          Int                @default(0)
+  vecesPreparada       Int                @default(0) @map("veces_preparada")
+  vecesFavorita        Int                @default(0) @map("veces_favorita")
+  calificacionPromedio Decimal            @default(0.00) @map("calificacion_promedio") @db.Decimal(3, 2)
+  totalCalificaciones  Int                @default(0) @map("total_calificaciones")
+  autorId              Int?               @map("autor_id")
+  esVerificada         Boolean            @default(false) @map("es_verificada")
+  fechaVerificacion    DateTime?          @map("fecha_verificacion")
+  esDestacada          Boolean            @default(false) @map("es_destacada")
+  esActivo             Boolean            @default(true) @map("es_activo")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @default(now()) @map("updated_at")
+
+  // Relaciones
+  categoria            RecipeCategory     @relation(fields: [categoriaRecetaId], references: [id])
+  dificultad           RecipeDifficulty   @relation(fields: [dificultadId], references: [id])
+  ingredientes         RecipeIngredient[]
+
+  @@index([esActivo], map: "idx_activo")
+  @@index([autorId], map: "idx_autor")
+  @@index([calificacionPromedio], map: "idx_calificacion")
+  @@index([categoriaRecetaId], map: "idx_categoria")
+  @@index([esDestacada], map: "idx_destacada")
+  @@index([dificultadId], map: "idx_dificultad")
+  @@index([esVegetariana, esVegana, sinGluten, sinLactosa], map: "idx_filtros")
+  @@index([popularidad], map: "idx_popularidad")
+  @@index([porciones], map: "idx_porciones")
+  @@index([tiempoTotal], map: "idx_tiempo_total")
+  @@map("recetas")
+}
+
+// Tabla de ingredientes por receta
+model RecipeIngredient {
+  id                    Int              @id @default(autoincrement())
+  recetaId              Int              @map("receta_id")
+  ingredienteMaestroId  Int              @map("ingrediente_maestro_id")
+  cantidad              Decimal          @db.Decimal(8, 2)
+  unidadMedidaId        Int              @map("unidad_medida_id")
+  esOpcional            Boolean          @default(false) @map("es_opcional")
+  esPrincipal           Boolean          @default(false) @map("es_principal")
+  notas                 String?          @db.VarChar(200)
+  ordenAparicion        Int              @default(1) @map("orden_aparicion")
+  grupoIngrediente      String?          @map("grupo_ingrediente") @db.VarChar(50)
+  costoAproximado       Decimal?         @map("costo_aproximado") @db.Decimal(6, 2)
+  createdAt             DateTime         @default(now()) @map("created_at")
+
+  // Relaciones
+  receta               Recipe           @relation(fields: [recetaId], references: [id], onDelete: Cascade)
+  ingredienteMaestro   MasterIngredient @relation(fields: [ingredienteMaestroId], references: [id])
+  unidadMedida         MeasurementUnit  @relation(fields: [unidadMedidaId], references: [id])
+
+  @@index([ingredienteMaestroId], map: "idx_ingrediente")
+  @@index([ordenAparicion], map: "idx_orden")
+  @@index([esPrincipal], map: "idx_principal")
+  @@index([recetaId], map: "idx_receta")
+  @@index([unidadMedidaId], map: "idx_unidad")
+  @@map("receta_ingredientes")
+}
+
+// ========================================
+// ENUMS ADICIONALES PARA RECETAS
+// ========================================
+
+enum MeasurementType {
+  PESO
+  VOLUMEN
+  LONGITUD
+  UNIDAD
+  TIEMPO
+}
+
+enum StorageTemperature {
+  AMBIENTE
+  REFRIGERADO
+  CONGELADO
+}
+
+enum RecipeSeason {
+  VERANO
+  OTONO     @map("OTOÑO")
+  INVIERNO
+  PRIMAVERA
+  TODO_ANO  @map("TODO_AÑO")
+}

@@ -1,0 +1,248 @@
+/* Removed Tailwind CSS imports and converted to vanilla CSS for Create React App */
+/* Recipe App Styles - Fun and Cute Design */
+
+/* Color Variables - Using only 4 colors as requested */
+:root {
+  --warm-yellow: #fbbf24;
+  --soft-pink: #ec4899;
+  --cream-white: #fefce8;
+  --dark-gray: #4b5563;
+}
+
+/* Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+    "Droid Sans", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--cream-white);
+  color: var(--dark-gray);
+  line-height: 1.6;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+/* Recipe App Specific Styles */
+.app {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--warm-yellow);
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: var(--dark-gray);
+  margin-bottom: 30px;
+}
+
+.ingredients-section {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 40px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border: 3px solid var(--soft-pink);
+}
+
+.ingredients-button {
+  background: var(--soft-pink);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+}
+
+.ingredients-button:hover {
+  background: #db2777;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
+}
+
+.ingredients-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.ingredient-item {
+  background: var(--cream-white);
+  border: 2px solid transparent;
+  border-radius: 15px;
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.ingredient-item:hover {
+  border-color: var(--warm-yellow);
+  transform: scale(1.05);
+}
+
+.ingredient-item.selected {
+  background: var(--warm-yellow);
+  color: white;
+  border-color: var(--warm-yellow);
+}
+
+.ingredient-emoji {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.ingredient-name {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+}
+
+.recipe-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border: 3px solid transparent;
+}
+
+.recipe-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+  border-color: var(--warm-yellow);
+}
+
+.recipe-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.recipe-content {
+  padding: 20px;
+}
+
+.recipe-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--dark-gray);
+  margin-bottom: 10px;
+}
+
+.recipe-description {
+  color: #6b7280;
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.recipe-ingredients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.recipe-ingredient-tag {
+  background: var(--cream-white);
+  color: var(--dark-gray);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  border: 1px solid var(--warm-yellow);
+}
+
+.no-recipes {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--dark-gray);
+}
+
+.no-recipes-emoji {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.no-recipes-text {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.no-recipes-subtext {
+  color: #6b7280;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.recipe-card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.ingredients-grid {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .title {
+    font-size: 2rem;
+  }
+
+  .ingredients-section {
+    padding: 20px;
+  }
+
+  .ingredients-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+
+  .recipes-grid {
+    grid-template-columns: 1fr;
+  }
+}
