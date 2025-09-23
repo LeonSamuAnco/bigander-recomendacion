@@ -192,7 +192,7 @@ export class AuthPrismaService {
   }
 
   async getUserById(id: number) {
-    return this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id },
       include: {
         rol: true,
@@ -204,5 +204,29 @@ export class AuthPrismaService {
         },
       },
     });
+
+    if (!user) {
+      return null;
+    }
+
+    // Remover información sensible y normalizar nombres de relaciones
+    const { passwordHash, tokenVerificacion, tokenRecuperacion, ...userSafe } = user;
+
+    // Asegurar que las relaciones tengan los nombres esperados por el frontend
+    const normalizedUser = {
+      ...userSafe,
+      // Mantener tanto los nombres originales como los esperados para compatibilidad
+      rol: userSafe.rol,
+      role: userSafe.rol, // Alias para compatibilidad
+      tipoDocumento: userSafe.tipoDocumento,
+      documentType: userSafe.tipoDocumento, // Alias para compatibilidad
+      cliente: userSafe.cliente,
+      client: userSafe.cliente, // Alias para compatibilidad
+    };
+
+    return {
+      success: true,
+      user: normalizedUser,
+    };
   }
 }

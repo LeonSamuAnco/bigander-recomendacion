@@ -14,5 +14,18 @@
   <body>
     <noscript>Necesitas habilitar JavaScript para ejecutar esta aplicación.</noscript>
     <div id="root"></div>
+    
+    <!-- Script para limpiar localStorage corrupto -->
+    <script>
+      // Limpiar tokens corruptos automáticamente
+      const token = localStorage.getItem('authToken');
+      if (token && (!token.includes('.') || token.split('.').length !== 3)) {
+        console.log('⚠️ Token corrupto detectado, limpiando localStorage...');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        localStorage.removeItem('userRole');
+        console.log('✅ localStorage limpiado');
+      }
+    </script>
   </body>
 </html>

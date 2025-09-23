@@ -21,7 +21,8 @@ import { Address } from './entities/address.entity';
       Address,
     ]),
     JwtModule.register({
-      secret: 'your-secret-key', // En producción usar variable de entorno
+      secret:
+        process.env.JWT_SECRET || 'fallback-secret-key-change-in-production',
       signOptions: { expiresIn: '24h' },
     }),
   ],

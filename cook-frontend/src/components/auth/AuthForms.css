@@ -252,24 +252,27 @@
   align-items: center;
 }
 
+/* Iconos removidos - diseño limpio sin iconos */
 .input-icon {
-  position: absolute;
-  left: 16px;
-  font-size: 16px;
-  color: #9ca3af;
-  z-index: 1;
+  display: none;
 }
 
 .input-container input,
 .input-container select {
   width: 100%;
-  padding: 14px 16px 14px 48px;
+  padding: 14px 16px;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
   font-size: 16px;
   transition: all 0.2s ease;
   background: #f9fafb;
   color: #1f2937;
+  box-sizing: border-box;
+}
+
+/* Padding especial para campos de contraseña con botón mostrar/ocultar */
+.input-container input[type="password"] {
+  padding-right: 50px;
 }
 
 .input-container input:focus,
@@ -284,6 +287,8 @@
   color: #9ca3af;
 }
 
+/* Diseño limpio sin iconos */
+
 .password-toggle {
   position: absolute;
   right: 16px;
@@ -295,6 +300,12 @@
   padding: 4px;
   border-radius: 4px;
   transition: color 0.2s ease;
+  z-index: 3;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .password-toggle:hover {

@@ -2,184 +2,319 @@ import {
   Injectable,
   Logger,
   InternalServerErrorException,
+  NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Recipe } from './entities/recipe.entity';
-import { Ingredient } from './entities/ingredient.entity';
-import { RecipeDto } from './dto/recipe.dto';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateRecipeDto } from './dto/create-recipe.dto';
+import { RecipeFiltersDto } from './dto/recipe-filters.dto';
 
 @Injectable()
 export class RecipesService {
   private readonly logger = new Logger(RecipesService.name);
 
-  constructor(
-    @InjectRepository(Recipe)
-    private recipesRepository: Repository<Recipe>,
-    @InjectRepository(Ingredient)
-    private ingredientsRepository: Repository<Ingredient>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async findAllIngredients(): Promise<Ingredient[]> {
-    return this.ingredientsRepository.find({
-      order: { nombre: 'ASC' },
-    });
-  }
-
-  async findRecipes(ingredientNames?: string[]): Promise<RecipeDto[]> {
+  // Crear una nueva receta
+  async create(createRecipeDto: CreateRecipeDto, autorId?: number) {
     try {
-      this.logger.log(
-        `Buscando recetas con ingredientes: ${
-          ingredientNames?.join(', ') ?? 'ninguno'
-        }`,
-      );
+      const recipe = await this.prisma.recipe.create({
+        data: {
+          nombre: createRecipeDto.nombre,
+          descripcion: createRecipeDto.descripcion,
+          categoriaRecetaId: createRecipeDto.categoriaRecetaId,
+          dificultadId: createRecipeDto.dificultadId,
+          tiempoPreparacion: createRecipeDto.tiempoPreparacion,
+          tiempoCoccion: createRecipeDto.tiempoCoccion || 0,
+          tiempoTotal: createRecipeDto.tiempoPreparacion + (createRecipeDto.tiempoCoccion || 0),
+          porciones: createRecipeDto.porciones,
+          instrucciones: createRecipeDto.instrucciones,
+          imagenPrincipal: createRecipeDto.imagenPrincipal,
+          tipsCocina: createRecipeDto.tipsCocina,
+          origenPais: createRecipeDto.origenPais || 'Perú',
+          esVegetariana: createRecipeDto.esVegetariana || false,
+          esVegana: createRecipeDto.esVegana || false,
+          sinGluten: createRecipeDto.sinGluten || false,
+          sinLactosa: createRecipeDto.sinLactosa || false,
+          esSaludable: createRecipeDto.esSaludable || false,
+          autorId: autorId,
+          ingredientes: {
+            create: createRecipeDto.ingredientes.map((ing, index) => ({
+              ingredienteMaestroId: ing.ingredienteMaestroId,
+              cantidad: ing.cantidad,
+              unidadMedidaId: ing.unidadMedidaId,
+              esOpcional: ing.esOpcional || false,
+              esPrincipal: ing.esPrincipal || false,
+              notas: ing.notas,
+              ordenAparicion: ing.ordenAparicion || index + 1,
+            })),
+          },
+        },
+        include: {
+          categoria: true,
+          dificultad: true,
+          ingredientes: {
+            include: {
+              ingredienteMaestro: true,
+              unidadMedida: true,
+            },
+          },
+        },
+      });
 
-      // Si no hay ingredientes seleccionados, devolver todas las recetas
-      if (!ingredientNames || ingredientNames.length === 0) {
-        const allRecipes = await this.recipesRepository.find({
-          relations: ['ingredients'],
-        });
-        return this.mapRecipesToDto(allRecipes);
-      }
-
-      // Primero, normalizar los nombres de los ingredientes a minúsculas
-      const normalizedIngredientNames = ingredientNames.map((name) =>
-        name.trim().toLowerCase(),
-      );
-
-      // Buscar recetas que contengan AL MENOS UNO de los ingredientes seleccionados
-      const recipes = await this.recipesRepository
-        .createQueryBuilder('recipe')
-        .leftJoinAndSelect('recipe.ingredients', 'ingredient')
-        .where('LOWER(ingredient.nombre) IN (:...ingredientNames)', {
-          ingredientNames: normalizedIngredientNames,
-        })
-        .getMany();
-
-      // Si no se encontraron recetas, retornar array vacío
-      if (!recipes || recipes.length === 0) {
-        this.logger.log(
-          'No se encontraron recetas con los ingredientes especificados.',
-        );
-        return [];
-      }
-
-      // Filtrar recetas para asegurar que tengan al menos un ingrediente coincidente
-      const filteredRecipes = recipes.filter(
-        (recipe) =>
-          recipe.ingredients &&
-          recipe.ingredients.some(
-            (ingredient) =>
-              ingredient &&
-              ingredient.nombre &&
-              normalizedIngredientNames.includes(
-                ingredient.nombre.toLowerCase(),
-              ),
-          ),
-      );
-
-      // Si después de filtrar no hay recetas, retornar array vacío
-      if (filteredRecipes.length === 0) {
-        this.logger.log(
-          'No se encontraron recetas con los ingredientes especificados después del filtrado.',
-        );
-        return [];
-      }
-
-      this.logger.log(`Se encontraron ${filteredRecipes.length} recetas.`);
-      return this.mapRecipesToDto(filteredRecipes);
-    } catch (error: unknown) {
-      // Manejo seguro de errores con verificación de tipo
-      const errorMessage =
-        error instanceof Error ? error.message : 'Error desconocido';
-      const errorStack = error instanceof Error ? error.stack : undefined;
-
-      this.logger.error(
-        `Falló la búsqueda de recetas: ${errorMessage}`,
-        errorStack,
-      );
-      throw new InternalServerErrorException(
-        'Ocurrió un error al buscar las recetas. Por favor, inténtalo de nuevo más tarde.',
-      );
+      this.logger.log(`Receta creada: ${recipe.nombre} (ID: ${recipe.id})`);
+      return recipe;
+    } catch (error) {
+      this.logger.error('Error creando receta:', error);
+      throw new InternalServerErrorException('Error al crear la receta');
     }
   }
 
-  private mapRecipesToDto(recipes: Recipe[]): RecipeDto[] {
-    return recipes.map((recipe) => {
-      // Usar el operador de encadenamiento opcional y el operador de fusión nula
-      const preparationSteps =
-        recipe.preparationSteps ??
-        (recipe as unknown as { instrucciones?: string }).instrucciones ??
-        '';
+  // Obtener todas las recetas con filtros
+  async findAll(filters?: RecipeFiltersDto) {
+    try {
+      const page = filters?.page || 1;
+      const limit = filters?.limit || 20;
+      const skip = (page - 1) * limit;
 
-      const dto: RecipeDto = {
-        id: recipe.id,
-        title: recipe.title,
-        description: recipe.description || '',
-        time: `${recipe.time} min`,
-        servings: recipe.servings,
-        difficulty: this.mapDifficulty(recipe.difficulty),
-        image: recipe.image,
-        ingredients:
-          recipe.ingredients && Array.isArray(recipe.ingredients)
-            ? recipe.ingredients
-                .filter((ing) => ing?.nombre) // Filtrar ingredientes nulos o sin nombre
-                .map((ing) => ing.nombre) // Obtener solo los nombres
-            : [],
-        preparationSteps,
-        instrucciones: preparationSteps, // Mantener para compatibilidad
+      const where: any = {
+        esActivo: true,
       };
 
-      return dto;
-    });
+      // Aplicar filtros
+      if (filters?.search) {
+        where.OR = [
+          { nombre: { contains: filters.search, mode: 'insensitive' } },
+          { descripcion: { contains: filters.search, mode: 'insensitive' } },
+        ];
+      }
+
+      if (filters?.categoriaId) {
+        where.categoriaRecetaId = filters.categoriaId;
+      }
+
+      if (filters?.dificultadId) {
+        where.dificultadId = filters.dificultadId;
+      }
+
+      if (filters?.tiempoMax) {
+        where.tiempoTotal = { lte: filters.tiempoMax };
+      }
+
+      if (filters?.porcionesMin || filters?.porcionesMax) {
+        where.porciones = {};
+        if (filters.porcionesMin) where.porciones.gte = filters.porcionesMin;
+        if (filters.porcionesMax) where.porciones.lte = filters.porcionesMax;
+      }
+
+      if (filters?.esVegetariana) where.esVegetariana = true;
+      if (filters?.esVegana) where.esVegana = true;
+      if (filters?.sinGluten) where.sinGluten = true;
+      if (filters?.sinLactosa) where.sinLactosa = true;
+      if (filters?.esSaludable) where.esSaludable = true;
+
+      if (filters?.origenPais) {
+        where.origenPais = { contains: filters.origenPais, mode: 'insensitive' };
+      }
+
+      // Filtro por ingredientes
+      if (filters?.ingredientes && filters.ingredientes.length > 0) {
+        where.ingredientes = {
+          some: {
+            ingredienteMaestroId: {
+              in: filters.ingredientes,
+            },
+          },
+        };
+      }
+
+      // Ordenamiento
+      const orderBy: any = {};
+      if (filters?.sortBy) {
+        orderBy[filters.sortBy] = filters?.sortOrder || 'desc';
+      } else {
+        orderBy.createdAt = 'desc';
+      }
+
+      const [recipes, total] = await Promise.all([
+        this.prisma.recipe.findMany({
+          where,
+          include: {
+            categoria: true,
+            dificultad: true,
+            ingredientes: {
+              include: {
+                ingredienteMaestro: true,
+                unidadMedida: true,
+              },
+            },
+          },
+          orderBy,
+          skip,
+          take: limit,
+        }),
+        this.prisma.recipe.count({ where }),
+      ]);
+
+      return {
+        recipes,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      this.logger.error('Error obteniendo recetas:', error);
+      throw new InternalServerErrorException('Error al obtener las recetas');
+    }
   }
 
-  async findOne(id: number): Promise<RecipeDto | null> {
+  // Buscar recetas por ingredientes disponibles
+  async findByIngredients(ingredientIds: number[]) {
     try {
-      const recipe = await this.recipesRepository.findOne({
-        where: { id },
-        relations: ['ingredients'],
+      if (!ingredientIds || ingredientIds.length === 0) {
+        throw new BadRequestException('Debe proporcionar al menos un ingrediente');
+      }
+
+      const recipes = await this.prisma.recipe.findMany({
+        where: {
+          esActivo: true,
+          ingredientes: {
+            some: {
+              ingredienteMaestroId: {
+                in: ingredientIds,
+              },
+            },
+          },
+        },
+        include: {
+          categoria: true,
+          dificultad: true,
+          ingredientes: {
+            include: {
+              ingredienteMaestro: true,
+              unidadMedida: true,
+            },
+          },
+        },
+        orderBy: {
+          calificacionPromedio: 'desc',
+        },
+      });
+
+      // Calcular porcentaje de coincidencia de ingredientes
+      const recipesWithMatch = recipes.map(recipe => {
+        const recipeIngredientIds = recipe.ingredientes.map(ing => ing.ingredienteMaestroId);
+        const matchingIngredients = recipeIngredientIds.filter(id => ingredientIds.includes(id));
+        const matchPercentage = (matchingIngredients.length / recipeIngredientIds.length) * 100;
+
+        return {
+          ...recipe,
+          matchPercentage: Math.round(matchPercentage),
+          matchingIngredients: matchingIngredients.length,
+          totalIngredients: recipeIngredientIds.length,
+        };
+      });
+
+      // Ordenar por porcentaje de coincidencia
+      recipesWithMatch.sort((a, b) => b.matchPercentage - a.matchPercentage);
+
+      this.logger.log(`Encontradas ${recipesWithMatch.length} recetas para ${ingredientIds.length} ingredientes`);
+      return recipesWithMatch;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      this.logger.error('Error buscando recetas por ingredientes:', error);
+      throw new InternalServerErrorException('Error al buscar recetas por ingredientes');
+    }
+  }
+
+  // Obtener ingredientes maestros
+  async findAllIngredients() {
+    try {
+      return await this.prisma.masterIngredient.findMany({
+        where: { esActivo: true },
+        include: {
+          unidadMedidaBase: true,
+        },
+        orderBy: { nombre: 'asc' },
+      });
+    } catch (error) {
+      this.logger.error('Error obteniendo ingredientes:', error);
+      throw new InternalServerErrorException('Error al obtener los ingredientes');
+    }
+  }
+
+  // Obtener una receta por ID
+  async findOne(id: number) {
+    try {
+      const recipe = await this.prisma.recipe.findUnique({
+        where: { id, esActivo: true },
+        include: {
+          categoria: true,
+          dificultad: true,
+          ingredientes: {
+            include: {
+              ingredienteMaestro: true,
+              unidadMedida: true,
+            },
+            orderBy: { ordenAparicion: 'asc' },
+          },
+        },
       });
 
       if (!recipe) {
-        return null;
+        throw new NotFoundException(`Receta con ID ${id} no encontrada`);
       }
 
-      // Mapear a DTO
-      return {
-        id: recipe.id,
-        title: recipe.title, // El nombre del campo en la entidad es 'title' (mapeado desde 'nombre')
-        description: recipe.description, // Mapeado desde 'descripcion'
-        time: `${recipe.time} min`, // Mapeado desde 'tiempo_total'
-        servings: recipe.servings, // Mapeado desde 'porciones'
-        difficulty: this.mapDifficulty(recipe.difficulty), // Mapeado desde 'dificultad_id'
-        image: recipe.image, // Mapeado desde 'imagen_principal'
-        preparationSteps:
-          recipe.preparationSteps || (recipe as any).instrucciones || '', // Incluir instrucciones de preparación
-        ingredients: recipe.ingredients
-          ? recipe.ingredients.map((ing) => ing.nombre)
-          : [],
-      };
+      return recipe;
     } catch (error) {
-      this.logger.error(`Error al buscar receta con ID ${id}:`, error);
-      throw new InternalServerErrorException('Error al buscar la receta');
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      this.logger.error(`Error obteniendo receta ${id}:`, error);
+      throw new InternalServerErrorException('Error al obtener la receta');
     }
   }
 
-  private mapDifficulty(id: string): string {
-    if (!id) return 'No especificada';
+  // Obtener categorías de recetas
+  async findAllCategories() {
+    try {
+      return await this.prisma.recipeCategory.findMany({
+        where: { esActivo: true },
+        orderBy: { ordenMostrar: 'asc' },
+      });
+    } catch (error) {
+      this.logger.error('Error obteniendo categorías:', error);
+      throw new InternalServerErrorException('Error al obtener las categorías');
+    }
+  }
 
-    switch (id.toString().trim()) {
-      case '1':
-        return 'Fácil';
-      case '2':
-        return 'Medio';
-      case '3':
-        return 'Difícil';
-      case '4':
-        return 'Experto';
-      default:
-        return 'No especificada';
+  // Obtener dificultades de recetas
+  async findAllDifficulties() {
+    try {
+      return await this.prisma.recipeDifficulty.findMany({
+        orderBy: { orden: 'asc' },
+      });
+    } catch (error) {
+      this.logger.error('Error obteniendo dificultades:', error);
+      throw new InternalServerErrorException('Error al obtener las dificultades');
+    }
+  }
+
+  // Obtener unidades de medida
+  async findAllMeasurementUnits() {
+    try {
+      return await this.prisma.measurementUnit.findMany({
+        where: { esActivo: true },
+        orderBy: { nombre: 'asc' },
+      });
+    } catch (error) {
+      this.logger.error('Error obteniendo unidades de medida:', error);
+      throw new InternalServerErrorException('Error al obtener las unidades de medida');
     }
   }
 }

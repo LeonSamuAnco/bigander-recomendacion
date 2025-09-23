@@ -20,7 +20,20 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
       }
 
       // Decodificar el token para obtener el ID del usuario
-      const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+      let tokenPayload;
+      try {
+        const tokenParts = token.split('.');
+        if (tokenParts.length !== 3) {
+          throw new Error('Token inválido');
+        }
+        tokenPayload = JSON.parse(atob(tokenParts[1]));
+      } catch (tokenError) {
+        console.error('Error decodificando token:', tokenError);
+        localStorage.removeItem('authToken');
+        setLoading(false);
+        return;
+      }
+
       const userId = tokenPayload.sub || tokenPayload.id;
 
       // Verificar si el token no ha expirado

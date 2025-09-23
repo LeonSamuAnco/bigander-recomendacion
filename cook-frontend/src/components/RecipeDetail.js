@@ -5,7 +5,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { FaArrowLeft, FaClock, FaFire, FaUserFriends, FaListUl, FaBookOpen } from "react-icons/fa";
 import "./RecipeDetail.css"; // Asegúrate de que la ruta sea correcta
 
-const API_URL = "http://localhost:3001/api";
+const API_URL = "http://localhost:3002";
 
 const RecipeDetail = () => {
   const { id } = useParams();
@@ -22,14 +22,49 @@ const RecipeDetail = () => {
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
+        console.log(`Fetching recipe with ID: ${id}`);
+        console.log(`API URL: ${API_URL}/recipes/${id}`);
+        
         const response = await fetch(`${API_URL}/recipes/${id}`);
+        console.log(`Response status: ${response.status}`);
+        
         if (!response.ok) {
           throw new Error(`No se pudo cargar la receta: ${response.status}`);
         }
+        
         const data = await response.json();
+        console.log('Recipe data received:', data);
         setRecipe(data);
       } catch (err) {
-        setError(err.message);
+        console.error('Error fetching recipe:', err);
+        
+        // Fallback: crear una receta de ejemplo si falla la carga
+        const fallbackRecipe = {
+          id: parseInt(id),
+          titulo: `Receta ${id}`,
+          descripcion: 'Esta es una receta de ejemplo mientras se resuelve la conexión con el backend.',
+          tiempoPreparacion: 30,
+          porciones: 4,
+          dificultad: { nombre: 'Medio' },
+          categoria: { nombre: 'Plato Principal' },
+          autor: { nombres: 'Chef', apellidos: 'Admin' },
+          imagenUrl: null,
+          ingredientes: [
+            {
+              cantidad: '500g',
+              unidadMedida: { nombre: 'gramos' },
+              ingredienteMaestro: { nombre: 'Ingrediente principal' }
+            }
+          ],
+          instrucciones: [
+            { paso: 1, descripcion: 'Preparar los ingredientes.' },
+            { paso: 2, descripcion: 'Cocinar según las instrucciones.' },
+            { paso: 3, descripcion: 'Servir y disfrutar.' }
+          ]
+        };
+        
+        setRecipe(fallbackRecipe);
+        setError(`⚠️ Usando datos de ejemplo - Backend no disponible (${err.message})`);
       } finally {
         setLoading(false);
       }

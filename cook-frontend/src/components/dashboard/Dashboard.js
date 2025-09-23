@@ -49,7 +49,13 @@ const Dashboard = () => {
       }
 
       const userData = await response.json();
-      setUser(userData.user);
+      console.log('Datos del usuario recibidos:', userData);
+      
+      // Verificar si los datos vienen en userData.user o directamente en userData
+      const userInfo = userData.user || userData;
+      console.log('Información del usuario procesada:', userInfo);
+      
+      setUser(userInfo);
     } catch (error) {
       console.error('Error cargando perfil:', error);
       setError(error.message);
@@ -64,21 +70,38 @@ const Dashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
-    navigate('/login');
+    localStorage.removeItem('user');
+    navigate('/home', { replace: true });
   };
 
   const renderProfileByRole = () => {
-    if (!user || !user.role) {
+    console.log('Usuario en renderProfileByRole:', user);
+    
+    if (!user) {
       return (
         <div className="error-message">
           <h2>Error de Configuración</h2>
-          <p>No se pudo determinar el tipo de usuario</p>
+          <p>No se encontraron datos del usuario</p>
           <button onClick={handleLogout}>Cerrar Sesión</button>
         </div>
       );
     }
 
-    const roleCode = user.role.codigo;
+    // Verificar si el rol viene como 'rol' o 'role'
+    const userRole = user.rol || user.role;
+    
+    if (!userRole) {
+      return (
+        <div className="error-message">
+          <h2>Error de Configuración</h2>
+          <p>No se pudo determinar el tipo de usuario</p>
+          <p>Datos del usuario: {JSON.stringify(user, null, 2)}</p>
+          <button onClick={handleLogout}>Cerrar Sesión</button>
+        </div>
+      );
+    }
+
+    const roleCode = userRole.codigo;
 
     switch (roleCode) {
       case 'CLIENTE':
@@ -132,33 +155,7 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {/* Header de navegación */}
-      <nav className="dashboard-nav">
-        <div className="nav-brand">
-          <h2>🍳 CookSync</h2>
-        </div>
-        <div className="nav-user">
-          <div className="user-info">
-            <img 
-              src={user?.fotoPerfil || '/default-avatar.png'} 
-              alt="Avatar" 
-              className="user-avatar"
-            />
-            <div className="user-details">
-              <span className="user-name">{user?.nombres} {user?.apellidos}</span>
-              <span className="user-role">{user?.role?.nombre}</span>
-            </div>
-          </div>
-          <button className="logout-btn" onClick={handleLogout}>
-            🚪 Cerrar Sesión
-          </button>
-        </div>
-      </nav>
-
-      {/* Contenido principal del dashboard */}
-      <main className="dashboard-main">
-        {renderProfileByRole()}
-      </main>
+      {renderProfileByRole()}
     </div>
   );
 };

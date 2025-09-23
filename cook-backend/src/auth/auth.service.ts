@@ -3,6 +3,9 @@ import {
   ConflictException,
   UnauthorizedException,
   InternalServerErrorException,
+  BadRequestException,
+  NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -17,6 +20,8 @@ import { LoginUserDto } from './dto/login-user.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
@@ -57,6 +62,18 @@ export class AuthService {
     });
     if (existingDocument) {
       throw new ConflictException('El número de documento ya está registrado');
+    }
+
+    // Verificar si se intenta registrar un administrador y ya existe uno
+    if (rolId === 3) { // Asumiendo que rolId 3 es ADMIN
+      const existingAdmin = await this.usersRepository.findOne({
+        where: { rolId: 3 },
+        relations: ['role'],
+      });
+      
+      if (existingAdmin) {
+        throw new ConflictException('Ya existe un administrador registrado en el sistema. Solo se permite un administrador por sistema.');
+      }
     }
 
     const salt = await bcrypt.genSalt();
@@ -241,14 +258,37 @@ export class AuthService {
 
   async getUserById(id: number): Promise<any> {
     try {
+      if (!id || id <= 0) {
+        throw new BadRequestException('ID de usuario inválido');
+      }
+
       const user = await this.usersRepository.findOne({
         where: { id },
-        relations: ['role', 'documentType', 'client']
+        relations: ['role', 'documentType', 'client'],
       });
-      
-      return user;
-    } catch (error: any) {
-      throw new InternalServerErrorException(`Error obteniendo usuario: ${error.message}`);
+
+      if (!user) {
+        throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+      }
+
+      // No devolver información sensible
+      const {
+        passwordHash,
+        tokenVerificacion,
+        tokenRecuperacion,
+        ...safeUser
+      } = user;
+
+      return safeUser;
+    } catch (error: unknown) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      this.logger.error(`Error obteniendo usuario ${id}:`, error);
+      throw new InternalServerErrorException('Error interno del servidor');
     }
   }
 }

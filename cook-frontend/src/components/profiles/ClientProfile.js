@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ProfileEdit from '../profile/ProfileEdit';
+import PantryManager from '../pantry/PantryManager';
 import './ProfileStyles.css';
 
 const ClientProfile = ({ user }) => {
@@ -6,6 +8,9 @@ const ClientProfile = ({ user }) => {
   const [favoriteRecipes, setFavoriteRecipes] = useState([]);
   const [pantryItems, setPantryItems] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showPantryManager, setShowPantryManager] = useState(false);
+  const [currentUser, setCurrentUser] = useState(user);
 
   useEffect(() => {
     // Cargar datos específicos del cliente
@@ -17,9 +22,20 @@ const ClientProfile = ({ user }) => {
 
   const loadClientData = async () => {
     try {
-      const response = await fetch(`http://localhost:3002/clients/${user.id}`);
-      const data = await response.json();
-      setClientData(data);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`http://localhost:3002/clients/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setClientData(data.user);
+      } else {
+        console.error('Error en la respuesta:', response.status);
+      }
     } catch (error) {
       console.error('Error cargando datos del cliente:', error);
     }
@@ -27,9 +43,20 @@ const ClientProfile = ({ user }) => {
 
   const loadFavoriteRecipes = async () => {
     try {
-      const response = await fetch(`http://localhost:3002/clients/${user.id}/favorite-recipes`);
-      const data = await response.json();
-      setFavoriteRecipes(Array.isArray(data) ? data : []);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`http://localhost:3002/clients/${user.id}/favorite-recipes`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setFavoriteRecipes(data.recipes || []);
+      } else {
+        setFavoriteRecipes([]);
+      }
     } catch (error) {
       console.error('Error cargando recetas favoritas:', error);
       setFavoriteRecipes([]);
@@ -38,9 +65,20 @@ const ClientProfile = ({ user }) => {
 
   const loadPantryItems = async () => {
     try {
-      const response = await fetch(`http://localhost:3002/clients/${user.id}/pantry`);
-      const data = await response.json();
-      setPantryItems(Array.isArray(data) ? data : []);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`http://localhost:3002/clients/${user.id}/pantry`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPantryItems(data.items || []);
+      } else {
+        setPantryItems([]);
+      }
     } catch (error) {
       console.error('Error cargando despensa:', error);
       setPantryItems([]);
@@ -49,9 +87,20 @@ const ClientProfile = ({ user }) => {
 
   const loadRecentActivity = async () => {
     try {
-      const response = await fetch(`http://localhost:3002/clients/${user.id}/activity`);
-      const data = await response.json();
-      setRecentActivity(Array.isArray(data) ? data : []);
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`http://localhost:3002/clients/${user.id}/activity`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setRecentActivity(data.activities || []);
+      } else {
+        setRecentActivity([]);
+      }
     } catch (error) {
       console.error('Error cargando actividad reciente:', error);
       setRecentActivity([]);
@@ -70,7 +119,7 @@ const ClientProfile = ({ user }) => {
           />
         </div>
         <div className="profile-info">
-          <h1>¡Hola, {user.nombres}! 👋</h1>
+          <h1>¡Hola, {currentUser.nombres}! 👋</h1>
           <p className="profile-subtitle">Bienvenido a tu cocina personal</p>
           <div className="client-stats">
             <div className="stat-item">
@@ -86,6 +135,12 @@ const ClientProfile = ({ user }) => {
               <span className="stat-label">Ingredientes</span>
             </div>
           </div>
+          <button 
+            className="edit-profile-btn"
+            onClick={() => setShowEditProfile(true)}
+          >
+            ✏️ Editar Perfil
+          </button>
         </div>
       </div>
 
@@ -187,9 +242,12 @@ const ClientProfile = ({ user }) => {
               <span className="action-icon">🔍</span>
               Buscar Recetas
             </button>
-            <button className="quick-action-btn">
-              <span className="action-icon">📝</span>
-              Lista de Compras
+            <button 
+              className="quick-action-btn"
+              onClick={() => setShowPantryManager(true)}
+            >
+              <span className="action-icon">🥫</span>
+              Mi Despensa
             </button>
             <button className="quick-action-btn">
               <span className="action-icon">🎯</span>
@@ -202,6 +260,26 @@ const ClientProfile = ({ user }) => {
           </div>
         </div>
       </div>
+
+      {/* Modal de edición de perfil */}
+      {showEditProfile && (
+        <ProfileEdit
+          user={currentUser}
+          onClose={() => setShowEditProfile(false)}
+          onUpdate={(updatedUser) => {
+            setCurrentUser(updatedUser);
+            setShowEditProfile(false);
+          }}
+        />
+      )}
+
+      {/* Modal de gestión de despensa */}
+      {showPantryManager && (
+        <PantryManager
+          user={currentUser}
+          onClose={() => setShowPantryManager(false)}
+        />
+      )}
     </div>
   );
 };

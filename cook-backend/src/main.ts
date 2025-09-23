@@ -1,19 +1,35 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
-  // Habilitar CORS
+  // Configuración de seguridad básica
   app.enableCors({
-    origin: 'http://localhost:3000', // Asegúrate de que coincida con la URL de tu frontend
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
     credentials: true,
+    optionsSuccessStatus: 200,
   });
 
-  // Escucha en el puerto 3002
-  await app.listen(3002);
-  console.log(`La aplicación está corriendo en: http://localhost:3002`);
+  // Validación global de DTOs
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Elimina propiedades no definidas en el DTO
+      forbidNonWhitelisted: true, // Lanza error si hay propiedades no permitidas
+      transform: true, // Transforma automáticamente los tipos
+      disableErrorMessages: process.env.NODE_ENV === 'production',
+    }),
+  );
+
+  // Puerto desde variable de entorno
+  const port = process.env.PORT || 3002;
+  await app.listen(port);
+  
+  logger.log(`🚀 Aplicación corriendo en: http://localhost:${port}`);
+  logger.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
 }
 
 bootstrap().catch((err) => {

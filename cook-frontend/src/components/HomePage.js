@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import "../App.css"; // Usa los estilos globales
 
-const API_URL = "http://localhost:3001/api";
+const API_URL = "http://localhost:3002";
 
 const getEmojiForIngredient = (name) => {
     const emojiMap = { "Pollo": "🐔", "Tomate": "🍅", "Cebolla": "🧅", "Ajo": "🧄", "Arroz": "🍚", "Pasta": "🍝", "Fideos": "🍝", "Queso": "🧀", "Huevos": "🥚", "Pescado": "🐟", "Verduras": "🥬", "Limón": "🍋", "Aceite": "🫒", "Carne de res": "🥩", "Papa": "🥔", "Camote": "🍠", "Zanahoria": "🥕", "Apio": "🥬", "Sal": "🧂", "Pimienta": "🌶️", "Comino": "🌿", "Ají amarillo": "🌶️", "Culantro": "🌿", "Leche": "🥛", "Agua": "💧" };

@@ -4,92 +4,6 @@
   background: #f8fafc;
 }
 
-/* Navigation Header */
-.dashboard-nav {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 15px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.nav-brand h2 {
-  color: white;
-  margin: 0;
-  font-size: 1.8rem;
-  font-weight: 700;
-}
-
-.nav-user {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 8px 16px;
-  border-radius: 25px;
-  backdrop-filter: blur(10px);
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.user-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.user-name {
-  color: white;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.user-role {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.logout-btn {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 10px 20px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-}
-
-.logout-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-/* Main Content */
-.dashboard-main {
-  padding: 0;
-  min-height: calc(100vh - 80px);
-}
-
 /* Loading State */
 .dashboard-loading {
   display: flex;
@@ -290,26 +204,6 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .dashboard-nav {
-    padding: 15px 20px;
-    flex-direction: column;
-    gap: 15px;
-  }
-  
-  .nav-user {
-    width: 100%;
-    justify-content: space-between;
-  }
-  
-  .user-info {
-    flex: 1;
-    justify-content: center;
-  }
-  
-  .dashboard-main {
-    padding: 0;
-  }
-  
   .loading-content,
   .error-content,
   .unauthorized-message {

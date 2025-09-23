@@ -1,28 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import './ProfileStyles.css';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
+import './VendorProfile.css';
 
 const VendorProfile = ({ user }) => {
-  const [vendorData, setVendorData] = useState(null);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const { showNotification } = useNotification();
+  const [activeSection, setActiveSection] = useState('dashboard');
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [analytics, setAnalytics] = useState({});
 
   useEffect(() => {
-    loadVendorData();
     loadProducts();
     loadOrders();
     loadAnalytics();
   }, [user.id]);
-
-  const loadVendorData = async () => {
-    try {
-      const response = await fetch(`http://localhost:3002/vendors/${user.id}`);
-      const data = await response.json();
-      setVendorData(data);
-    } catch (error) {
-      console.error('Error cargando datos del vendedor:', error);
-    }
-  };
 
   const loadProducts = async () => {
     try {
@@ -56,171 +51,310 @@ const VendorProfile = ({ user }) => {
     }
   };
 
-  return (
-    <div className="profile-container vendor-profile">
-      {/* Header del perfil */}
-      <div className="profile-header">
-        <div className="profile-avatar">
-          <img 
-            src={user.fotoPerfil || '/vendor-avatar.png'} 
-            alt="Avatar"
-            className="avatar-image"
-          />
+  const sidebarItems = [
+    { id: 'dashboard', icon: '📊', label: 'Dashboard' },
+    { id: 'products', icon: '🛍️', label: 'Productos' },
+    { id: 'orders', icon: '📦', label: 'Pedidos' },
+    { id: 'inventory', icon: '📋', label: 'Inventario' },
+    { id: 'analytics', icon: '📈', label: 'Analytics' },
+    { id: 'customers', icon: '👥', label: 'Clientes' },
+    { id: 'marketing', icon: '📢', label: 'Marketing' },
+    { id: 'settings', icon: '⚙️', label: 'Configuración' },
+  ];
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return renderDashboard();
+      case 'products':
+        return renderProducts();
+      case 'orders':
+        return renderOrders();
+      case 'inventory':
+        return renderInventory();
+      case 'analytics':
+        return renderAnalytics();
+      case 'customers':
+        return renderCustomers();
+      case 'marketing':
+        return renderMarketing();
+      case 'settings':
+        return renderSettings();
+      default:
+        return renderDashboard();
+    }
+  };
+
+  const renderDashboard = () => (
+    <div className="vendor-content-section">
+      <div className="section-header">
+        <h2>📊 Dashboard de Ventas</h2>
+        <p>Resumen de tu negocio en CookSync</p>
+      </div>
+      
+      <div className="stats-overview">
+        <div className="stat-card">
+          <div className="stat-icon">🛍️</div>
+          <div className="stat-info">
+            <h3>{products.length || 0}</h3>
+            <p>Productos Activos</p>
+            <span className="stat-change positive">+3 esta semana</span>
+          </div>
         </div>
-        <div className="profile-info">
-          <h1>Panel de Vendedor 🏪</h1>
-          <p className="profile-subtitle">{user.nombres} {user.apellidos}</p>
-          <div className="vendor-stats">
-            <div className="stat-item">
-              <span className="stat-number">{products.length}</span>
-              <span className="stat-label">Productos</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">{orders.length}</span>
-              <span className="stat-label">Pedidos</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">S/ {analytics.totalSales || 0}</span>
-              <span className="stat-label">Ventas</span>
-            </div>
+        <div className="stat-card">
+          <div className="stat-icon">📦</div>
+          <div className="stat-info">
+            <h3>{orders.length || 0}</h3>
+            <p>Pedidos Totales</p>
+            <span className="stat-change positive">+15% vs mes anterior</span>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">💰</div>
+          <div className="stat-info">
+            <h3>S/ {analytics.totalSales || 2850}</h3>
+            <p>Ventas del Mes</p>
+            <span className="stat-change positive">+28% vs mes anterior</span>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon">⭐</div>
+          <div className="stat-info">
+            <h3>4.8</h3>
+            <p>Rating Promedio</p>
+            <span className="stat-change neutral">Excelente</span>
           </div>
         </div>
       </div>
 
-      {/* Dashboard del vendedor */}
-      <div className="dashboard-grid">
-        {/* Resumen de ventas */}
-        <div className="dashboard-card sales-card">
-          <h3>💰 Resumen de Ventas</h3>
-          <div className="sales-summary">
-            <div className="sales-metric">
-              <h4>Hoy</h4>
-              <p className="sales-amount">S/ {analytics.todaySales || 0}</p>
-              <small className="sales-change">+{analytics.todayChange || 0}%</small>
-            </div>
-            <div className="sales-metric">
-              <h4>Esta Semana</h4>
-              <p className="sales-amount">S/ {analytics.weekSales || 0}</p>
-              <small className="sales-change">+{analytics.weekChange || 0}%</small>
-            </div>
-            <div className="sales-metric">
-              <h4>Este Mes</h4>
-              <p className="sales-amount">S/ {analytics.monthSales || 0}</p>
-              <small className="sales-change">+{analytics.monthChange || 0}%</small>
-            </div>
-          </div>
-        </div>
-
-        {/* Pedidos pendientes */}
-        <div className="dashboard-card orders-card">
-          <h3>📦 Pedidos Pendientes</h3>
-          <div className="orders-list">
-            {orders.filter(order => order.estado === 'PENDIENTE').slice(0, 5).map(order => (
-              <div key={order.id} className="order-item">
-                <div className="order-info">
-                  <h4>Pedido #{order.id}</h4>
-                  <p>{order.cliente.nombres} {order.cliente.apellidos}</p>
-                  <small>{order.fechaPedido}</small>
-                </div>
-                <div className="order-actions">
-                  <span className="order-amount">S/ {order.total}</span>
-                  <button className="process-btn">Procesar</button>
-                </div>
+      <div className="dashboard-widgets">
+        <div className="widget">
+          <h3>📈 Ventas Recientes</h3>
+          <div className="sales-chart">
+            <div className="chart-placeholder">
+              <p>Gráfico de ventas de los últimos 7 días</p>
+              <div className="mock-chart">
+                <div className="chart-bar" style={{height: '60%'}}></div>
+                <div className="chart-bar" style={{height: '80%'}}></div>
+                <div className="chart-bar" style={{height: '45%'}}></div>
+                <div className="chart-bar" style={{height: '90%'}}></div>
+                <div className="chart-bar" style={{height: '70%'}}></div>
+                <div className="chart-bar" style={{height: '85%'}}></div>
+                <div className="chart-bar" style={{height: '95%'}}></div>
               </div>
-            ))}
-          </div>
-          <button className="view-all-btn">Ver todos los pedidos</button>
-        </div>
-
-        {/* Productos más vendidos */}
-        <div className="dashboard-card top-products-card">
-          <h3>🏆 Productos Más Vendidos</h3>
-          <div className="products-ranking">
-            {analytics.topProducts?.slice(0, 5).map((product, index) => (
-              <div key={product.id} className="product-rank-item">
-                <span className="rank-number">#{index + 1}</span>
-                <div className="product-info">
-                  <h4>{product.nombre}</h4>
-                  <p>{product.ventas} vendidos</p>
-                </div>
-                <span className="product-revenue">S/ {product.ingresos}</span>
-              </div>
-            )) || <p className="empty-state">No hay datos de ventas aún</p>}
+            </div>
           </div>
         </div>
 
-        {/* Inventario */}
-        <div className="dashboard-card inventory-card">
-          <h3>📊 Estado del Inventario</h3>
-          <div className="inventory-summary">
-            <div className="inventory-metric">
-              <h4>Stock Bajo</h4>
-              <p className="metric-number">{analytics.lowStock || 0}</p>
-              <small>productos</small>
+        <div className="widget">
+          <h3>🔔 Alertas Importantes</h3>
+          <div className="alerts-list">
+            <div className="alert-item warning">
+              <span className="alert-icon">⚠️</span>
+              <span className="alert-text">3 productos con stock bajo</span>
             </div>
-            <div className="inventory-metric">
-              <h4>Sin Stock</h4>
-              <p className="metric-number">{analytics.outOfStock || 0}</p>
-              <small>productos</small>
+            <div className="alert-item info">
+              <span className="alert-icon">📦</span>
+              <span className="alert-text">5 pedidos pendientes de envío</span>
             </div>
-            <div className="inventory-metric">
-              <h4>Valor Total</h4>
-              <p className="metric-number">S/ {analytics.inventoryValue || 0}</p>
-              <small>inventario</small>
+            <div className="alert-item success">
+              <span className="alert-icon">⭐</span>
+              <span className="alert-text">2 nuevas reseñas positivas</span>
             </div>
           </div>
-          <button className="manage-inventory-btn">Gestionar Inventario</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderProducts = () => (
+    <div className="vendor-content-section">
+      <div className="section-header">
+        <h2>🛍️ Gestión de Productos</h2>
+        <button className="primary-btn">+ Nuevo Producto</button>
+      </div>
+      
+      <div className="products-grid">
+        <div className="product-card">
+          <div className="product-image">🍽️</div>
+          <div className="product-info">
+            <h4>Ceviche Clásico</h4>
+            <p>S/ 25.00</p>
+            <span className="product-status active">Activo</span>
+          </div>
+          <div className="product-actions">
+            <button className="edit-btn">Editar</button>
+            <button className="view-btn">Ver</button>
+          </div>
+        </div>
+        <div className="product-card">
+          <div className="product-image">🥘</div>
+          <div className="product-info">
+            <h4>Lomo Saltado</h4>
+            <p>S/ 32.00</p>
+            <span className="product-status active">Activo</span>
+          </div>
+          <div className="product-actions">
+            <button className="edit-btn">Editar</button>
+            <button className="view-btn">Ver</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderOrders = () => (
+    <div className="vendor-content-section">
+      <div className="section-header">
+        <h2>📦 Gestión de Pedidos</h2>
+      </div>
+      
+      <div className="orders-table">
+        <div className="table-header">
+          <span>Pedido</span>
+          <span>Cliente</span>
+          <span>Fecha</span>
+          <span>Total</span>
+          <span>Estado</span>
+          <span>Acciones</span>
+        </div>
+        <div className="table-row">
+          <span>#001</span>
+          <span>Juan Pérez</span>
+          <span>22/09/2024</span>
+          <span>S/ 45.00</span>
+          <span className="status-badge pending">Pendiente</span>
+          <div className="action-buttons">
+            <button className="action-btn">Procesar</button>
+            <button className="action-btn">Ver</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderInventory = () => (
+    <div className="vendor-content-section">
+      <div className="section-header">
+        <h2>📋 Control de Inventario</h2>
+      </div>
+      <div className="inventory-content">
+        <p>Módulo de inventario en desarrollo...</p>
+      </div>
+    </div>
+  );
+
+  const renderAnalytics = () => (
+    <div className="vendor-content-section">
+      <div className="section-header">
+        <h2>📈 Analytics de Ventas</h2>
+      </div>
+      <div className="analytics-content">
+        <p>Módulo de analytics en desarrollo...</p>
+      </div>
+    </div>
+  );
+
+  const renderCustomers = () => (
+    <div className="vendor-content-section">
+      <div className="section-header">
+        <h2>👥 Gestión de Clientes</h2>
+      </div>
+      <div className="customers-content">
+        <p>Módulo de clientes en desarrollo...</p>
+      </div>
+    </div>
+  );
+
+  const renderMarketing = () => (
+    <div className="vendor-content-section">
+      <div className="section-header">
+        <h2>📢 Marketing y Promociones</h2>
+      </div>
+      <div className="marketing-content">
+        <p>Módulo de marketing en desarrollo...</p>
+      </div>
+    </div>
+  );
+
+  const renderSettings = () => (
+    <div className="vendor-content-section">
+      <div className="section-header">
+        <h2>⚙️ Configuración de Tienda</h2>
+      </div>
+      <div className="settings-content">
+        <p>Módulo de configuración en desarrollo...</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="vendor-panel">
+      {/* Sidebar */}
+      <div className="vendor-sidebar">
+        <div className="sidebar-header">
+          <div className="logo">
+            <span className="logo-icon">🏪</span>
+            <span className="logo-text">Mi Tienda</span>
+          </div>
+          <div className="vendor-info">
+            <img 
+              src={user.fotoPerfil || '/vendor-avatar.png'} 
+              alt="Vendor"
+              className="vendor-avatar"
+            />
+            <div className="vendor-details">
+              <span className="vendor-name">{user.nombres}</span>
+              <span className="vendor-role">Vendedor</span>
+            </div>
+          </div>
         </div>
 
-        {/* Acciones rápidas del vendedor */}
-        <div className="dashboard-card vendor-actions-card">
-          <h3>⚡ Acciones Rápidas</h3>
-          <div className="vendor-actions">
-            <button className="vendor-action-btn">
-              <span className="action-icon">➕</span>
-              Agregar Producto
+        <nav className="sidebar-nav">
+          {sidebarItems.map(item => (
+            <button
+              key={item.id}
+              className={`nav-item ${activeSection === item.id ? 'active' : ''}`}
+              onClick={() => setActiveSection(item.id)}
+            >
+              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-label">{item.label}</span>
             </button>
-            <button className="vendor-action-btn">
-              <span className="action-icon">📋</span>
-              Gestionar Pedidos
+          ))}
+        </nav>
+
+        <div className="sidebar-footer">
+          <button className="logout-btn" onClick={() => {
+            logout();
+            showNotification("Sesión cerrada exitosamente", "success");
+            navigate('/', { replace: true });
+          }}>
+            <span className="nav-icon">🚪</span>
+            <span className="nav-label">Cerrar Sesión</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="vendor-main">
+        <div className="vendor-header">
+          <div className="header-title">
+            <h1>Panel de Vendedor</h1>
+            <p>Gestiona tu tienda en CookSync</p>
+          </div>
+          <div className="header-actions">
+            <button className="notification-btn">
+              <span className="notification-icon">🔔</span>
+              <span className="notification-badge">5</span>
             </button>
-            <button className="vendor-action-btn">
-              <span className="action-icon">📈</span>
-              Ver Reportes
-            </button>
-            <button className="vendor-action-btn">
-              <span className="action-icon">💬</span>
-              Mensajes Clientes
+            <button className="profile-btn">
+              <img src={user.fotoPerfil || '/vendor-avatar.png'} alt="Profile" />
             </button>
           </div>
         </div>
 
-        {/* Notificaciones */}
-        <div className="dashboard-card notifications-card">
-          <h3>🔔 Notificaciones</h3>
-          <div className="notifications-list">
-            <div className="notification-item urgent">
-              <span className="notification-icon">⚠️</span>
-              <div className="notification-text">
-                <p>5 productos con stock bajo</p>
-                <small>Hace 2 horas</small>
-              </div>
-            </div>
-            <div className="notification-item">
-              <span className="notification-icon">📦</span>
-              <div className="notification-text">
-                <p>3 nuevos pedidos recibidos</p>
-                <small>Hace 30 min</small>
-              </div>
-            </div>
-            <div className="notification-item">
-              <span className="notification-icon">⭐</span>
-              <div className="notification-text">
-                <p>Nueva reseña de 5 estrellas</p>
-                <small>Hace 1 hora</small>
-              </div>
-            </div>
-          </div>
+        <div className="vendor-content">
+          {renderContent()}
         </div>
       </div>
     </div>

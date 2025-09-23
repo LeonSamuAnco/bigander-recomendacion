@@ -1,16 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RecipesController } from './recipes.controller';
-import { RecipesService } from './recipes.service';
-import { Recipe } from './entities/recipe.entity';
-import { Ingredient } from './entities/ingredient.entity';
+import { RecipesPrismaService } from './recipes-prisma.service';
+import { User } from '../auth/entities/user.entity';
+import { Role } from '../auth/entities/role.entity';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 @Module({
-  imports: [
-    // Hacemos que las entidades estén disponibles dentro de este módulo
-    TypeOrmModule.forFeature([Recipe, Ingredient]),
-  ],
+  imports: [TypeOrmModule.forFeature([User, Role])],
   controllers: [RecipesController],
-  providers: [RecipesService],
+  providers: [RecipesPrismaService, RolesGuard],
+  exports: [RecipesPrismaService],
 })
 export class RecipesModule {}

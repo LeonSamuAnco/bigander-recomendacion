@@ -1,35 +1,142 @@
 import {
   Controller,
   Get,
+  Post,
+  Delete,
+  Body,
   Query,
   Param,
-  NotFoundException,
+  UseGuards,
+  Request,
+  ValidationPipe,
 } from '@nestjs/common';
-import { RecipesService } from './recipes.service';
+import { RecipesPrismaService } from './recipes-prisma.service';
+import { CreateRecipeDto } from './dto/create-recipe.dto';
+import { RecipeFiltersDto } from './dto/recipe-filters.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
-@Controller('api')
+@Controller('recipes')
 export class RecipesController {
-  constructor(private readonly recipesService: RecipesService) {}
+  constructor(private readonly recipesService: RecipesPrismaService) {}
 
-  @Get('ingredients')
-  findAllIngredients() {
+  // Endpoint de prueba para crear recetas sin guards (temporal)
+  @Post('test-create')
+  async testCreate(@Body(ValidationPipe) createRecipeDto: CreateRecipeDto) {
+    try {
+      // Usar ID de admin por defecto para testing
+      const adminId = 1; // Asumiendo que el admin tiene ID 1
+      return await this.recipesService.create(createRecipeDto, adminId);
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Crear una nueva receta - SOLO ADMINISTRADORES
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN') // Solo administradores pueden crear recetas
+  async create(
+    @Body(ValidationPipe) createRecipeDto: CreateRecipeDto,
+    @Request() req?: any,
+  ) {
+    const autorId = req?.user?.id; // ID del usuario autenticado
+    return this.recipesService.create(createRecipeDto, autorId);
+  }
+
+  // Obtener todas las recetas con filtros
+  @Get()
+  async findAll(@Query(ValidationPipe) filters: RecipeFiltersDto) {
+    return this.recipesService.findAll(filters);
+  }
+
+  // Buscar recetas por ingredientes
+  @Get('by-ingredients')
+  async findByIngredients(@Query('ingredients') ingredients: string) {
+    if (!ingredients) {
+      return [];
+    }
+    const ingredientIds = ingredients
+      .split(',')
+      .map((id) => parseInt(id.trim()))
+      .filter((id) => !isNaN(id));
+    
+    return this.recipesService.findByIngredients(ingredientIds);
+  }
+
+  // Obtener una receta específica
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.recipesService.findOne(parseInt(id));
+  }
+
+  // Obtener todos los ingredientes maestros
+  @Get('ingredients/all')
+  async findAllIngredients() {
     return this.recipesService.findAllIngredients();
   }
 
-  @Get('recipes')
-  findRecipes(@Query('ingredients') ingredientsQuery: string) {
-    // El query param llega como un string "Pollo,Tomate,Arroz"
-    // Lo convertimos en un array: ["Pollo", "Tomate", "Arroz"]
-    const ingredientList = ingredientsQuery ? ingredientsQuery.split(',') : [];
-    return this.recipesService.findRecipes(ingredientList);
+  // Obtener todas las categorías
+  @Get('categories/all')
+  async findAllCategories() {
+    return this.recipesService.findAllCategories();
   }
 
-  @Get('recipes/:id')
-  async findOne(@Param('id') id: string) {
-    const recipe = await this.recipesService.findOne(Number(id));
-    if (!recipe) {
-      throw new NotFoundException(`Receta con ID ${id} no encontrada`);
-    }
-    return recipe;
+  // Obtener todas las dificultades
+  @Get('difficulties/all')
+  async findAllDifficulties() {
+    return this.recipesService.findAllDifficulties();
+  }
+
+  // Obtener todas las unidades de medida
+  @Get('units/all')
+  async findAllMeasurementUnits() {
+    return this.recipesService.findAllMeasurementUnits();
+  }
+
+  // ========================================
+  // ENDPOINTS DE FAVORITAS
+  // ========================================
+
+  // Agregar receta a favoritas
+  @Post(':id/favorite')
+  // @UseGuards(JwtAuthGuard) // Descomenta cuando tengas el guard configurado
+  async addToFavorites(
+    @Param('id') recipeId: string,
+    @Request() req?: any,
+  ) {
+    const userId = req?.user?.id || 1; // Temporal: usar ID 1 para testing
+    return this.recipesService.addToFavorites(parseInt(recipeId), userId);
+  }
+
+  // Quitar receta de favoritas
+  @Delete(':id/favorite')
+  // @UseGuards(JwtAuthGuard) // Descomenta cuando tengas el guard configurado
+  async removeFromFavorites(
+    @Param('id') recipeId: string,
+    @Request() req?: any,
+  ) {
+    const userId = req?.user?.id || 1; // Temporal: usar ID 1 para testing
+    return this.recipesService.removeFromFavorites(parseInt(recipeId), userId);
+  }
+
+  // Obtener recetas favoritas del usuario
+  @Get('favorites/my')
+  // @UseGuards(JwtAuthGuard) // Descomenta cuando tengas el guard configurado
+  async getMyFavorites(@Request() req?: any) {
+    const userId = req?.user?.id || 1; // Temporal: usar ID 1 para testing
+    return this.recipesService.getUserFavorites(userId);
+  }
+
+  // Verificar si una receta es favorita del usuario
+  @Get(':id/is-favorite')
+  // @UseGuards(JwtAuthGuard) // Descomenta cuando tengas el guard configurado
+  async isFavorite(
+    @Param('id') recipeId: string,
+    @Request() req?: any,
+  ) {
+    const userId = req?.user?.id || 1; // Temporal: usar ID 1 para testing
+    return this.recipesService.isFavorite(parseInt(recipeId), userId);
   }
 }

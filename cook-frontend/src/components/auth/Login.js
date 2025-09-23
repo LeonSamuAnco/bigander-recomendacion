@@ -2,6 +2,7 @@
 
 import React, { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useAuth } from "../../context/AuthContext"
 import "./AuthForms.css"
 
 const Login = () => {
@@ -11,7 +12,9 @@ const Login = () => {
   })
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const { login, getDashboardRoute } = useAuth()
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -23,39 +26,22 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
+    setLoading(true)
 
     try {
-      const response = await fetch("http://localhost:3002/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
-      })
-
-      if (response.ok) {
-        const userData = await response.json()
-        
-        // Guardar el token de autenticación
-        if (userData.access_token) {
-          localStorage.setItem("authToken", userData.access_token)
-        }
-        
-        // Guardar datos del usuario
-        localStorage.setItem("user", JSON.stringify(userData.user))
-        
-        // Redirigir al dashboard según el rol del usuario
-        navigate("/dashboard")
+      const result = await login(formData.email, formData.password)
+      
+      if (result.success) {
+        // Redirigir al dashboard según el rol del usuario (reemplazar en historial)
+        navigate(getDashboardRoute(), { replace: true })
       } else {
-        const errorData = await response.json()
-        setError(errorData.message || "Error al iniciar sesión")
+        setError(result.error || "Error al iniciar sesión")
       }
     } catch (err) {
       setError("Error al conectar con el servidor")
       console.error("Error en login:", err)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -170,8 +156,8 @@ const Login = () => {
               <a href="#" className="forgot-password">¿Olvidaste tu contraseña?</a>
             </div>
 
-            <button type="submit" className="modern-submit-btn">
-              Iniciar Sesión
+            <button type="submit" className="modern-submit-btn" disabled={loading}>
+              {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
             </button>
           </form>
 
