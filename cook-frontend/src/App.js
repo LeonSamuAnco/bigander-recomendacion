@@ -5,7 +5,7 @@ import Dashboard from "./components/dashboard/Dashboard";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ProductsPage from "./components/products/ProductsPage";
 import FavoritesPage from "./components/favorites/FavoritesPage";
-import CategoriesPage from "./pages/CategoriesPage";
+import CategoriesExplorer from "./pages/CategoriesExplorer";
 import AuthRedirect from "./components/auth/AuthRedirect";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { NotificationProvider, useNotification } from "./context/NotificationContext";
@@ -26,25 +26,42 @@ const TopBar = () => {
   };
 
   return (
-    <header style={{ background: "linear-gradient(135deg, #dc2626, #f59e0b)", padding: "1rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <div style={{ color: "white", fontSize: "1.8rem", fontWeight: "bold", cursor: "pointer" }} onClick={() => navigate("/home")}>
-        🍳 CookSync
+    <header className="app-header">
+      <div className="header-brand" onClick={() => navigate("/home")}>
+        <span className="brand-icon">🍳</span>
+        <span className="brand-title">CookSync</span>
       </div>
-      <nav style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-        <button onClick={() => navigate("/home")} style={{ background: "transparent", border: "none", color: "white", cursor: "pointer" }}>🏠 Inicio</button>
-        <button onClick={() => navigate("/categorias")} style={{ background: "transparent", border: "none", color: "white", cursor: "pointer" }}>📂 Categorías</button>
-        <button onClick={() => navigate("/productos")} style={{ background: "transparent", border: "none", color: "white", cursor: "pointer" }}>🛍️ Productos</button>
-        <button onClick={() => navigate("/favoritas")} style={{ background: "transparent", border: "none", color: "white", cursor: "pointer" }}>💖 Favoritas</button>
+      <nav className="header-nav">
+        <button className="nav-btn" onClick={() => navigate("/home")}>
+          <span className="nav-icon">🏠</span>
+          <span>Inicio</span>
+        </button>
+        <button className="nav-btn" onClick={() => navigate("/categorias")}>
+          <span className="nav-icon">📂</span>
+          <span>Categorías</span>
+        </button>
+        <button className="nav-btn" onClick={() => navigate("/favoritas")}>
+          <span className="nav-icon">💖</span>
+          <span>Favoritas</span>
+        </button>
         {isAuthenticated ? (
           <>
-            <span>👋 {user?.nombres || 'Usuario'}</span>
-            <button onClick={() => navigate(getDashboardRoute())}>📊 Dashboard</button>
-            <button onClick={handleLogout}>🚪 Salir</button>
+            <span className="user-greeting">👋 {user?.nombres || 'Usuario'}</span>
+            <button className="nav-btn-primary" onClick={() => navigate(getDashboardRoute())}>
+              📊 Dashboard
+            </button>
+            <button className="nav-btn-secondary" onClick={handleLogout}>
+              🚪 Salir
+            </button>
           </>
         ) : (
           <>
-            <button onClick={() => navigate("/login")}>Iniciar Sesión</button>
-            <button onClick={() => navigate("/registro")}>Registrarse</button>
+            <button className="auth-btn login-btn" onClick={() => navigate("/login")}>
+              Iniciar Sesión
+            </button>
+            <button className="auth-btn register-btn" onClick={() => navigate("/registro")}>
+              Registrarse
+            </button>
           </>
         )}
       </nav>
@@ -66,7 +83,8 @@ const AppContent = () => {
         <Route path="/login" element={<AuthRedirect><Login /></AuthRedirect>} />
         <Route path="/registro" element={<AuthRedirect><Register /></AuthRedirect>} />
         <Route path="/home" element={<HomePage />} />
-        <Route path="/categorias" element={<CategoriesPage />} />
+        <Route path="/categorias" element={<CategoriesExplorer />} />
+        <Route path="/explore" element={<CategoriesExplorer />} />
         <Route path="/productos" element={<ProductsPage />} />
         <Route path="/receta/:id" element={<RecipeDetail />} />
         <Route path="/recipes/:id" element={<RecipeDetail />} />

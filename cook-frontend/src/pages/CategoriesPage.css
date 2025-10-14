@@ -113,8 +113,16 @@
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 }
 
+/* Layout horizontal para recetas */
+.recipes-section {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
 .results-section {
-  margin-top: 2rem;
+  min-height: 500px;
 }
 
 .results-section h2 {
@@ -202,6 +210,13 @@
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  .recipes-section {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
 @media (max-width: 768px) {
   .categories-page {
     padding: 1rem;

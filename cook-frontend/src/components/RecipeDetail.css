@@ -376,33 +376,270 @@
   animation-delay: 0.3s;
 }
 
-@media (max-width: 768px) {
+/* Responsive Design - Mobile First */
+
+/* Extra Small Devices (Phones, 320px - 480px) */
+@media (max-width: 480px) {
   .recipe-detail {
-    padding: 1rem;
+    padding: 0.75rem;
+    background: #f8fafc;
+  }
+
+  .back-button {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    justify-content: center;
   }
 
   .recipe-header {
-    padding: 2rem 1rem;
+    padding: 1.5rem 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 16px;
   }
 
   .recipe-header h1 {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
+    margin: 1rem 0;
+    padding-bottom: 0.75rem;
+  }
+
+  .recipe-header h1::after {
+    width: 80px;
+    height: 3px;
+  }
+
+  .recipe-image {
+    max-height: 200px;
+    border-radius: 12px;
+    margin: 1rem 0;
+    border-width: 4px;
+  }
+
+  .recipe-image:hover {
+    transform: none;
   }
 
   .recipe-meta {
     flex-direction: column;
-    gap: 1rem;
-    align-items: center;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
   }
 
-  .recipe-image {
-    max-height: 250px;
+  .meta-item {
+    padding: 0.9rem 1.5rem;
+    font-size: 0.9rem;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .meta-item svg {
+    font-size: 1.2rem;
+    margin-right: 8px;
+  }
+
+  .recipe-content {
+    gap: 1.5rem;
+    margin: 2rem 0;
   }
 
   .ingredients-section,
   .description-section,
   .instructions-section {
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .ingredients-section h2,
+  .description-section h2,
+  .instructions-section h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .ingredients-section h2 svg,
+  .instructions-section h2 svg,
+  .description-section h2 svg {
+    font-size: 1.3rem;
+    margin-right: 10px;
+  }
+
+  .ingredients-section li {
+    padding: 8px 12px;
+    font-size: 0.95rem;
+    gap: 8px;
+  }
+
+  .ingredient-check {
+    font-size: 1rem;
+    width: 18px;
+  }
+
+  .recipe-description {
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .recipe-description p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .instruction-step {
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .step-number {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.95rem;
+  }
+
+  .step-content {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    padding-top: 0;
+  }
+
+  .ingredients-section ul li {
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 0.4rem;
+    border-radius: 6px;
+  }
+
+  .ingredients-section ul li:hover {
+    transform: translateX(2px);
+  }
+}
+
+/* Small Devices (Phones landscape, 481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .recipe-detail {
+    padding: 1rem;
+  }
+
+  .back-button {
+    padding: 0.7rem 1.4rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .recipe-header {
+    padding: 2rem 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .recipe-header h1 {
+    font-size: 2.2rem;
+  }
+
+  .recipe-header h1::after {
+    width: 100px;
+  }
+
+  .recipe-image {
+    max-height: 280px;
+    border-radius: 16px;
+  }
+
+  .recipe-meta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .meta-item {
+    padding: 1rem 1.75rem;
+    flex: 0 1 calc(50% - 0.5rem);
+    min-width: 180px;
+  }
+
+  .recipe-content {
+    gap: 2rem;
+  }
+
+  .ingredients-section,
+  .description-section,
+  .instructions-section {
+    padding: 1.75rem;
+  }
+
+  .ingredients-section h2,
+  .description-section h2,
+  .instructions-section h2 {
+    font-size: 1.6rem;
+  }
+
+  .instruction-step {
+    padding: 1.25rem;
+  }
+
+  .step-number {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 1rem;
+  }
+
+  .step-content {
+    font-size: 0.95rem;
+  }
+}
+
+/* Medium Devices (Tablets, 769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .recipe-detail {
+    max-width: 960px;
     padding: 1.5rem;
+  }
+
+  .recipe-header h1 {
+    font-size: 2.8rem;
+  }
+
+  .recipe-image {
+    max-height: 350px;
+  }
+
+  .recipe-meta {
+    gap: 1.5rem;
+  }
+
+  .meta-item {
+    padding: 1.1rem 1.9rem;
+  }
+
+  .recipe-content {
+    grid-template-columns: 1fr 1.5fr;
+    gap: 2.5rem;
+  }
+
+  .ingredients-section,
+  .description-section,
+  .instructions-section {
+    padding: 2rem;
+  }
+}
+
+/* Large Devices (Desktops, 1025px and up) */
+@media (min-width: 1025px) {
+  .recipe-detail {
+    max-width: 1200px;
+  }
+
+  .recipe-header {
+    padding: 3.5rem 2.5rem;
+  }
+
+  .recipe-content {
+    grid-template-columns: 1fr 2fr;
   }
 }
 .ingredients-section ul {

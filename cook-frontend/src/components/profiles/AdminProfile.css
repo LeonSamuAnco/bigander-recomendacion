@@ -801,26 +801,163 @@
   color: white;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
+/* Responsive - Mobile First */
+
+/* Extra Small Devices (Phones, 320px - 480px) */
+@media (max-width: 480px) {
+  .admin-panel {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+  
   .admin-sidebar {
-    width: 240px;
+    width: 100%;
+    height: auto;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .sidebar-header {
+    padding: 12px 15px;
+  }
+  
+  .logo {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .logo-icon {
+    font-size: 1.5rem;
+    padding: 6px;
+    border-radius: 8px;
+  }
+  
+  .logo-text {
+    font-size: 1.2rem;
+  }
+  
+  .admin-info {
+    gap: 8px;
+  }
+  
+  .admin-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+  
+  .admin-name {
+    font-size: 0.9rem;
+  }
+  
+  .admin-role {
+    font-size: 0.75rem;
+  }
+  
+  .sidebar-nav {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    padding: 8px 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .nav-item {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 8px 8px 0 0;
+    white-space: nowrap;
+  }
+  
+  .nav-item.active {
+    border-left: none;
+    border-bottom-color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+  }
+  
+  .nav-item svg {
+    font-size: 1rem;
   }
   
   .admin-content {
-    padding: 24px;
+    padding: 12px;
+    width: 100%;
+  }
+  
+  .content-header h1 {
+    font-size: 1.5rem;
   }
   
   .stats-overview {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .stat-card {
+    padding: 14px;
+  }
+  
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+  
+  .stat-value {
+    font-size: 1.6rem;
+  }
+  
+  .stat-label {
+    font-size: 0.8rem;
+  }
+  
+  .stat-change {
+    font-size: 0.75rem;
   }
   
   .dashboard-widgets {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .widget-card {
+    padding: 14px;
+  }
+  
+  .widget-header h3 {
+    font-size: 1rem;
+  }
+  
+  .users-grid,
+  .recipes-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .user-card,
+  .recipe-card {
+    padding: 12px;
+  }
+  
+  .action-button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .logout-button {
+    padding: 8px 12px;
+    font-size: 0.85rem;
   }
 }
 
-@media (max-width: 768px) {
+/* Small Devices (Phones landscape, 481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
   .admin-panel {
     flex-direction: column;
   }
@@ -828,20 +965,40 @@
   .admin-sidebar {
     width: 100%;
     height: auto;
-    flex-direction: row;
-    overflow-x: auto;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .sidebar-header {
+    padding: 16px;
+  }
+  
+  .logo-icon {
+    font-size: 1.75rem;
+  }
+  
+  .logo-text {
+    font-size: 1.35rem;
+  }
+  
+  .admin-avatar {
+    width: 42px;
+    height: 42px;
   }
   
   .sidebar-nav {
     display: flex;
     flex-direction: row;
-    gap: 8px;
-    padding: 12px 20px;
+    gap: 6px;
+    padding: 10px 16px;
+    overflow-x: auto;
   }
   
   .nav-item {
     flex-shrink: 0;
-    padding: 8px 16px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
     border-left: none;
     border-bottom: 3px solid transparent;
   }
@@ -851,25 +1008,81 @@
     border-bottom-color: #10b981;
   }
   
-  .admin-header {
-    padding: 16px 20px;
+  .admin-content {
+    padding: 16px;
   }
   
-  .admin-content {
-    padding: 16px 20px;
+  .content-header h1 {
+    font-size: 1.75rem;
   }
   
   .stats-overview {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
   
-  .table-header,
-  .table-row {
-    grid-template-columns: 1fr;
-    gap: 8px;
+  .stat-card {
+    padding: 16px;
   }
   
+  .dashboard-widgets {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .users-grid,
   .recipes-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+/* Medium Devices (Tablets, 769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .admin-sidebar {
+    width: 240px;
+  }
+  
+  .logo-text {
+    font-size: 1.35rem;
+  }
+  
+  .admin-content {
+    padding: 24px;
+  }
+  
+  .stats-overview {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .dashboard-widgets {
     grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .users-grid,
+  .recipes-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Large Devices (Desktops, 1025px and up) */
+@media (min-width: 1025px) {
+  .admin-sidebar {
+    width: 280px;
+  }
+  
+  .stats-overview {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .dashboard-widgets {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .users-grid,
+  .recipes-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }

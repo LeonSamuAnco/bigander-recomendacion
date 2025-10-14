@@ -1,37 +1,52 @@
 .recipe-filters {
-  background: white;
+  background: #f8fafc;
   border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-  margin-bottom: 2rem;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 2px solid #e5e7eb;
+  position: sticky;
+  top: 20px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
 }
 
 .filters-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #f3f4f6;
+  flex-direction: column;
+  gap: 1rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 20px 20px 0 0;
+  border-bottom: 3px solid #e5e7eb;
+  margin-bottom: 0;
 }
 
 .filters-header h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.4rem;
+  font-weight: 800;
   color: #1f2937;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .clear-filters-btn {
-  padding: 0.75rem 1.5rem;
+  width: 100%;
+  padding: 0.875rem 1.5rem;
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
   border: none;
   border-radius: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .clear-filters-btn:hover {
@@ -39,15 +54,19 @@
   box-shadow: 0 6px 25px rgba(239, 68, 68, 0.4);
 }
 
+.filters-body {
+  padding: 1.5rem;
+}
+
 .filter-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .filter-section h4 {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #374151;
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.75rem 0;
 }
 
 /* Ingredientes chips */
@@ -90,21 +109,24 @@
 /* Grid de ingredientes */
 .ingredients-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
 }
 
 .ingredient-option {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem;
-  background: #f8fafc;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  padding: 0.6rem 0.75rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
 }
 
 .ingredient-option:hover {

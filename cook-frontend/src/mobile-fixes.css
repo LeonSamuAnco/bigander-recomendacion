@@ -1,0 +1,119 @@
+/* Mobile Fixes - Correcciones específicas para dispositivos móviles */
+
+/* Prevenir desbordamiento horizontal en toda la aplicación */
+html,
+body,
+#root {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+  position: relative;
+}
+
+/* Asegurar que todos los elementos respeten el ancho del viewport */
+* {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Prevenir zoom en inputs en iOS */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+
+/* Mejorar el rendimiento de scroll en móviles */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevenir selección de texto accidental en móviles */
+.cta-button,
+.feature-card,
+button {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* Asegurar que las imágenes no se desborden */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Correcciones específicas para móviles pequeños */
+@media (max-width: 480px) {
+  /* Reducir padding general */
+  body {
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Asegurar que los contenedores no se desborden */
+  .home-page,
+  .app,
+  .container {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+
+  /* Prevenir desbordamiento en secciones */
+  section,
+  div {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Ajustar textos largos */
+  h1, h2, h3, h4, h5, h6, p {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  /* Mejorar botones en móvil */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Prevenir zoom en landscape */
+  @media (orientation: landscape) {
+    html {
+      font-size: 14px;
+    }
+  }
+}
+
+/* Correcciones para tablets pequeñas */
+@media (min-width: 481px) and (max-width: 768px) {
+  .home-page,
+  .app,
+  .container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+/* Asegurar que los elementos flex no se desborden */
+.features-section,
+.flex,
+[class*="flex"] {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+/* Prevenir que los elementos grid se desborden */
+.grid,
+[class*="grid"] {
+  max-width: 100%;
+  overflow: hidden;
+}

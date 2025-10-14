@@ -106,6 +106,7 @@ const RecipeFilters = ({ onFilterChange, userIngredients = [] }) => {
         </button>
       </div>
 
+      <div className="filters-body">
       {/* Ingredientes de mi despensa */}
       {userIngredients.length > 0 && (
         <div className="filter-section">
@@ -369,6 +370,7 @@ const RecipeFilters = ({ onFilterChange, userIngredients = [] }) => {
           </ul>
         </div>
       )}
+      </div>
     </div>
   );
 };
