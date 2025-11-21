@@ -19,7 +19,7 @@ class AdminService {
   async testConnection() {
     try {
       const response = await fetch(`${API_URL}/admin/test`);
-      
+
       if (!response.ok) {
         throw new Error('Error al conectar con admin module');
       }
@@ -34,7 +34,7 @@ class AdminService {
   // Obtener estadísticas del sistema
   async getSystemStats() {
     try {
-      
+
       // Primero probar endpoint sin autenticación
       try {
         const testResponse = await fetch(`${API_URL}/admin/test-stats`);
@@ -46,7 +46,7 @@ class AdminService {
         }
       } catch (testError) {
       }
-      
+
       // Si el test falla, usar endpoint con autenticación
       const response = await fetch(`${API_URL}/admin/stats`, {
         headers: this.getAuthHeaders(),
@@ -110,7 +110,7 @@ class AdminService {
   // Obtener todos los usuarios (con paginación y búsqueda opcional)
   async getAllUsers(page = 1, limit = 10, search = '') {
     try {
-      
+
       // Primero probar endpoint sin autenticación
       try {
         const testResponse = await fetch(`${API_URL}/admin/test-users?page=${page}&limit=${limit}`);
@@ -148,7 +148,7 @@ class AdminService {
   // Obtener usuarios recientes
   async getRecentUsers(limit = 5) {
     try {
-      
+
       // Primero probar endpoint sin autenticación
       try {
         const testResponse = await fetch(`${API_URL}/admin/test-recent-users`);
@@ -160,7 +160,7 @@ class AdminService {
         }
       } catch (testError) {
       }
-      
+
       // Si el test falla, usar endpoint con autenticación
       const response = await fetch(`${API_URL}/admin/users/recent?limit=${limit}`, {
         headers: this.getAuthHeaders(),
@@ -234,6 +234,25 @@ class AdminService {
     }
   }
 
+  // Eliminar usuario
+  async deleteUser(userId) {
+    try {
+      const response = await fetch(`${API_URL}/admin/users/${userId}/delete`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar usuario');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error en deleteUser:', error);
+      throw error;
+    }
+  }
+
   // Obtener reportes del sistema
   async getSystemReports() {
     try {
@@ -259,7 +278,7 @@ class AdminService {
   // Obtener todas las recetas para administración
   async getAllRecipes(page = 1, limit = 10, search = '') {
     try {
-      
+
       // Primero probar endpoint sin autenticación
       try {
         const testResponse = await fetch(`${API_URL}/admin/test-recipes`);
@@ -271,7 +290,7 @@ class AdminService {
         }
       } catch (testError) {
       }
-      
+
       // Si el test falla, usar endpoint con autenticación
       const params = new URLSearchParams({ page: page.toString(), limit: limit.toString(), search });
       const response = await fetch(`${API_URL}/admin/recipes?${params}`, {
@@ -354,262 +373,262 @@ class AdminService {
 
   // Obtener estadísticas completas del dashboard
   async getCompleteDashboardStats() {
-  try {
-    const response = await fetch(`${API_URL}/admin/dashboard/complete`, {
-      headers: this.getAuthHeaders(),
-    });
+    try {
+      const response = await fetch(`${API_URL}/admin/dashboard/complete`, {
+        headers: this.getAuthHeaders(),
+      });
 
-    if (!response.ok) {
-      // Fallback con datos de ejemplo
+      if (!response.ok) {
+        // Fallback con datos de ejemplo
+        return this.getMockDashboardStats();
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting complete dashboard stats:', error);
       return this.getMockDashboardStats();
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error getting complete dashboard stats:', error);
-    return this.getMockDashboardStats();
   }
-}
 
-// Obtener actividades recientes del sistema
-async getRecentSystemActivities(limit = 20) {
-  try {
-    const response = await fetch(`${API_URL}/admin/activities/recent?limit=${limit}`, {
-      headers: this.getAuthHeaders(),
-    });
+  // Obtener actividades recientes del sistema
+  async getRecentSystemActivities(limit = 20) {
+    try {
+      const response = await fetch(`${API_URL}/admin/activities/recent?limit=${limit}`, {
+        headers: this.getAuthHeaders(),
+      });
 
-    if (!response.ok) {
+      if (!response.ok) {
+        return [];
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting recent activities:', error);
       return [];
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error getting recent activities:', error);
-    return [];
   }
-}
 
-// Obtener estadísticas de notificaciones
-async getNotificationsStats() {
-  try {
-    const response = await fetch(`${API_URL}/admin/notifications/stats`, {
-      headers: this.getAuthHeaders(),
-    });
+  // Obtener estadísticas de notificaciones
+  async getNotificationsStats() {
+    try {
+      const response = await fetch(`${API_URL}/admin/notifications/stats`, {
+        headers: this.getAuthHeaders(),
+      });
 
-    if (!response.ok) {
+      if (!response.ok) {
+        return { total: 0, unread: 0, programmed: 0, byType: [] };
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting notifications stats:', error);
       return { total: 0, unread: 0, programmed: 0, byType: [] };
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error getting notifications stats:', error);
-    return { total: 0, unread: 0, programmed: 0, byType: [] };
   }
-}
 
-// Enviar notificación global
-async sendGlobalNotification(data) {
-  try {
-    const response = await fetch(`${API_URL}/admin/notifications/global`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(data),
-    });
+  // Enviar notificación global
+  async sendGlobalNotification(data) {
+    try {
+      const response = await fetch(`${API_URL}/admin/notifications/global`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(data),
+      });
 
-    if (!response.ok) {
-      throw new Error('Error al enviar notificación global');
+      if (!response.ok) {
+        throw new Error('Error al enviar notificación global');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error sending global notification:', error);
+      throw error;
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error sending global notification:', error);
-    throw error;
   }
-}
 
-// Obtener estadísticas de reseñas
-async getReviewsStats() {
-  try {
-    const response = await fetch(`${API_URL}/admin/reviews/stats`, {
-      headers: this.getAuthHeaders(),
-    });
+  // Obtener estadísticas de reseñas
+  async getReviewsStats() {
+    try {
+      const response = await fetch(`${API_URL}/admin/reviews/stats`, {
+        headers: this.getAuthHeaders(),
+      });
 
-    if (!response.ok) {
+      if (!response.ok) {
+        return { total: 0, verified: 0, reported: 0, avgRating: 0 };
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting reviews stats:', error);
       return { total: 0, verified: 0, reported: 0, avgRating: 0 };
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error getting reviews stats:', error);
-    return { total: 0, verified: 0, reported: 0, avgRating: 0 };
   }
-}
 
-// Moderar reseña
-async moderateReview(reviewId, action) {
-  try {
-    const response = await fetch(`${API_URL}/admin/reviews/${reviewId}/moderate`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ action }),
-    });
+  // Moderar reseña
+  async moderateReview(reviewId, action) {
+    try {
+      const response = await fetch(`${API_URL}/admin/reviews/${reviewId}/moderate`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ action }),
+      });
 
-    if (!response.ok) {
-      throw new Error('Error al moderar reseña');
+      if (!response.ok) {
+        throw new Error('Error al moderar reseña');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error moderating review:', error);
+      throw error;
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error moderating review:', error);
-    throw error;
   }
-}
 
-// Obtener estadísticas de productos
-async getProductsStats() {
-  try {
-    const response = await fetch(`${API_URL}/admin/products/stats`, {
-      headers: this.getAuthHeaders(),
-    });
+  // Obtener estadísticas de productos
+  async getProductsStats() {
+    try {
+      const response = await fetch(`${API_URL}/admin/products/stats`, {
+        headers: this.getAuthHeaders(),
+      });
 
-    if (!response.ok) {
+      if (!response.ok) {
+        return { celulares: 0, tortas: 0, lugares: 0, deportes: 0, total: 0 };
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting products stats:', error);
       return { celulares: 0, tortas: 0, lugares: 0, deportes: 0, total: 0 };
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error getting products stats:', error);
-    return { celulares: 0, tortas: 0, lugares: 0, deportes: 0, total: 0 };
   }
-}
 
-// Obtener logs del sistema
-async getSystemLogs(filters = {}) {
-  try {
-    const queryParams = new URLSearchParams(filters);
-    const response = await fetch(`${API_URL}/admin/logs?${queryParams}`, {
-      headers: this.getAuthHeaders(),
-    });
+  // Obtener logs del sistema
+  async getSystemLogs(filters = {}) {
+    try {
+      const queryParams = new URLSearchParams(filters);
+      const response = await fetch(`${API_URL}/admin/logs?${queryParams}`, {
+        headers: this.getAuthHeaders(),
+      });
 
-    if (!response.ok) {
+      if (!response.ok) {
+        return [];
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting system logs:', error);
       return [];
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error getting system logs:', error);
-    return [];
   }
-}
 
-// Obtener configuración del sistema
-async getSystemConfig() {
-  try {
-    const response = await fetch(`${API_URL}/admin/config`, {
-      headers: this.getAuthHeaders(),
-    });
+  // Obtener configuración del sistema
+  async getSystemConfig() {
+    try {
+      const response = await fetch(`${API_URL}/admin/config`, {
+        headers: this.getAuthHeaders(),
+      });
 
-    if (!response.ok) {
+      if (!response.ok) {
+        return this.getDefaultConfig();
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting system config:', error);
       return this.getDefaultConfig();
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error getting system config:', error);
-    return this.getDefaultConfig();
   }
-}
 
-// Actualizar configuración del sistema
-async updateSystemConfig(config) {
-  try {
-    const response = await fetch(`${API_URL}/admin/config`, {
-      method: 'PUT',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(config),
-    });
+  // Actualizar configuración del sistema
+  async updateSystemConfig(config) {
+    try {
+      const response = await fetch(`${API_URL}/admin/config`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(config),
+      });
 
-    if (!response.ok) {
-      throw new Error('Error al actualizar configuración');
+      if (!response.ok) {
+        throw new Error('Error al actualizar configuración');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating system config:', error);
+      throw error;
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error updating system config:', error);
-    throw error;
   }
-}
 
-// Crear backup de base de datos
-async createDatabaseBackup() {
-  try {
-    const response = await fetch(`${API_URL}/admin/backup`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-    });
+  // Crear backup de base de datos
+  async createDatabaseBackup() {
+    try {
+      const response = await fetch(`${API_URL}/admin/backup`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+      });
 
-    if (!response.ok) {
-      throw new Error('Error al crear backup');
+      if (!response.ok) {
+        throw new Error('Error al crear backup');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating database backup:', error);
+      throw error;
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating database backup:', error);
-    throw error;
   }
-}
 
-// ========================================
-// MÉTODOS AUXILIARES Y DATOS DE EJEMPLO
-// ========================================
+  // ========================================
+  // MÉTODOS AUXILIARES Y DATOS DE EJEMPLO
+  // ========================================
 
-getMockDashboardStats() {
-  return {
-    users: {
-      total: 150,
-      newLastWeek: 12,
-      active: 135,
-      verified: 120,
-    },
-    recipes: {
-      total: 45,
-      newLastWeek: 3,
-      verified: 40,
-      featured: 8,
-    },
-    products: {
-      total: 165,
-      celulares: 50,
-      avgPrice: 1200,
-      minPrice: 300,
-      maxPrice: 5000,
-    },
-    engagement: {
-      totalFavorites: 520,
-      totalReviews: 230,
-      totalActivities: 3450,
-      activitiesLastWeek: 450,
-      avgRating: 4.3,
-    },
-    pantry: {
-      totalItems: 890,
-      activeUsers: 75,
-    },
-    notifications: {
-      total: 1200,
-      unread: 45,
-    },
-    system: {
-      uptime: 864000,
-      memoryUsage: {
-        rss: 125000000,
-        heapUsed: 45000000,
-        heapTotal: 80000000,
+  getMockDashboardStats() {
+    return {
+      users: {
+        total: 150,
+        newLastWeek: 12,
+        active: 135,
+        verified: 120,
       },
-      nodeVersion: 'v18.17.0',
-      platform: 'linux',
-    },
-  };
+      recipes: {
+        total: 45,
+        newLastWeek: 3,
+        verified: 40,
+        featured: 8,
+      },
+      products: {
+        total: 165,
+        celulares: 50,
+        avgPrice: 1200,
+        minPrice: 300,
+        maxPrice: 5000,
+      },
+      engagement: {
+        totalFavorites: 520,
+        totalReviews: 230,
+        totalActivities: 3450,
+        activitiesLastWeek: 450,
+        avgRating: 4.3,
+      },
+      pantry: {
+        totalItems: 890,
+        activeUsers: 75,
+      },
+      notifications: {
+        total: 1200,
+        unread: 45,
+      },
+      system: {
+        uptime: 864000,
+        memoryUsage: {
+          rss: 125000000,
+          heapUsed: 45000000,
+          heapTotal: 80000000,
+        },
+        nodeVersion: 'v18.17.0',
+        platform: 'linux',
+      },
+    };
   }
 
   getDefaultConfig() {

@@ -7,6 +7,8 @@ import {
   IsBoolean,
   IsDateString,
   IsNumber,
+  IsArray,
+  IsInt,
 } from 'class-validator';
 
 export class RegisterUserDto {
@@ -57,4 +59,49 @@ export class RegisterUserDto {
   @IsBoolean()
   @IsOptional()
   aceptaMarketing?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  categorias?: number[];
+
+  @IsOptional()
+  @IsString()
+  nombreTienda?: string;
+
+  @IsOptional()
+  @IsString()
+  horarioAtencion?: string;
+
+  @IsOptional()
+  @IsString()
+  metodosPago?: string;
+
+  @IsOptional()
+  @IsString()
+  tipoServicio?: string;
+
+  @IsOptional()
+  @IsString()
+  whatsapp?: string;
+
+  @IsOptional()
+  @IsString()
+  instagram?: string;
+
+  @IsOptional()
+  @IsString()
+  facebook?: string;
+
+  @IsOptional()
+  @IsString()
+  logoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  sitioWeb?: string;
+
+  @IsOptional()
+  @IsString()
+  direccionNegocio?: string;
 }

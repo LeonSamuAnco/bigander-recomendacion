@@ -26,6 +26,40 @@ const VendorProfile = ({ user }) => {
   const [productsPage, setProductsPage] = useState(1);
   // eslint-disable-next-line no-unused-vars
   const [ordersPage, setOrdersPage] = useState(1);
+  const [profileForm, setProfileForm] = useState({
+    nombres: user?.nombres || '',
+    apellidos: user?.apellidos || '',
+    telefono: user?.telefono || '',
+    email: user?.email || '',
+    direccion: user?.direccion || '',
+    bio: user?.bio || '',
+    nombreTienda: user?.vendedor?.nombreTienda || '',
+    sitioWeb: user?.vendedor?.sitioWeb || '',
+    direccionNegocio: user?.vendedor?.direccion || '',
+    whatsapp: user?.vendedor?.whatsapp || '',
+    instagram: user?.vendedor?.instagram || '',
+    facebook: user?.vendedor?.facebook || '',
+    tipoServicio: user?.vendedor?.tipoServicio || 'Ambos',
+  });
+
+  const [horarioDias, setHorarioDias] = useState({
+    Lun: false, Mar: false, Mie: false, Jue: false, Vie: false, Sab: false, Dom: false
+  });
+  const [horarioInicio, setHorarioInicio] = useState("09:00");
+  const [horarioFin, setHorarioFin] = useState("18:00");
+  const [metodosPagoSeleccionados, setMetodosPagoSeleccionados] = useState({
+    Yape: false, Plin: false, Efectivo: false, Tarjeta: false, Transferencia: false
+  });
+
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+
+  const handleDiaChange = (dia) => {
+    setHorarioDias(prev => ({ ...prev, [dia]: !prev[dia] }));
+  };
+
+  const handleMetodoPagoChange = (metodo) => {
+    setMetodosPagoSeleccionados(prev => ({ ...prev, [metodo]: !prev[metodo] }));
+  };
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -47,6 +81,31 @@ const VendorProfile = ({ user }) => {
     loadInitialData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]);
+
+  // Load data when section changes
+  useEffect(() => {
+    const loadSectionData = async () => {
+      switch (activeSection) {
+        case 'customers':
+          await loadCustomers();
+          break;
+        case 'inventory':
+          await loadInventory();
+          break;
+        case 'marketing':
+          await loadCampaigns();
+          break;
+        case 'settings':
+          await loadSettings();
+          break;
+        default:
+          break;
+      }
+    };
+
+    loadSectionData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection]);
 
   const loadStats = async () => {
     try {
@@ -129,8 +188,137 @@ const VendorProfile = ({ user }) => {
     try {
       const data = await vendorService.getVendorSettings(user.id);
       setSettings(data);
+      // Update profile form with user data
+      setProfileForm({
+        nombres: user?.nombres || '',
+        apellidos: user?.apellidos || '',
+        telefono: user?.telefono || '',
+        email: user?.email || '',
+        direccion: user?.direccion || '',
+        bio: user?.bio || '',
+        nombreTienda: user?.vendedor?.nombreTienda || '',
+        sitioWeb: user?.vendedor?.sitioWeb || '',
+        direccionNegocio: user?.vendedor?.direccion || '',
+        whatsapp: user?.vendedor?.whatsapp || '',
+        instagram: user?.vendedor?.instagram || '',
+        facebook: user?.vendedor?.facebook || '',
+        tipoServicio: user?.vendedor?.tipoServicio || 'Ambos',
+      });
+
+      // Parse Payment Methods
+      if (user?.vendedor?.metodosPago) {
+        const methods = user.vendedor.metodosPago.split(', ');
+        const newMethods = { ...metodosPagoSeleccionados };
+        // Reset all first
+        Object.keys(newMethods).forEach(k => newMethods[k] = false);
+        methods.forEach(m => {
+          if (newMethods.hasOwnProperty(m)) newMethods[m] = true;
+        });
+        setMetodosPagoSeleccionados(newMethods);
+      }
+
+      // Parse Horario (Simple attempt)
+      // Expected format: "Lun-Vie 09:00-18:00"
+      if (user?.vendedor?.horarioAtencion) {
+        const parts = user.vendedor.horarioAtencion.split(' ');
+        if (parts.length >= 2) {
+          const daysPart = parts[0]; // "Lun-Vie" or "Lun,Mar"
+          const timePart = parts[1]; // "09:00-18:00"
+
+          // Set times
+          const times = timePart.split('-');
+          if (times.length === 2) {
+            setHorarioInicio(times[0]);
+            setHorarioFin(times[1]);
+          }
+
+          // Set days (Simplified: if contains day name, set true)
+          const newDays = { ...horarioDias };
+          Object.keys(newDays).forEach(d => {
+            if (daysPart.includes(d)) newDays[d] = true;
+            // Handle ranges like Lun-Vie?
+            if (daysPart === 'Lun-Vie' && ['Lun', 'Mar', 'Mie', 'Jue', 'Vie'].includes(d)) newDays[d] = true;
+          });
+          setHorarioDias(newDays);
+        }
+      }
     } catch (error) {
       console.error('Error cargando configuración:', error);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      setLoading(true);
+
+      setLoading(true);
+
+      // Construct strings
+      const diasSeleccionados = Object.keys(horarioDias).filter(dia => horarioDias[dia]);
+      const horarioString = diasSeleccionados.length > 0
+        ? `${diasSeleccionados.join('-')} ${horarioInicio}-${horarioFin}`
+        : "";
+
+      const metodosPagoString = Object.keys(metodosPagoSeleccionados)
+        .filter(metodo => metodosPagoSeleccionados[metodo])
+        .join(", ");
+
+      const dataToSend = {
+        ...profileForm,
+        horarioAtencion: horarioString,
+        metodosPago: metodosPagoString
+      };
+
+      console.log('📤 Enviando datos:', dataToSend);
+
+      const response = await fetch(`http://localhost:3002/auth/update-profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+        body: JSON.stringify(dataToSend),
+      });
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+
+        console.log('✅ Usuario actualizado:', updatedUser);
+
+        // Update user in localStorage
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        showNotification('Perfil actualizado correctamente', 'success');
+
+        // Desactivar modo edición
+        setIsEditingProfile(false);
+
+        // Update profile form with new data
+        setProfileForm({
+          nombres: updatedUser.nombres || '',
+          apellidos: updatedUser.apellidos || '',
+          telefono: updatedUser.telefono || '',
+          email: updatedUser.email || '',
+          direccion: updatedUser.direccion || '',
+          bio: updatedUser.bio || '',
+          nombreTienda: updatedUser.vendedor?.nombreTienda || '',
+          sitioWeb: updatedUser.vendedor?.sitioWeb || '',
+          direccionNegocio: updatedUser.vendedor?.direccion || '',
+          whatsapp: updatedUser.vendedor?.whatsapp || '',
+          instagram: updatedUser.vendedor?.instagram || '',
+          facebook: updatedUser.vendedor?.facebook || '',
+          tipoServicio: updatedUser.vendedor?.tipoServicio || 'Ambos',
+        });
+      } else {
+        const error = await response.json();
+        console.error('❌ Error del servidor:', error);
+        showNotification(error.message || 'Error al actualizar perfil', 'error');
+      }
+    } catch (error) {
+      console.error('❌ Error guardando perfil:', error);
+      showNotification('Error al guardar cambios', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -194,7 +382,7 @@ const VendorProfile = ({ user }) => {
         <h2>📊 Dashboard de Ventas</h2>
         <p>Resumen de tu negocio en CookSync</p>
       </div>
-      
+
       <div className="stats-overview">
         <div className="stat-card">
           <div className="stat-icon">🛍️</div>
@@ -237,13 +425,13 @@ const VendorProfile = ({ user }) => {
             <div className="chart-placeholder">
               <p>Gráfico de ventas de los últimos 7 días</p>
               <div className="mock-chart">
-                <div className="chart-bar" style={{height: '60%'}}></div>
-                <div className="chart-bar" style={{height: '80%'}}></div>
-                <div className="chart-bar" style={{height: '45%'}}></div>
-                <div className="chart-bar" style={{height: '90%'}}></div>
-                <div className="chart-bar" style={{height: '70%'}}></div>
-                <div className="chart-bar" style={{height: '85%'}}></div>
-                <div className="chart-bar" style={{height: '95%'}}></div>
+                <div className="chart-bar" style={{ height: '60%' }}></div>
+                <div className="chart-bar" style={{ height: '80%' }}></div>
+                <div className="chart-bar" style={{ height: '45%' }}></div>
+                <div className="chart-bar" style={{ height: '90%' }}></div>
+                <div className="chart-bar" style={{ height: '70%' }}></div>
+                <div className="chart-bar" style={{ height: '85%' }}></div>
+                <div className="chart-bar" style={{ height: '95%' }}></div>
               </div>
             </div>
           </div>
@@ -278,7 +466,7 @@ const VendorProfile = ({ user }) => {
           + Nueva Receta
         </button>
       </div>
-      
+
       {loading ? (
         <div className="loading-container">
           <div className="spinner"></div>
@@ -308,19 +496,19 @@ const VendorProfile = ({ user }) => {
                   </div>
                 </div>
                 <div className="product-actions">
-                  <button 
+                  <button
                     className="edit-btn"
                     onClick={() => navigate(`/recipes/${product.id}/edit`)}
                   >
                     Editar
                   </button>
-                  <button 
+                  <button
                     className="view-btn"
                     onClick={() => navigate(`/recipes/${product.id}`)}
                   >
                     Ver
                   </button>
-                  <button 
+                  <button
                     className="toggle-btn"
                     onClick={() => handleToggleProduct(product.id)}
                   >
@@ -348,7 +536,7 @@ const VendorProfile = ({ user }) => {
         <h2>📦 Pedidos (Recetas Preparadas)</h2>
         <p>{orders.length} pedidos totales</p>
       </div>
-      
+
       {loading ? (
         <div className="loading-container">
           <div className="spinner"></div>
@@ -398,7 +586,7 @@ const VendorProfile = ({ user }) => {
             + Agregar Ingrediente
           </button>
         </div>
-        
+
         {/* Resumen del inventario */}
         <div className="inventory-summary">
           <div className="summary-card">
@@ -450,7 +638,7 @@ const VendorProfile = ({ user }) => {
                       {ingredient.status === 'out_of_stock' && '❌ Sin Stock'}
                     </span>
                     <span>
-                      <button 
+                      <button
                         className="edit-btn small"
                         onClick={() => showNotification('Edición en desarrollo', 'info')}
                       >
@@ -480,7 +668,7 @@ const VendorProfile = ({ user }) => {
         <h2>📈 Analytics de Ventas</h2>
         <p>Últimos 30 días</p>
       </div>
-      
+
       <div className="analytics-stats">
         <div className="stat-card">
           <h4>Ingresos Totales</h4>
@@ -525,7 +713,7 @@ const VendorProfile = ({ user }) => {
           <h2>👥 Mis Clientes</h2>
           <p>{customers.length} clientes totales</p>
         </div>
-        
+
         {loading ? (
           <div className="loading-container">
             <div className="spinner"></div>
@@ -579,7 +767,7 @@ const VendorProfile = ({ user }) => {
             + Nueva Campaña
           </button>
         </div>
-        
+
         {/* Estadísticas de marketing */}
         <div className="marketing-stats">
           <div className="stat-card">
@@ -630,13 +818,13 @@ const VendorProfile = ({ user }) => {
                     </div>
                   </div>
                   <div className="campaign-actions">
-                    <button 
+                    <button
                       className="edit-btn"
                       onClick={() => showNotification('Edición en desarrollo', 'info')}
                     >
                       Editar
                     </button>
-                    <button 
+                    <button
                       className="view-btn"
                       onClick={() => showNotification('Ver detalles en desarrollo', 'info')}
                     >
@@ -668,11 +856,38 @@ const VendorProfile = ({ user }) => {
       <div className="vendor-content-section">
         <div className="section-header">
           <h2>⚙️ Configuración de Tienda</h2>
-          <button className="primary-btn" onClick={() => showNotification('Función en desarrollo', 'info')}>
-            Guardar Cambios
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {!isEditingProfile ? (
+              <button
+                className="primary-btn"
+                onClick={() => setIsEditingProfile(true)}
+              >
+                ✏️ Editar Perfil
+              </button>
+            ) : (
+              <>
+                <button
+                  className="primary-btn"
+                  onClick={handleSaveProfile}
+                  disabled={loading}
+                >
+                  {loading ? 'Guardando...' : '💾 Guardar Cambios'}
+                </button>
+                <button
+                  className="secondary-btn"
+                  onClick={() => {
+                    setIsEditingProfile(false);
+                    loadSettings(); // Recargar datos originales
+                  }}
+                  disabled={loading}
+                >
+                  ❌ Cancelar
+                </button>
+              </>
+            )}
+          </div>
         </div>
-        
+
         {loading ? (
           <div className="loading-container">
             <div className="spinner"></div>
@@ -685,50 +900,194 @@ const VendorProfile = ({ user }) => {
               <h3>🏪 Perfil del Negocio</h3>
               <div className="settings-form">
                 <div className="form-group">
-                  <label>Nombre del Negocio</label>
-                  <input 
-                    type="text" 
-                    value={settings.profile?.businessName || ''} 
-                    placeholder="Mi Cocina Gourmet"
-                    onChange={() => showNotification('Función en desarrollo', 'info')}
+                  <label>Nombres</label>
+                  <input
+                    type="text"
+                    value={profileForm.nombres}
+                    placeholder="Tus nombres"
+                    onChange={(e) => setProfileForm({ ...profileForm, nombres: e.target.value })}
+                    disabled={!isEditingProfile}
                   />
                 </div>
                 <div className="form-group">
-                  <label>Descripción</label>
-                  <textarea 
-                    value={settings.profile?.description || ''} 
-                    placeholder="Describe tu negocio..."
-                    onChange={() => showNotification('Función en desarrollo', 'info')}
+                  <label>Apellidos</label>
+                  <input
+                    type="text"
+                    value={profileForm.apellidos}
+                    placeholder="Tus apellidos"
+                    onChange={(e) => setProfileForm({ ...profileForm, apellidos: e.target.value })}
+                    disabled={!isEditingProfile}
                   />
+                </div>
+                <div className="form-group">
+                  <label>Bio / Descripción</label>
+                  <textarea
+                    value={profileForm.bio}
+                    placeholder="Describe tu negocio..."
+                    onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
+                    disabled={!isEditingProfile}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Nombre del Negocio</label>
+                  <input
+                    type="text"
+                    value={profileForm.nombreTienda}
+                    placeholder="Nombre de tu tienda"
+                    onChange={(e) => setProfileForm({ ...profileForm, nombreTienda: e.target.value })}
+                    disabled={!isEditingProfile}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Horario de Atención</label>
+                  <div className="schedule-container" style={{ background: '#f8f9fa', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <div className="days-selector" style={{ display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
+                      {Object.keys(horarioDias).map(dia => (
+                        <label key={dia} style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={horarioDias[dia]}
+                            onChange={() => handleDiaChange(dia)}
+                            disabled={!isEditingProfile}
+                          />
+                          {dia}
+                        </label>
+                      ))}
+                    </div>
+                    <div className="time-selector" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <input
+                        type="time"
+                        value={horarioInicio}
+                        onChange={(e) => setHorarioInicio(e.target.value)}
+                        className="form-control"
+                        style={{ maxWidth: '120px' }}
+                        disabled={!isEditingProfile}
+                      />
+                      <span>a</span>
+                      <input
+                        type="time"
+                        value={horarioFin}
+                        onChange={(e) => setHorarioFin(e.target.value)}
+                        className="form-control"
+                        style={{ maxWidth: '120px' }}
+                        disabled={!isEditingProfile}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Métodos de Pago</label>
+                  <div className="payment-methods-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '10px', background: '#f8f9fa', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    {Object.keys(metodosPagoSeleccionados).map(metodo => (
+                      <label key={metodo} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={metodosPagoSeleccionados[metodo]}
+                          onChange={() => handleMetodoPagoChange(metodo)}
+                          disabled={!isEditingProfile}
+                        />
+                        {metodo}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Tipo de Servicio</label>
+                  <select
+                    value={profileForm.tipoServicio}
+                    onChange={(e) => setProfileForm({ ...profileForm, tipoServicio: e.target.value })}
+                    className="form-control"
+                    disabled={!isEditingProfile}
+                  >
+                    <option value="Ambos">Delivery y Recojo</option>
+                    <option value="Delivery">Solo Delivery</option>
+                    <option value="Recojo">Solo Recojo en Tienda</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Dirección del Negocio</label>
+                  <input
+                    type="text"
+                    value={profileForm.direccionNegocio}
+                    placeholder="Dirección física de la tienda"
+                    onChange={(e) => setProfileForm({ ...profileForm, direccionNegocio: e.target.value })}
+                    disabled={!isEditingProfile}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Sitio Web</label>
+                  <input
+                    type="url"
+                    value={profileForm.sitioWeb}
+                    placeholder="https://tutienda.com"
+                    onChange={(e) => setProfileForm({ ...profileForm, sitioWeb: e.target.value })}
+                    disabled={!isEditingProfile}
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>WhatsApp</label>
+                    <input
+                      type="text"
+                      value={profileForm.whatsapp}
+                      placeholder="999888777"
+                      onChange={(e) => setProfileForm({ ...profileForm, whatsapp: e.target.value })}
+                      disabled={!isEditingProfile}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Instagram</label>
+                    <input
+                      type="text"
+                      value={profileForm.instagram}
+                      placeholder="@usuario"
+                      onChange={(e) => setProfileForm({ ...profileForm, instagram: e.target.value })}
+                      disabled={!isEditingProfile}
+                    />
+                  </div>
                 </div>
                 <div className="form-row">
                   <div className="form-group">
                     <label>Teléfono</label>
-                    <input 
-                      type="tel" 
-                      value={settings.profile?.phone || ''} 
+                    <input
+                      type="tel"
+                      value={profileForm.telefono}
                       placeholder="+51 999 888 777"
-                      onChange={() => showNotification('Función en desarrollo', 'info')}
+                      onChange={(e) => setProfileForm({ ...profileForm, telefono: e.target.value })}
+                      disabled={!isEditingProfile}
                     />
                   </div>
                   <div className="form-group">
                     <label>Email</label>
-                    <input 
-                      type="email" 
-                      value={settings.profile?.email || ''} 
+                    <input
+                      type="email"
+                      value={profileForm.email}
                       placeholder="contacto@micocina.com"
-                      onChange={() => showNotification('Función en desarrollo', 'info')}
+                      onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                      disabled={!isEditingProfile}
                     />
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Dirección</label>
-                  <input 
-                    type="text" 
-                    value={settings.profile?.address || ''} 
-                    placeholder="Av. Principal 123, Arequipa"
-                    onChange={() => showNotification('Función en desarrollo', 'info')}
-                  />
+                  <label>Categorías de Venta</label>
+                  <div className="categories-tags">
+                    {user?.vendedor?.categorias && user.vendedor.categorias.length > 0 ? (
+                      user.vendedor.categorias.map((vendorCat) => (
+                        <span key={vendorCat.id} className="category-tag">
+                          {vendorCat.categoria.nombre}
+                        </span>
+                      ))
+                    ) : (
+                      <p className="no-categories">No hay categorías seleccionadas</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -740,8 +1099,8 @@ const VendorProfile = ({ user }) => {
                 <div className="toggle-item">
                   <span>Nuevos pedidos</span>
                   <label className="toggle">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={settings.preferences?.notifications?.newOrders || false}
                       onChange={() => showNotification('Función en desarrollo', 'info')}
                     />
@@ -751,8 +1110,8 @@ const VendorProfile = ({ user }) => {
                 <div className="toggle-item">
                   <span>Stock bajo</span>
                   <label className="toggle">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={settings.preferences?.notifications?.lowStock || false}
                       onChange={() => showNotification('Función en desarrollo', 'info')}
                     />
@@ -762,8 +1121,8 @@ const VendorProfile = ({ user }) => {
                 <div className="toggle-item">
                   <span>Nuevas reseñas</span>
                   <label className="toggle">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={settings.preferences?.notifications?.newReviews || false}
                       onChange={() => showNotification('Función en desarrollo', 'info')}
                     />
@@ -773,8 +1132,8 @@ const VendorProfile = ({ user }) => {
                 <div className="toggle-item">
                   <span>Marketing</span>
                   <label className="toggle">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={settings.preferences?.notifications?.marketing || false}
                       onChange={() => showNotification('Función en desarrollo', 'info')}
                     />
@@ -792,8 +1151,8 @@ const VendorProfile = ({ user }) => {
                   <div key={method.id} className="payment-method">
                     <span>{method.name}</span>
                     <label className="toggle">
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         checked={method.enabled}
                         onChange={() => showNotification('Función en desarrollo', 'info')}
                       />
@@ -811,8 +1170,8 @@ const VendorProfile = ({ user }) => {
                 <div className="toggle-item">
                   <span>Mostrar teléfono públicamente</span>
                   <label className="toggle">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={settings.preferences?.business?.showPhone || false}
                       onChange={() => showNotification('Función en desarrollo', 'info')}
                     />
@@ -822,8 +1181,8 @@ const VendorProfile = ({ user }) => {
                 <div className="toggle-item">
                   <span>Mostrar email públicamente</span>
                   <label className="toggle">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={settings.preferences?.business?.showEmail || false}
                       onChange={() => showNotification('Función en desarrollo', 'info')}
                     />
@@ -833,8 +1192,8 @@ const VendorProfile = ({ user }) => {
                 <div className="toggle-item">
                   <span>Permitir mensajes de clientes</span>
                   <label className="toggle">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={settings.preferences?.business?.allowMessages || false}
                       onChange={() => showNotification('Función en desarrollo', 'info')}
                     />
@@ -859,8 +1218,8 @@ const VendorProfile = ({ user }) => {
             <span className="logo-text">Mi Tienda</span>
           </div>
           <div className="vendor-info">
-            <img 
-              src={user.fotoPerfil || '/vendor-avatar.png'} 
+            <img
+              src={user.fotoPerfil || '/vendor-avatar.png'}
               alt="Vendor"
               className="vendor-avatar"
             />

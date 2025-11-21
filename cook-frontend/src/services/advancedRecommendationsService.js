@@ -9,7 +9,7 @@ class AdvancedRecommendationsService {
    * Obtener token de autenticación
    */
   getAuthHeaders() {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
@@ -22,7 +22,7 @@ class AdvancedRecommendationsService {
   async getPersonalizedRecommendations(limit = 12) {
     try {
       console.log('🎯 Obteniendo recomendaciones personalizadas...');
-      
+
       const response = await fetch(
         `${API_BASE_URL}/recommendations/personalized?limit=${limit}`,
         {
@@ -37,7 +37,7 @@ class AdvancedRecommendationsService {
 
       const data = await response.json();
       console.log('✅ Recomendaciones personalizadas obtenidas:', data);
-      
+
       return {
         success: true,
         data: data,
@@ -60,7 +60,7 @@ class AdvancedRecommendationsService {
   async getAdvancedRecommendations(limit = 12, contexto = {}) {
     try {
       console.log('🧠 Obteniendo recomendaciones avanzadas con contexto:', contexto);
-      
+
       const params = new URLSearchParams({
         limit: limit.toString(),
       });
@@ -84,7 +84,7 @@ class AdvancedRecommendationsService {
 
       const data = await response.json();
       console.log('✅ Recomendaciones avanzadas obtenidas:', data);
-      
+
       return {
         success: true,
         data: data,
@@ -108,7 +108,7 @@ class AdvancedRecommendationsService {
   async getMLRecommendations(limit = 12) {
     try {
       console.log('🤖 Obteniendo recomendaciones ML...');
-      
+
       const response = await fetch(
         `${API_BASE_URL}/recommendations/ml?limit=${limit}`,
         {
@@ -123,7 +123,7 @@ class AdvancedRecommendationsService {
 
       const data = await response.json();
       console.log('✅ Recomendaciones ML obtenidas:', data);
-      
+
       return {
         success: true,
         data: data,
@@ -146,7 +146,7 @@ class AdvancedRecommendationsService {
   async getHybridRecommendations(limit = 12) {
     try {
       console.log('🔀 Obteniendo recomendaciones híbridas...');
-      
+
       const response = await fetch(
         `${API_BASE_URL}/recommendations/hybrid?limit=${limit}`,
         {
@@ -161,7 +161,7 @@ class AdvancedRecommendationsService {
 
       const data = await response.json();
       console.log('✅ Recomendaciones híbridas obtenidas:', data);
-      
+
       return {
         success: true,
         data: data.recomendaciones,
@@ -185,19 +185,19 @@ class AdvancedRecommendationsService {
   async getSmartRecommendations(limit = 12) {
     try {
       console.log('🎯 Obteniendo recomendaciones inteligentes...');
-      
+
       // Detectar contexto automáticamente
       const contexto = this.detectarContexto();
-      
+
       // Usar algoritmo híbrido con contexto
       const result = await this.getHybridRecommendations(limit);
-      
+
       if (result.success) {
         // Aplicar boost contextual en el frontend
         result.data = this.aplicarBoostContextual(result.data, contexto);
         result.contexto = contexto;
       }
-      
+
       return result;
     } catch (error) {
       console.error('❌ Error obteniendo recomendaciones inteligentes:', error);
@@ -215,7 +215,7 @@ class AdvancedRecommendationsService {
   async getRecommendationStats() {
     try {
       console.log('📊 Obteniendo estadísticas de recomendaciones...');
-      
+
       const response = await fetch(
         `${API_BASE_URL}/recommendations/stats`,
         {
@@ -230,7 +230,7 @@ class AdvancedRecommendationsService {
 
       const data = await response.json();
       console.log('✅ Estadísticas obtenidas:', data);
-      
+
       return {
         success: true,
         data: data,
@@ -251,7 +251,7 @@ class AdvancedRecommendationsService {
   async getAccuracyAnalysis() {
     try {
       console.log('🎯 Obteniendo análisis de precisión...');
-      
+
       const response = await fetch(
         `${API_BASE_URL}/recommendations/accuracy`,
         {
@@ -266,7 +266,7 @@ class AdvancedRecommendationsService {
 
       const data = await response.json();
       console.log('✅ Análisis de precisión obtenido:', data);
-      
+
       return {
         success: true,
         data: data,
@@ -286,7 +286,7 @@ class AdvancedRecommendationsService {
    */
   detectarContexto() {
     const ahora = new Date();
-    
+
     return {
       hora: ahora.getHours(),
       dia: ahora.getDay(),
@@ -306,7 +306,7 @@ class AdvancedRecommendationsService {
   aplicarBoostContextual(recomendaciones, contexto) {
     return recomendaciones.map(rec => {
       let boost = 1.0;
-      
+
       // Boost por hora del día
       if (contexto.hora >= 12 && contexto.hora <= 14 && rec.tipo === 'receta') {
         boost += 0.2; // Boost para recetas en hora de almuerzo
@@ -315,19 +315,19 @@ class AdvancedRecommendationsService {
       } else if (contexto.hora >= 10 && contexto.hora <= 18 && rec.tipo === 'celular') {
         boost += 0.1; // Boost para celulares en horario laboral
       }
-      
+
       // Boost por día de la semana
       if (contexto.dia === 0 || contexto.dia === 6) { // Fin de semana
         if (rec.tipo === 'lugar' || rec.tipo === 'torta') {
           boost += 0.15; // Boost para lugares y tortas en fin de semana
         }
       }
-      
+
       // Boost por dispositivo
       if (contexto.dispositivo === 'mobile' && rec.tipo === 'lugar') {
         boost += 0.1; // Boost para lugares en móvil
       }
-      
+
       return {
         ...rec,
         score: Math.round(rec.score * boost),
@@ -342,7 +342,7 @@ class AdvancedRecommendationsService {
    */
   detectarDispositivo() {
     const userAgent = navigator.userAgent.toLowerCase();
-    
+
     if (/mobile|android|iphone|ipad|tablet/.test(userAgent)) {
       return 'mobile';
     } else if (/tablet|ipad/.test(userAgent)) {
@@ -431,7 +431,7 @@ class AdvancedRecommendationsService {
         },
       },
     ];
-    
+
     return fallbackItems.slice(0, limit);
   }
 
@@ -490,7 +490,7 @@ class AdvancedRecommendationsService {
   async compareAlgorithms(limit = 6) {
     try {
       console.log('🔬 Comparando algoritmos de recomendación...');
-      
+
       const [personalized, advanced, ml] = await Promise.all([
         this.getPersonalizedRecommendations(limit),
         this.getAdvancedRecommendations(limit),

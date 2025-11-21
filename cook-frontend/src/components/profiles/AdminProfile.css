@@ -704,6 +704,23 @@
   border-color: #ef4444;
 }
 
+.action-btn.delete {
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.2);
+  background: white;
+}
+
+.action-btn.delete:hover {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: #dc2626;
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
 /* Recipes Grid */
 .recipes-grid {
   display: grid;
@@ -764,7 +781,9 @@
   gap: 8px;
 }
 
-.approve-btn, .edit-btn, .view-btn {
+.approve-btn,
+.edit-btn,
+.view-btn {
   padding: 8px 16px;
   border: none;
   border-radius: 8px;
@@ -810,7 +829,7 @@
     height: auto;
     min-height: 100vh;
   }
-  
+
   .admin-sidebar {
     width: 100%;
     height: auto;
@@ -818,44 +837,44 @@
     top: 0;
     z-index: 1000;
   }
-  
+
   .sidebar-header {
     padding: 12px 15px;
   }
-  
+
   .logo {
     gap: 8px;
     margin-bottom: 12px;
   }
-  
+
   .logo-icon {
     font-size: 1.5rem;
     padding: 6px;
     border-radius: 8px;
   }
-  
+
   .logo-text {
     font-size: 1.2rem;
   }
-  
+
   .admin-info {
     gap: 8px;
   }
-  
+
   .admin-avatar {
     width: 36px;
     height: 36px;
     border-radius: 8px;
   }
-  
+
   .admin-name {
     font-size: 0.9rem;
   }
-  
+
   .admin-role {
     font-size: 0.75rem;
   }
-  
+
   .sidebar-nav {
     display: flex;
     flex-direction: row;
@@ -864,7 +883,7 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-  
+
   .nav-item {
     flex-shrink: 0;
     padding: 8px 12px;
@@ -874,82 +893,82 @@
     border-radius: 8px 8px 0 0;
     white-space: nowrap;
   }
-  
+
   .nav-item.active {
     border-left: none;
     border-bottom-color: #10b981;
     background: rgba(16, 185, 129, 0.1);
   }
-  
+
   .nav-item svg {
     font-size: 1rem;
   }
-  
+
   .admin-content {
     padding: 12px;
     width: 100%;
   }
-  
+
   .content-header h1 {
     font-size: 1.5rem;
   }
-  
+
   .stats-overview {
     grid-template-columns: 1fr;
     gap: 10px;
   }
-  
+
   .stat-card {
     padding: 14px;
   }
-  
+
   .stat-icon {
     width: 40px;
     height: 40px;
     font-size: 1.2rem;
   }
-  
+
   .stat-value {
     font-size: 1.6rem;
   }
-  
+
   .stat-label {
     font-size: 0.8rem;
   }
-  
+
   .stat-change {
     font-size: 0.75rem;
   }
-  
+
   .dashboard-widgets {
     grid-template-columns: 1fr;
     gap: 12px;
   }
-  
+
   .widget-card {
     padding: 14px;
   }
-  
+
   .widget-header h3 {
     font-size: 1rem;
   }
-  
+
   .users-grid,
   .recipes-grid {
     grid-template-columns: 1fr;
     gap: 10px;
   }
-  
+
   .user-card,
   .recipe-card {
     padding: 12px;
   }
-  
+
   .action-button {
     padding: 6px 12px;
     font-size: 0.8rem;
   }
-  
+
   .logout-button {
     padding: 8px 12px;
     font-size: 0.85rem;
@@ -961,7 +980,7 @@
   .admin-panel {
     flex-direction: column;
   }
-  
+
   .admin-sidebar {
     width: 100%;
     height: auto;
@@ -969,24 +988,24 @@
     top: 0;
     z-index: 1000;
   }
-  
+
   .sidebar-header {
     padding: 16px;
   }
-  
+
   .logo-icon {
     font-size: 1.75rem;
   }
-  
+
   .logo-text {
     font-size: 1.35rem;
   }
-  
+
   .admin-avatar {
     width: 42px;
     height: 42px;
   }
-  
+
   .sidebar-nav {
     display: flex;
     flex-direction: row;
@@ -994,7 +1013,7 @@
     padding: 10px 16px;
     overflow-x: auto;
   }
-  
+
   .nav-item {
     flex-shrink: 0;
     padding: 10px 16px;
@@ -1002,34 +1021,34 @@
     border-left: none;
     border-bottom: 3px solid transparent;
   }
-  
+
   .nav-item.active {
     border-left: none;
     border-bottom-color: #10b981;
   }
-  
+
   .admin-content {
     padding: 16px;
   }
-  
+
   .content-header h1 {
     font-size: 1.75rem;
   }
-  
+
   .stats-overview {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
-  
+
   .stat-card {
     padding: 16px;
   }
-  
+
   .dashboard-widgets {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .users-grid,
   .recipes-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1042,25 +1061,25 @@
   .admin-sidebar {
     width: 240px;
   }
-  
+
   .logo-text {
     font-size: 1.35rem;
   }
-  
+
   .admin-content {
     padding: 24px;
   }
-  
+
   .stats-overview {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
   }
-  
+
   .dashboard-widgets {
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
+
   .users-grid,
   .recipes-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1072,15 +1091,15 @@
   .admin-sidebar {
     width: 280px;
   }
-  
+
   .stats-overview {
     grid-template-columns: repeat(4, 1fr);
   }
-  
+
   .dashboard-widgets {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .users-grid,
   .recipes-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -1198,7 +1217,8 @@
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.search-btn, .clear-btn {
+.search-btn,
+.clear-btn {
   padding: 12px 20px;
   border: none;
   border-radius: 12px;
@@ -1243,8 +1263,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-container p {
@@ -1627,11 +1652,11 @@
   border-radius: 50%;
 }
 
-input:checked + .slider {
+input:checked+.slider {
   background-color: #10b981;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
   transform: translateX(24px);
 }
 
@@ -1741,8 +1766,13 @@ input:checked + .slider:before {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
@@ -1750,6 +1780,7 @@ input:checked + .slider:before {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1971,12 +2002,12 @@ input:checked + .slider:before {
   .products-table {
     font-size: 0.8rem;
   }
-  
+
   .products-table th,
   .products-table td {
     padding: 0.75rem 0.5rem;
   }
-  
+
   .product-image,
   .product-placeholder {
     width: 40px;
@@ -1988,7 +2019,7 @@ input:checked + .slider:before {
   .table-container {
     overflow-x: auto;
   }
-  
+
   .products-table {
     min-width: 800px;
   }

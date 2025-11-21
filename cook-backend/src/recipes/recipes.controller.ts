@@ -19,7 +19,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('recipes')
 export class RecipesController {
-  constructor(private readonly recipesService: RecipesPrismaService) {}
+  constructor(private readonly recipesService: RecipesPrismaService) { }
 
   // Endpoint de prueba para crear recetas sin guards (temporal)
   @Post('test-create')
@@ -57,12 +57,12 @@ export class RecipesController {
     @Query('ingredients') ingredients: string,
     @Query() allFilters: any, // Usar any para evitar validación estricta
   ) {
-    
+
     if (!ingredients) {
       console.log('❌ No se proporcionaron ingredientes');
       return [];
     }
-    
+
     const ingredientIds = ingredients
       .split(',')
       .map((id) => parseInt(id.trim()))

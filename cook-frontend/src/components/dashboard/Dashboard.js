@@ -17,7 +17,7 @@ const Dashboard = () => {
   };
 
   const renderProfileByRole = () => {
-    
+
     if (!user) {
       return (
         <div className="error-message">
@@ -31,7 +31,7 @@ const Dashboard = () => {
     // Verificar si el rol viene como 'rol' o 'role'
     // IMPORTANTE: Verificar también si el user es un objeto con propiedad 'user' anidada
     let userRole = user.rol || user.role;
-    
+
     // Si no encontramos el rol directamente, buscar en user.user (por si viene anidado del backend)
     if (!userRole && user.user) {
       console.log('⚠️ Usuario anidado detectado, extrayendo...');
@@ -46,7 +46,7 @@ const Dashboard = () => {
         userRole = { codigo: 'CLIENTE', nombre: 'Cliente' };
       }
     }
-    
+
     if (!userRole || !userRole.codigo) {
       console.error('❌ No se pudo determinar el rol del usuario');
       console.error('❌ user:', user);
@@ -54,7 +54,7 @@ const Dashboard = () => {
       console.error('❌ user.role:', user.role);
       console.error('❌ user.user:', user.user);
       console.error('❌ user.rolId:', user.rolId);
-      
+
       return (
         <div className="error-message">
           <h2>Error de Configuración</h2>
@@ -63,9 +63,9 @@ const Dashboard = () => {
             <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
               Ver datos del usuario (click para expandir)
             </summary>
-            <pre style={{ 
-              background: '#f5f5f5', 
-              padding: '15px', 
+            <pre style={{
+              background: '#f5f5f5',
+              padding: '15px',
               borderRadius: '5px',
               overflow: 'auto',
               maxHeight: '400px',

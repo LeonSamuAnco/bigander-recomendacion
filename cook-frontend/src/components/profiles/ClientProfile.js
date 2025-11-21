@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  FaHome, FaSearch, FaPlusCircle, FaUser, FaCog, 
+import {
+  FaHome, FaSearch, FaPlusCircle, FaUser, FaCog,
   FaHeart, FaHistory, FaShoppingCart, FaSignOutAlt,
   FaCamera, FaSave, FaTimes, FaBook, FaEdit, FaTrash
 } from 'react-icons/fa';
@@ -11,7 +11,7 @@ import './ClientProfileModern.css';
 
 const ClientProfile = ({ user }) => {
   const navigate = useNavigate();
-  
+
   // Estados existentes
   const [clientData, setClientData] = useState(null);
   const [favoriteRecipes, setFavoriteRecipes] = useState([]);
@@ -20,7 +20,7 @@ const ClientProfile = ({ user }) => {
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showPantryManager, setShowPantryManager] = useState(false);
   const [currentUser, setCurrentUser] = useState(user);
-  
+
   // Estados para el nuevo diseño
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -73,7 +73,7 @@ const ClientProfile = ({ user }) => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setClientData(data.user || data.client);
@@ -102,7 +102,7 @@ const ClientProfile = ({ user }) => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       // Si falla, intentar endpoint de favoritos
       if (!response.ok && response.status === 404) {
         console.warn('⚠️ Usando endpoint alternativo /favorites/my-favorites');
@@ -113,7 +113,7 @@ const ClientProfile = ({ user }) => {
           }
         });
       }
-      
+
       if (response.ok) {
         const data = await response.json();
         setFavoriteRecipes(data.recipes || data.favorites || []);
@@ -136,7 +136,7 @@ const ClientProfile = ({ user }) => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setPantryItems(data.items || data.pantry || []);
@@ -163,7 +163,7 @@ const ClientProfile = ({ user }) => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       // Si falla, intentar endpoint de actividad
       if (!response.ok && response.status === 404) {
         console.warn('⚠️ Usando endpoint alternativo /activity/my-activities');
@@ -174,7 +174,7 @@ const ClientProfile = ({ user }) => {
           }
         });
       }
-      
+
       if (response.ok) {
         const data = await response.json();
         setRecentActivity(data.activities || []);
@@ -292,7 +292,7 @@ const ClientProfile = ({ user }) => {
                 ) : (
                   <FaUser />
                 )}
-                <button 
+                <button
                   className="avatar-change-btn"
                   onClick={() => setShowImageUpload(!showImageUpload)}
                 >
@@ -308,8 +308,8 @@ const ClientProfile = ({ user }) => {
                     id="profile-image-input"
                     style={{ display: 'none' }}
                   />
-                  <label 
-                    htmlFor="profile-image-input" 
+                  <label
+                    htmlFor="profile-image-input"
                     style={{
                       display: 'inline-block',
                       padding: '0.5rem 1rem',
@@ -451,21 +451,21 @@ const ClientProfile = ({ user }) => {
               <h3 className="quick-access-title">Acciones Rápidas</h3>
             </div>
             <div className="quick-access-content">
-              <button 
-                className="quick-access-action" 
+              <button
+                className="quick-access-action"
                 onClick={() => navigate('/recipes')}
                 style={{ marginBottom: '0.5rem' }}
               >
                 🔍 Buscar Recetas
               </button>
-              <button 
+              <button
                 className="quick-access-action"
                 onClick={() => navigate('/shopping-lists')}
                 style={{ marginBottom: '0.5rem' }}
               >
                 🛒 Mis Despensas
               </button>
-              <button 
+              <button
                 className="quick-access-action"
                 onClick={() => setIsEditing(true)}
               >
@@ -612,7 +612,7 @@ const ClientProfile = ({ user }) => {
 
       {/* Modales existentes */}
       {showEditProfile && (
-        <ProfileEdit 
+        <ProfileEdit
           user={currentUser}
           onClose={() => setShowEditProfile(false)}
           onSave={(updatedUser) => {
@@ -623,7 +623,7 @@ const ClientProfile = ({ user }) => {
       )}
 
       {showPantryManager && (
-        <PantryManager 
+        <PantryManager
           user={currentUser}
           onClose={() => setShowPantryManager(false)}
         />

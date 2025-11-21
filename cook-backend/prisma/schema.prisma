@@ -67,6 +67,10 @@ model User {
   fechaNacimiento    DateTime?            @map("fecha_nacimiento") @db.Date
   genero             Gender?              @default(O)
   fotoPerfil         String?              @map("foto_perfil") @db.VarChar(500)
+  direccion          String?              @db.VarChar(500)
+  bio                String?              @db.Text
+  ciudad             String?              @db.VarChar(100)
+  pais               String?              @db.VarChar(100)
   emailVerificado    Boolean?             @default(false) @map("email_verificado")
   telefonoVerificado Boolean?             @default(false) @map("telefono_verificado")
   tokenVerificacion  String?              @map("token_verificacion") @db.VarChar(100)
@@ -83,6 +87,7 @@ model User {
   updatedAt          DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
   actividades        UserActivity[]
   cliente            Client?
+  vendedor           Vendor?
   favoritos          Favorite[]
   listaCompras       ShoppingList[]
   notificaciones     Notification[]
@@ -105,6 +110,7 @@ model ProductCategory {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
   products    Product[]
+  vendedores  VendorCategory[]
 
   @@map("productos_categorias")
 }
@@ -150,6 +156,47 @@ model Client {
 
   @@index([planClienteId], map: "clientes_plan_cliente_id_fkey")
   @@map("clientes")
+}
+
+model Vendor {
+  id            Int      @id @default(autoincrement())
+  usuarioId     Int      @unique @map("usuario_id")
+  nombreTienda  String?  @map("nombre_tienda") @db.VarChar(100)
+  descripcion   String?  @db.Text
+  ruc           String?  @db.VarChar(20)
+  direccion     String?  @db.VarChar(255)
+  sitioWeb      String?  @map("sitio_web") @db.VarChar(255)
+  esVerificado    Boolean? @default(false) @map("es_verificado")
+  calificacion    Decimal? @default(0.00) @db.Decimal(3, 2)
+  
+  // Nuevos campos para "Dónde Comprar"
+  horarioAtencion String?  @map("horario_atencion") @db.VarChar(255)
+  metodosPago     String?  @map("metodos_pago") @db.VarChar(255)
+  tipoServicio    String?  @map("tipo_servicio") @db.VarChar(255)
+  whatsapp        String?  @db.VarChar(20)
+  instagram       String?  @db.VarChar(255)
+  facebook        String?  @db.VarChar(255)
+  logoUrl         String?  @map("logo_url") @db.VarChar(500)
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  usuario         User     @relation(fields: [usuarioId], references: [id])
+  categorias      VendorCategory[]
+
+  @@map("vendedores")
+}
+
+model VendorCategory {
+  id          Int      @id @default(autoincrement())
+  vendedorId  Int      @map("vendedor_id")
+  categoriaId Int      @map("categoria_id")
+  
+  vendedor    Vendor          @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  categoria   ProductCategory @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+
+  @@unique([vendedorId, categoriaId])
+  @@map("vendedores_categorias")
 }
 
 model RecipeCategory {

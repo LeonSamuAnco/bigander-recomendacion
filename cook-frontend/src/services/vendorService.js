@@ -1,7 +1,7 @@
 const API_BASE_URL = 'http://localhost:3002';
 
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('authToken');
   return {
     'Content-Type': 'application/json',
     'Authorization': token ? `Bearer ${token}` : '',
@@ -15,11 +15,11 @@ const vendorService = {
       const response = await fetch(`${API_BASE_URL}/vendors/${vendorId}/stats`, {
         headers: getAuthHeaders(),
       });
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       // Fallback con datos de ejemplo
       return {
         totalRecipes: 0,
@@ -53,11 +53,11 @@ const vendorService = {
         `${API_BASE_URL}/vendors/${vendorId}/products?page=${page}&limit=${limit}`,
         { headers: getAuthHeaders() }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       return {
         products: [],
         total: 0,
@@ -84,11 +84,11 @@ const vendorService = {
         `${API_BASE_URL}/vendors/${vendorId}/orders?page=${page}&limit=${limit}`,
         { headers: getAuthHeaders() }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       return {
         orders: [],
         total: 0,
@@ -115,11 +115,11 @@ const vendorService = {
         `${API_BASE_URL}/vendors/${vendorId}/analytics?days=${days}`,
         { headers: getAuthHeaders() }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       return {
         salesByDay: [],
         topRecipes: [],
@@ -148,11 +148,11 @@ const vendorService = {
         `${API_BASE_URL}/vendors/${vendorId}/reviews?page=${page}&limit=${limit}`,
         { headers: getAuthHeaders() }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       return {
         reviews: [],
         total: 0,
@@ -179,11 +179,11 @@ const vendorService = {
         `${API_BASE_URL}/vendors/${vendorId}/customers`,
         { headers: getAuthHeaders() }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       return {
         customers: [],
         total: 0,
@@ -208,11 +208,11 @@ const vendorService = {
           body: JSON.stringify(data),
         }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       throw new Error('Failed to update product');
     } catch (error) {
       console.error('Error updating product:', error);
@@ -230,11 +230,11 @@ const vendorService = {
           headers: getAuthHeaders(),
         }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       throw new Error('Failed to toggle product');
     } catch (error) {
       console.error('Error toggling product:', error);
@@ -249,11 +249,11 @@ const vendorService = {
         `${API_BASE_URL}/vendors/${vendorId}/inventory`,
         { headers: getAuthHeaders() }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       // Fallback con datos de ejemplo para inventario
       return {
         ingredients: [
@@ -326,11 +326,11 @@ const vendorService = {
           body: JSON.stringify({ stock: newStock }),
         }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       // Simulación exitosa
       return {
         success: true,
@@ -349,11 +349,11 @@ const vendorService = {
         `${API_BASE_URL}/vendors/${vendorId}/campaigns`,
         { headers: getAuthHeaders() }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       // Fallback con campañas de ejemplo
       return {
         campaigns: [
@@ -415,11 +415,11 @@ const vendorService = {
           body: JSON.stringify(campaignData),
         }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       // Simulación exitosa
       return {
         success: true,
@@ -445,11 +445,11 @@ const vendorService = {
         `${API_BASE_URL}/vendors/${vendorId}/settings`,
         { headers: getAuthHeaders() }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       // Configuración por defecto
       return {
         profile: {
@@ -502,11 +502,11 @@ const vendorService = {
           body: JSON.stringify(settings),
         }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       return {
         success: true,
         message: 'Configuración actualizada exitosamente'
@@ -524,11 +524,11 @@ const vendorService = {
         `${API_BASE_URL}/vendors/${vendorId}/notifications`,
         { headers: getAuthHeaders() }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       // Notificaciones de ejemplo
       return {
         notifications: [
@@ -581,11 +581,11 @@ const vendorService = {
           headers: getAuthHeaders(),
         }
       );
-      
+
       if (response.ok) {
         return await response.json();
       }
-      
+
       return { success: true };
     } catch (error) {
       console.error('Error marking notification as read:', error);

@@ -25,7 +25,7 @@ class NotificationsService {
   async getMyNotifications(filters = {}) {
     try {
       const params = new URLSearchParams();
-      
+
       if (filters.tipo) params.append('tipo', filters.tipo);
       if (filters.leido !== undefined) params.append('leido', filters.leido);
       if (filters.page) params.append('page', filters.page);
@@ -40,14 +40,21 @@ class NotificationsService {
       );
 
       if (!response.ok) {
+        // Si es 401, retornar array vacío sin error
+        if (response.status === 401) {
+          return { notifications: [], total: 0 };
+        }
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('❌ Error obteniendo notificaciones:', error);
-      throw error;
+      // No mostrar error en consola para 401
+      if (!error.message.includes('401')) {
+        console.error('❌ Error obteniendo notificaciones:', error);
+      }
+      return { notifications: [], total: 0 };
     }
   }
 
@@ -63,13 +70,20 @@ class NotificationsService {
       });
 
       if (!response.ok) {
+        // Si es 401, simplemente retornar 0 sin error
+        if (response.status === 401) {
+          return 0;
+        }
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
       return data.count;
     } catch (error) {
-      console.error('❌ Error obteniendo contador:', error);
+      // No mostrar error en consola para 401
+      if (!error.message.includes('401')) {
+        console.error('❌ Error obteniendo contador:', error);
+      }
       return 0;
     }
   }

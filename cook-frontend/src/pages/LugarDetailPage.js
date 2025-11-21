@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaPhone, FaGlobe, FaMapMarkerAlt, FaClock, FaStar } from 'react-icons/fa';
+import { FaArrowLeft, FaPhone, FaGlobe, FaMapMarkerAlt, FaClock, FaStar, FaUserTie } from 'react-icons/fa';
 import lugarService from '../services/lugarService';
 import activityService from '../services/activityService';
+import LugarPurchaseOptions from '../components/lugares/LugarPurchaseOptions';
 import './LugarDetailPage.css';
 
 const LugarDetailPage = () => {
@@ -10,6 +11,7 @@ const LugarDetailPage = () => {
   const navigate = useNavigate();
   const [lugar, setLugar] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showPurchaseOptions, setShowPurchaseOptions] = useState(false);
 
   useEffect(() => {
     loadLugar();
@@ -178,7 +180,7 @@ const LugarDetailPage = () => {
         <aside className="lugar-detail-sidebar">
           <div className="sidebar-card">
             <h3>Contacto</h3>
-            
+
             {lugar.telefono && (
               <a href={`tel:${lugar.telefono}`} className="contact-btn phone-btn">
                 <FaPhone />
@@ -211,6 +213,18 @@ const LugarDetailPage = () => {
                 <span className="contact-value">Abrir en Maps</span>
               </div>
             </button>
+
+            <button
+              onClick={() => setShowPurchaseOptions(true)}
+              className="contact-btn vendor-btn"
+              style={{ marginTop: '1rem', background: '#f0fff4', border: '2px solid #48bb78', color: '#2f855a' }}
+            >
+              <FaUserTie style={{ color: '#48bb78' }} />
+              <div>
+                <span className="contact-label">Servicios</span>
+                <span className="contact-value">Ver Guías y Agencias</span>
+              </div>
+            </button>
           </div>
 
           {rangoPrecio && (
@@ -224,6 +238,14 @@ const LugarDetailPage = () => {
           )}
         </aside>
       </div>
+
+      {/* Modal de Servicios/Vendedores */}
+      {showPurchaseOptions && (
+        <LugarPurchaseOptions
+          lugar={lugar}
+          onClose={() => setShowPurchaseOptions(false)}
+        />
+      )}
     </div>
   );
 };

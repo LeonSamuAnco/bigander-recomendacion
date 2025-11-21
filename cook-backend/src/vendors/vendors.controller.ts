@@ -13,9 +13,21 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { VendorsService } from './vendors.service';
 
 @Controller('vendors')
-@UseGuards(JwtAuthGuard)
 export class VendorsController {
-  constructor(private readonly vendorsService: VendorsService) {}
+  constructor(private readonly vendorsService: VendorsService) { }
+
+  // Endpoint público para obtener vendedores por categoría
+  @Get('by-category/:categoryId')
+  async getVendorsByCategory(
+    @Param('categoryId', ParseIntPipe) categoryId: number,
+    @Query('limit') limit?: string,
+  ) {
+    const limitNum = limit ? parseInt(limit) : 10;
+    return this.vendorsService.getVendorsByCategory(categoryId, limitNum);
+  }
+
+  // Rutas protegidas
+  @UseGuards(JwtAuthGuard)
 
   // Obtener estadísticas del vendedor
   @Get(':id/stats')
@@ -92,5 +104,11 @@ export class VendorsController {
     @Param('productId', ParseIntPipe) productId: number,
   ) {
     return this.vendorsService.toggleVendorRecipe(vendorId, productId);
+  }
+
+  // Obtener configuración del vendedor
+  @Get(':id/settings')
+  async getVendorSettings(@Param('id', ParseIntPipe) vendorId: number) {
+    return this.vendorsService.getVendorSettings(vendorId);
   }
 }

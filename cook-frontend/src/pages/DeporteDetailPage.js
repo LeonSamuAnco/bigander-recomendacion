@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaShoppingCart } from 'react-icons/fa';
 import deporteService from '../services/deporteService';
 import activityService from '../services/activityService';
+import DeportePurchaseOptions from '../components/deportes/DeportePurchaseOptions';
 import './DeporteDetailPage.css';
 
 const DeporteDetailPage = () => {
@@ -13,6 +14,7 @@ const DeporteDetailPage = () => {
   const [selectedTalla, setSelectedTalla] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedVariacion, setSelectedVariacion] = useState(null);
+  const [showPurchaseOptions, setShowPurchaseOptions] = useState(false);
 
   useEffect(() => {
     const loadDeporte = async () => {
@@ -61,10 +63,10 @@ const DeporteDetailPage = () => {
   }, [id]);
 
   const variaciones = React.useMemo(() => deporte?.items?.deporte_variaciones || [], [deporte]);
-  
+
   // Obtener tallas únicas
   const tallasUnicas = [...new Set(variaciones.map((v) => v.talla))];
-  
+
   // Obtener colores disponibles para la talla seleccionada
   const coloresDisponibles = selectedTalla
     ? [...new Set(variaciones.filter((v) => v.talla === selectedTalla).map((v) => v.color))]
@@ -82,12 +84,12 @@ const DeporteDetailPage = () => {
 
   const handleTallaChange = (talla) => {
     setSelectedTalla(talla);
-    
+
     // Actualizar color si no está disponible en esta talla
     const coloresParaTalla = variaciones
       .filter((v) => v.talla === talla)
       .map((v) => v.color);
-    
+
     if (!coloresParaTalla.includes(selectedColor)) {
       setSelectedColor(coloresParaTalla[0] || null);
     }
@@ -236,13 +238,22 @@ const DeporteDetailPage = () => {
               )}
 
               {/* Botón de Compra */}
-              <button
-                className="btn-add-cart"
-                disabled={!selectedVariacion || selectedVariacion.stock === 0}
-              >
-                <FaShoppingCart />
-                {selectedVariacion?.stock > 0 ? 'Agregar al Carrito' : 'Agotado'}
-              </button>
+              <div className="purchase-actions">
+                <button
+                  className="btn-add-cart"
+                  disabled={!selectedVariacion || selectedVariacion.stock === 0}
+                >
+                  <FaShoppingCart />
+                  {selectedVariacion?.stock > 0 ? 'Agregar al Carrito' : 'Agotado'}
+                </button>
+
+                <button
+                  className="btn-where-to-buy"
+                  onClick={() => setShowPurchaseOptions(true)}
+                >
+                  <FaShoppingCart /> Dónde Comprar
+                </button>
+              </div>
             </div>
           )}
 
@@ -283,6 +294,14 @@ const DeporteDetailPage = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de Dónde Comprar */}
+      {showPurchaseOptions && (
+        <DeportePurchaseOptions
+          deporte={deporte}
+          onClose={() => setShowPurchaseOptions(false)}
+        />
+      )}
     </div>
   );
 };

@@ -56,7 +56,7 @@
     justify-content: space-between;
     padding: 1.5rem;
     border-bottom: 2px solid #E9ECEF;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
     color: white;
 }
 
@@ -77,9 +77,18 @@
 }
 
 .purchase-modal-title p {
-    margin: 0.3rem 0 0 0;
+    margin: 0.3rem 0 0.2rem 0;
     font-size: 0.95rem;
     opacity: 0.9;
+}
+
+.modal-tipo {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
 }
 
 .purchase-modal-close {
@@ -135,7 +144,7 @@
 }
 
 .purchase-tab.active {
-    color: #667eea;
+    color: #38a169;
     background-color: #FFFFFF;
 }
 
@@ -146,7 +155,7 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
 }
 
 .purchase-tab svg {
@@ -176,134 +185,6 @@
     font-size: 0.95rem;
 }
 
-/* Online Stores Grid */
-.online-stores-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem;
-}
-
-.online-store-card {
-    background-color: #F8F9FA;
-    border: 2px solid #E9ECEF;
-    border-radius: 12px;
-    padding: 1.2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    transition: all 0.3s ease;
-}
-
-.online-store-card:hover {
-    border-color: #667eea;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-    transform: translateY(-3px);
-}
-
-.store-info h4 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.1rem;
-    color: #000000;
-}
-
-.store-info p {
-    margin: 0;
-    font-size: 0.85rem;
-    color: #6C757D;
-}
-
-.store-visit-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 0.8rem 1rem;
-    border-radius: 8px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.3s ease;
-}
-
-.store-visit-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-/* Physical Stores List */
-.physical-stores-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.physical-store-card {
-    background-color: #F8F9FA;
-    border: 2px solid #E9ECEF;
-    border-radius: 12px;
-    padding: 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1.5rem;
-    transition: all 0.3s ease;
-}
-
-.physical-store-card:hover {
-    border-color: #667eea;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-}
-
-.store-details {
-    flex: 1;
-}
-
-.store-details h4 {
-    margin: 0 0 0.8rem 0;
-    font-size: 1.2rem;
-    color: #000000;
-}
-
-.store-address,
-.store-phone,
-.store-description {
-    margin: 0.4rem 0;
-    font-size: 0.9rem;
-    color: #6C757D;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.store-address svg,
-.store-phone svg {
-    color: #667eea;
-}
-
-.store-maps-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    text-decoration: none;
-    white-space: nowrap;
-    transition: all 0.3s ease;
-}
-
-.store-maps-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
 /* Platform Vendors Grid */
 .platform-vendors-grid {
     display: grid;
@@ -321,8 +202,8 @@
 }
 
 .platform-vendor-card:hover {
-    border-color: #667eea;
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.15);
+    border-color: #38a169;
+    box-shadow: 0 6px 20px rgba(56, 161, 105, 0.15);
     transform: translateY(-3px);
 }
 
@@ -338,14 +219,14 @@
     height: 60px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid #667eea;
+    border: 3px solid #38a169;
 }
 
 .vendor-photo-placeholder {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
     color: white;
     display: flex;
     align-items: center;
@@ -403,7 +284,7 @@
 
 .vendor-address svg,
 .vendor-phone svg {
-    color: #667eea;
+    color: #38a169;
 }
 
 .vendor-actions {
@@ -430,23 +311,23 @@
 }
 
 .vendor-contact-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
     color: white;
 }
 
 .vendor-contact-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(56, 161, 105, 0.4);
 }
 
 .vendor-email-btn {
     background-color: #F8F9FA;
-    color: #667eea;
-    border: 2px solid #667eea;
+    color: #38a169;
+    border: 2px solid #38a169;
 }
 
 .vendor-email-btn:hover {
-    background-color: #667eea;
+    background-color: #38a169;
     color: white;
 }
 
@@ -489,20 +370,6 @@
         font-size: 1.5rem;
     }
 
-    .online-stores-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .physical-store-card {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .store-maps-btn {
-        width: 100%;
-        justify-content: center;
-    }
-
     .purchase-tab {
         font-size: 0.9rem;
         padding: 0.8rem;
@@ -532,10 +399,10 @@
 }
 
 .purchase-modal-body::-webkit-scrollbar-thumb {
-    background: #667eea;
+    background: #38a169;
     border-radius: 4px;
 }
 
 .purchase-modal-body::-webkit-scrollbar-thumb:hover {
-    background: #764ba2;
+    background: #2f855a;
 }

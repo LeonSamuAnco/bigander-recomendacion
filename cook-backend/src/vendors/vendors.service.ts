@@ -10,7 +10,7 @@ export class VendorsService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private prisma: PrismaService,
-  ) {}
+  ) { }
 
   // Obtener estadísticas del vendedor
   async getVendorStats(vendorId: number) {
@@ -38,7 +38,7 @@ export class VendorsService {
       const averageRating = reviews.length > 0
         ? reviews.reduce((acc, r) => acc + r.calificacion, 0) / reviews.length
         : 0;
-      
+
       const totalViews = recipes.reduce((acc, r) => acc + (r.vecesPreparada || 0), 0);
       const totalFavorites = recipes.reduce((acc, r) => acc + (r.vecesFavorita || 0), 0);
 
@@ -344,7 +344,7 @@ export class VendorsService {
 
       // Contar preparaciones por usuario
       const customerCounts = new Map();
-      
+
       if (recipeIds.length > 0) {
         const allActivities = await this.prisma.userActivity.findMany({
           where: {
@@ -549,5 +549,151 @@ export class VendorsService {
     // Precio base de S/ 5.00 por receta
     // Podría basarse en ingredientes, dificultad, etc.
     return 5.00;
+  }
+
+  // Obtener configuración del vendedor
+  async getVendorSettings(userId: number) {
+    try {
+      const vendor = await this.prisma.vendor.findUnique({
+        where: { usuarioId: userId },
+        include: {
+          categorias: {
+            include: {
+              categoria: true,
+            },
+          },
+        },
+      });
+
+      if (!vendor) {
+        // Si no existe perfil de vendedor, devolver configuración por defecto
+        return {
+          profile: {
+            businessName: 'Mi Negocio',
+            description: '',
+            phone: '',
+            email: '',
+            address: '',
+            website: '',
+            categories: [],
+          },
+          preferences: {},
+          paymentMethods: [],
+        };
+      }
+
+      return {
+        profile: {
+          businessName: vendor.nombreTienda,
+          description: vendor.descripcion,
+          phone: '', // Se podría obtener del usuario si se desea
+          email: '', // Se podría obtener del usuario
+          address: vendor.direccion,
+          website: vendor.sitioWeb,
+          categories: vendor.categorias.map(vc => vc.categoria.nombre),
+        },
+        preferences: {
+          notifications: {
+            newOrders: true,
+            lowStock: true,
+            newReviews: true,
+            marketing: false
+          },
+        },
+        paymentMethods: [
+          { id: 1, name: 'Efectivo', enabled: true },
+          { id: 2, name: 'Tarjeta', enabled: true },
+        ]
+      };
+    } catch (error) {
+      console.error('Error getting vendor settings:', error);
+      throw new BadRequestException('Error al obtener configuración');
+    }
+  }
+
+  // Obtener vendedores por categoría
+  async getVendorsByCategory(categoryId: number, limit: number = 10) {
+    try {
+      const vendors = await this.prisma.vendorCategory.findMany({
+        where: {
+          categoriaId: categoryId,
+          vendedor: {
+            usuario: {
+              esActivo: true, // Solo mostrar vendedores con usuarios activos
+            },
+          },
+        },
+        take: limit,
+        include: {
+          vendedor: {
+            include: {
+              usuario: {
+                select: {
+                  id: true,
+                  nombres: true,
+                  apellidos: true,
+                  email: true,
+                  telefono: true,
+                  direccion: true,
+                  bio: true,
+                  fotoPerfil: true,
+                  ciudad: true,
+                  pais: true,
+                  esActivo: true,
+                },
+              },
+            },
+          },
+          categoria: true,
+        },
+      });
+
+      // Transformar datos para el frontend
+      const vendorsData = await Promise.all(
+        vendors.map(async (vc) => {
+          const vendor = vc.vendedor;
+          const user = vendor.usuario;
+
+          // Obtener estadísticas del vendedor
+          const stats = await this.getVendorStats(user.id);
+
+          return {
+            id: vendor.id,
+            userId: user.id,
+            businessName: vendor.nombreTienda || `${user.nombres} ${user.apellidos}`,
+            name: `${user.nombres} ${user.apellidos}`,
+            email: user.email,
+            phone: user.telefono,
+            address: user.direccion,
+            bio: user.bio,
+            photo: vendor.logoUrl || user.fotoPerfil, // Priorizar logo del negocio
+            city: user.ciudad,
+            country: user.pais,
+            category: vc.categoria.nombre,
+            // Nuevos campos
+            horarioAtencion: vendor.horarioAtencion,
+            metodosPago: vendor.metodosPago,
+            tipoServicio: vendor.tipoServicio,
+            whatsapp: vendor.whatsapp,
+            instagram: vendor.instagram,
+            facebook: vendor.facebook,
+            stats: {
+              totalRecipes: stats.totalRecipes,
+              averageRating: stats.averageRating,
+              totalReviews: stats.totalReviews,
+            },
+          };
+        })
+      );
+
+      return {
+        vendors: vendorsData,
+        total: vendorsData.length,
+        category: vendors[0]?.categoria.nombre || 'Desconocida',
+      };
+    } catch (error) {
+      console.error('Error getting vendors by category:', error);
+      throw new BadRequestException('Error al obtener vendedores');
+    }
   }
 }

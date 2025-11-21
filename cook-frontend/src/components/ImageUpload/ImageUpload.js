@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
 import './ImageUpload.css';
 
-const ImageUpload = ({ 
-  type = 'profile', 
-  entityId, 
-  currentImage, 
-  onUploadSuccess, 
-  onUploadError 
+const ImageUpload = ({
+  type = 'profile',
+  entityId,
+  currentImage,
+  onUploadSuccess,
+  onUploadError
 }) => {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(currentImage || null);
@@ -79,7 +79,7 @@ const ImageUpload = ({
         endpoint = `${API_BASE_URL}/upload/${type}/${entityId}`;
       }
 
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -104,7 +104,7 @@ const ImageUpload = ({
     } catch (err) {
       console.error('Error al subir imagen:', err);
       setError(err.message || 'Error al subir la imagen');
-      
+
       if (onUploadError) {
         onUploadError(err);
       }
@@ -135,13 +135,13 @@ const ImageUpload = ({
       <div className="image-upload-preview">
         {preview ? (
           <div className="preview-wrapper">
-            <img 
-              src={preview} 
-              alt="Preview" 
+            <img
+              src={preview}
+              alt="Preview"
               className={`preview-image ${type}-preview`}
             />
             {!uploading && (
-              <button 
+              <button
                 className="remove-image-btn"
                 onClick={handleRemoveImage}
                 type="button"
@@ -166,7 +166,7 @@ const ImageUpload = ({
           onChange={handleFileSelect}
           style={{ display: 'none' }}
         />
-        
+
         <button
           className="upload-btn"
           onClick={handleButtonClick}

@@ -18,6 +18,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -41,6 +42,7 @@
     transform: translateY(50px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -311,6 +313,171 @@
   box-shadow: 0 4px 12px rgba(255, 107, 157, 0.4);
 }
 
+/* Platform Vendors Grid */
+.platform-vendors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.platform-vendor-card {
+  background-color: #FFFFFF;
+  border: 2px solid #E9ECEF;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.platform-vendor-card:hover {
+  border-color: #FF6B9D;
+  box-shadow: 0 6px 20px rgba(255, 107, 157, 0.15);
+  transform: translateY(-3px);
+}
+
+.vendor-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.vendor-photo {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #FF6B9D;
+}
+
+.vendor-photo-placeholder {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF6B9D 0%, #C06C84 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.vendor-info h4 {
+  margin: 0 0 0.3rem 0;
+  font-size: 1.1rem;
+  color: #000000;
+}
+
+.vendor-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.star-icon {
+  color: #FFC107;
+}
+
+.reviews-count {
+  color: #6C757D;
+  margin-left: 0.3rem;
+}
+
+.vendor-bio {
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: #495057;
+  line-height: 1.5;
+}
+
+.vendor-details {
+  margin: 1rem 0;
+  padding: 1rem 0;
+  border-top: 1px solid #E9ECEF;
+  border-bottom: 1px solid #E9ECEF;
+}
+
+.vendor-address,
+.vendor-phone,
+.vendor-products {
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+  color: #6C757D;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.vendor-address svg,
+.vendor-phone svg {
+  color: #FF6B9D;
+}
+
+.vendor-actions {
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.vendor-contact-btn,
+.vendor-email-btn {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.vendor-contact-btn {
+  background: linear-gradient(135deg, #FF6B9D 0%, #C06C84 100%);
+  color: white;
+}
+
+.vendor-contact-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 157, 0.4);
+}
+
+.vendor-email-btn {
+  background-color: #F8F9FA;
+  color: #FF6B9D;
+  border: 2px solid #FF6B9D;
+}
+
+.vendor-email-btn:hover {
+  background-color: #FF6B9D;
+  color: white;
+}
+
+.loading-vendors,
+.no-vendors {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6C757D;
+}
+
+.loading-vendors p,
+.no-vendors p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+.no-vendors p:first-child {
+  font-size: 1.1rem;
+  color: #495057;
+  font-weight: 600;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .purchase-modal-content {
@@ -348,6 +515,19 @@
   .purchase-tab {
     font-size: 0.9rem;
     padding: 0.8rem;
+  }
+
+  .platform-vendors-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vendor-actions {
+    flex-direction: column;
+  }
+
+  .vendor-contact-btn,
+  .vendor-email-btn {
+    width: 100%;
   }
 }
 

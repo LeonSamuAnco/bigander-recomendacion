@@ -15,7 +15,7 @@ export class AdminService {
     private rolesRepository: Repository<Role>,
     private recipesService: RecipesPrismaService,
     private prisma: PrismaService,
-  ) {}
+  ) { }
 
   // Obtener estadísticas del sistema
   async getSystemStats() {
@@ -25,7 +25,7 @@ export class AdminService {
       const activeUsers = await this.usersRepository.count({
         where: { esActivo: true },
       }).catch(() => 0);
-      
+
       const inactiveUsers = totalUsers - activeUsers;
 
       // Datos simplificados para evitar errores
@@ -70,7 +70,7 @@ export class AdminService {
   async getAllUsers(page: number = 1, limit: number = 10, search?: string) {
     try {
       const skip = (page - 1) * limit;
-      
+
       let query = this.usersRepository
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.role', 'role')
@@ -147,6 +147,58 @@ export class AdminService {
         throw error;
       }
       throw new BadRequestException('Error al cambiar estado del usuario');
+    }
+  }
+
+  // Eliminar usuario permanentemente
+  async deleteUser(userId: number) {
+    try {
+      const user = await this.usersRepository.findOne({
+        where: { id: userId },
+        relations: ['role'],
+      });
+
+      if (!user) {
+        throw new NotFoundException('Usuario no encontrado');
+      }
+
+      // No permitir eliminar al administrador
+      if (user.role.codigo === 'ADMIN') {
+        throw new BadRequestException('No se puede eliminar al administrador');
+      }
+
+      // Intentar eliminar el usuario
+      try {
+        await this.usersRepository.remove(user);
+      } catch (dbError) {
+        console.error('Error al eliminar usuario de la base de datos:', dbError);
+        // Si falla la eliminación física, hacer un borrado lógico
+        user.esActivo = false;
+        await this.usersRepository.save(user);
+        return {
+          message: `Usuario desactivado exitosamente (no se pudo eliminar por restricciones de base de datos)`,
+          deletedUser: {
+            id: userId,
+            nombres: user.nombres,
+            apellidos: user.apellidos,
+          },
+        };
+      }
+
+      return {
+        message: `Usuario eliminado exitosamente`,
+        deletedUser: {
+          id: userId,
+          nombres: user.nombres,
+          apellidos: user.apellidos,
+        },
+      };
+    } catch (error) {
+      console.error('Error en deleteUser:', error);
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(`Error al eliminar usuario: ${error.message || 'Error desconocido'}`);
     }
   }
 
@@ -291,7 +343,7 @@ export class AdminService {
         limit,
         search: search || '',
       };
-      
+
       return await this.recipesService.findAll(filters);
     } catch (error) {
       console.error('Error in getAllRecipes:', error);
@@ -310,7 +362,7 @@ export class AdminService {
       // Usar el servicio de recetas para obtener todas las recetas
       const allRecipes = await this.recipesService.findAll({ page: 1, limit: 1000 });
       const totalRecipes = allRecipes.recipes?.length || 0;
-      
+
       return {
         totalRecipes,
         activeRecipes: totalRecipes,
@@ -714,11 +766,11 @@ export class AdminService {
   }) {
     try {
       const whereConditions: any = {};
-      
+
       if (filters.type) {
         whereConditions.tipo = filters.type;
       }
-      
+
       if (filters.startDate || filters.endDate) {
         whereConditions.fecha = {};
         if (filters.startDate) whereConditions.fecha.gte = filters.startDate;
@@ -775,7 +827,7 @@ export class AdminService {
     try {
       // En un sistema real, aquí ejecutarías comandos de backup de MySQL
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      
+
       return {
         success: true,
         message: 'Backup creado exitosamente',

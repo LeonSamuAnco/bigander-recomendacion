@@ -17,6 +17,24 @@ const Register = () => {
     aceptaTerminos: false,
     aceptaMarketing: false,
     rolId: 1, // Cliente por defecto
+    nombreTienda: "",
+    horarioAtencion: "",
+    metodosPago: "",
+    tipoServicio: "Ambos",
+    whatsapp: "",
+    instagram: "",
+    facebook: "",
+    sitioWeb: "",
+    direccionNegocio: "",
+  })
+  const [horarioDias, setHorarioDias] = useState({
+    Lun: true, Mar: true, Mie: true, Jue: true, Vie: true, Sab: false, Dom: false
+  })
+  const [horarioInicio, setHorarioInicio] = useState("09:00")
+  const [horarioFin, setHorarioFin] = useState("18:00")
+
+  const [metodosPagoSeleccionados, setMetodosPagoSeleccionados] = useState({
+    Yape: false, Plin: false, Efectivo: false, Tarjeta: false, Transferencia: false
   })
   const [roles, setRoles] = useState([])
   const [documentTypes, setDocumentTypes] = useState([])
@@ -59,7 +77,7 @@ const Register = () => {
         } else {
           console.error('❌ Error al cargar roles:', rolesResponse.statusText);
         }
-        
+
         if (docTypesResponse.ok) {
           const docTypesData = await docTypesResponse.json()
           setDocumentTypes(docTypesData)
@@ -78,7 +96,7 @@ const Register = () => {
         console.error("❌ Error cargando datos:", error)
       }
     }
-    
+
     fetchData()
   }, [])
 
@@ -98,6 +116,14 @@ const Register = () => {
         return [...prev, categoryId]
       }
     })
+  }
+
+  const handleDiaChange = (dia) => {
+    setHorarioDias(prev => ({ ...prev, [dia]: !prev[dia] }))
+  }
+
+  const handleMetodoPagoChange = (metodo) => {
+    setMetodosPagoSeleccionados(prev => ({ ...prev, [metodo]: !prev[metodo] }))
   }
 
   const handleSubmit = async (e) => {
@@ -120,6 +146,26 @@ const Register = () => {
       return
     }
 
+    // Validar campos obligatorios de vendedor
+    if (formData.rolId === 2) {
+      if (!formData.nombreTienda || formData.nombreTienda.trim() === '') {
+        setError("El nombre del negocio es obligatorio para vendedores")
+        return
+      }
+
+      const diasSeleccionados = Object.keys(horarioDias).filter(d => horarioDias[d]);
+      if (diasSeleccionados.length === 0) {
+        setError("Debes seleccionar al menos un día de atención")
+        return
+      }
+
+      const metodosSeleccionados = Object.keys(metodosPagoSeleccionados).filter(m => metodosPagoSeleccionados[m]);
+      if (metodosSeleccionados.length === 0) {
+        setError("Debes seleccionar al menos un método de pago")
+        return
+      }
+    }
+
     try {
       setLoading(true)
       const response = await fetch("http://localhost:3002/auth/register", {
@@ -140,14 +186,43 @@ const Register = () => {
           aceptaTerminos: formData.aceptaTerminos,
           aceptaMarketing: formData.aceptaMarketing,
           rolId: formData.rolId,
-          // Solo enviar categorías si es vendedor
-          ...(formData.rolId === 2 && { categorias: selectedCategories })
+          // Solo enviar categorías y datos de negocio si es vendedor
+          ...(formData.rolId === 2 && {
+            categorias: selectedCategories,
+            nombreTienda: formData.nombreTienda,
+            horarioAtencion: Object.keys(horarioDias).filter(d => horarioDias[d]).length > 0
+              ? `${Object.keys(horarioDias).filter(d => horarioDias[d]).join('-')} ${horarioInicio}-${horarioFin}`
+              : "",
+            metodosPago: Object.keys(metodosPagoSeleccionados).filter(m => metodosPagoSeleccionados[m]).join(", "),
+            tipoServicio: formData.tipoServicio,
+            whatsapp: formData.whatsapp,
+            instagram: formData.instagram,
+            facebook: formData.facebook,
+            sitioWeb: formData.sitioWeb,
+            direccionNegocio: formData.direccionNegocio,
+          })
         }),
       })
 
+      console.log('📤 Datos enviados al registro:', {
+        ...JSON.parse(JSON.stringify({
+          nombres: formData.nombres,
+          apellidos: formData.apellidos,
+          email: formData.email,
+          rolId: formData.rolId,
+          ...(formData.rolId === 2 && {
+            nombreTienda: formData.nombreTienda,
+            horarioAtencion: Object.keys(horarioDias).filter(d => horarioDias[d]).length > 0
+              ? `${Object.keys(horarioDias).filter(d => horarioDias[d]).join('-')} ${horarioInicio}-${horarioFin}`
+              : "",
+            metodosPago: Object.keys(metodosPagoSeleccionados).filter(m => metodosPagoSeleccionados[m]).join(", "),
+          })
+        }))
+      });
+
       if (response.ok) {
         const userData = await response.json()
-        
+
         // Si el registro incluye login automático
         if (userData.access_token) {
           localStorage.setItem("authToken", userData.access_token)
@@ -177,7 +252,7 @@ const Register = () => {
           <span className="brand-icon">🍳</span>
           <span className="brand-text">CookSync</span>
         </div>
-        
+
         <div className="auth-welcome">
           <h1>Crea tu cuenta y <span className="highlight">disfruta</span></h1>
           <p>Únete a miles de usuarios satisfechos y accede a recetas personalizadas, ofertas especiales y la mejor experiencia culinaria.</p>
@@ -203,9 +278,9 @@ const Register = () => {
         </div>
 
         <div className="auth-image">
-          <img 
-            src="/cooking-ingredients.jpg" 
-            alt="Ingredientes de cocina" 
+          <img
+            src="/cooking-ingredients.jpg"
+            alt="Ingredientes de cocina"
             onError={(e) => {
               e.target.style.display = 'none';
             }}
@@ -300,8 +375,157 @@ const Register = () => {
                 />
               </div>
             </div>
+            {/* Campos adicionales para Vendedor */}
+            {formData.rolId === 2 && (
+              <div className="vendor-fields-section" style={{ marginTop: '1.5rem', marginBottom: '1.5rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px', border: '1px solid #e9ecef' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#2d3748' }}>Información del Negocio</h3>
 
-            
+                <div className="form-group">
+                  <label htmlFor="nombreTienda">Nombre del Negocio</label>
+                  <div className="input-container">
+                    <span className="input-icon">🏪</span>
+                    <input
+                      type="text"
+                      id="nombreTienda"
+                      name="nombreTienda"
+                      value={formData.nombreTienda}
+                      onChange={handleChange}
+                      required
+                      placeholder="Ej. Pastelería Dulce Sabor"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Horario de Atención</label>
+                  <div className="schedule-container" style={{ background: 'white', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <div className="days-selector" style={{ display: 'flex', gap: '5px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                      {Object.keys(horarioDias).map(dia => (
+                        <label key={dia} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={horarioDias[dia]}
+                            onChange={() => handleDiaChange(dia)}
+                          />
+                          {dia}
+                        </label>
+                      ))}
+                    </div>
+                    <div className="time-selector" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <input
+                        type="time"
+                        value={horarioInicio}
+                        onChange={(e) => setHorarioInicio(e.target.value)}
+                        style={{ padding: '5px', borderRadius: '4px', border: '1px solid #cbd5e0' }}
+                      />
+                      <span>a</span>
+                      <input
+                        type="time"
+                        value={horarioFin}
+                        onChange={(e) => setHorarioFin(e.target.value)}
+                        style={{ padding: '5px', borderRadius: '4px', border: '1px solid #cbd5e0' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Métodos de Pago</label>
+                  <div className="payment-methods-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '10px', background: 'white', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    {Object.keys(metodosPagoSeleccionados).map(metodo => (
+                      <label key={metodo} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={metodosPagoSeleccionados[metodo]}
+                          onChange={() => handleMetodoPagoChange(metodo)}
+                        />
+                        {metodo}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="direccionNegocio">Dirección del Negocio</label>
+                  <div className="input-container">
+                    <span className="input-icon">📍</span>
+                    <input
+                      type="text"
+                      id="direccionNegocio"
+                      name="direccionNegocio"
+                      value={formData.direccionNegocio}
+                      onChange={handleChange}
+                      placeholder="Av. Comercial 123, Distrito"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="sitioWeb">Sitio Web (Opcional)</label>
+                  <div className="input-container">
+                    <span className="input-icon">🌐</span>
+                    <input
+                      type="url"
+                      id="sitioWeb"
+                      name="sitioWeb"
+                      value={formData.sitioWeb}
+                      onChange={handleChange}
+                      placeholder="https://mitienda.com"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="tipoServicio">Tipo de Servicio</label>
+                  <div className="input-container">
+                    <span className="input-icon">🚚</span>
+                    <select
+                      id="tipoServicio"
+                      name="tipoServicio"
+                      value={formData.tipoServicio}
+                      onChange={handleChange}
+                    >
+                      <option value="Ambos">Delivery y Recojo</option>
+                      <option value="Delivery">Solo Delivery</option>
+                      <option value="Recojo">Solo Recojo en Tienda</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group half-width">
+                    <label htmlFor="whatsapp">WhatsApp Business</label>
+                    <div className="input-container">
+                      <span className="input-icon">💬</span>
+                      <input
+                        type="text"
+                        id="whatsapp"
+                        name="whatsapp"
+                        value={formData.whatsapp}
+                        onChange={handleChange}
+                        placeholder="999888777"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group half-width">
+                    <label htmlFor="instagram">Instagram</label>
+                    <div className="input-container">
+                      <span className="input-icon">📸</span>
+                      <input
+                        type="text"
+                        id="instagram"
+                        name="instagram"
+                        value={formData.instagram}
+                        onChange={handleChange}
+                        placeholder="@tu_negocio"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Selección de categorías - solo para vendedores */}
             {formData.rolId === 2 && (
               <div className="form-group categories-section">

@@ -32,7 +32,7 @@ const MyPantry = () => {
 
   const loadPantry = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await fetch(`${API_BASE_URL}/pantry/my-pantry`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -47,7 +47,7 @@ const MyPantry = () => {
 
   const loadStats = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await fetch(`${API_BASE_URL}/pantry/stats`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -81,7 +81,7 @@ const MyPantry = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await fetch(`${API_BASE_URL}/pantry`, {
         method: 'POST',
         headers: {
@@ -123,7 +123,7 @@ const MyPantry = () => {
     if (!window.confirm('¿Eliminar este ingrediente de la despensa?')) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       await fetch(`${API_BASE_URL}/pantry/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },

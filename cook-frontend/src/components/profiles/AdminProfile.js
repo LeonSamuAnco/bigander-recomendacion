@@ -38,15 +38,20 @@ const AdminProfile = ({ user }) => {
   const [usersPage, setUsersPage] = useState(1);
   const [usersSearch, setUsersSearch] = useState('');
   const [usersTotalPages, setUsersTotalPages] = useState(1);
-  // eslint-disable-next-line no-unused-vars
   const [showUserModal, setShowUserModal] = useState(false);
-  // eslint-disable-next-line no-unused-vars
   const [editingUser, setEditingUser] = useState(null);
+  const [editUserForm, setEditUserForm] = useState({
+    nombres: '',
+    apellidos: '',
+    email: '',
+    telefono: '',
+    rolId: 1,
+  });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   const [hasAttemptedUsersLoad, setHasAttemptedUsersLoad] = useState(false);
   const [backendError, setBackendError] = useState(false);
-  
+
   // Estados para tabla CRUD de categorías
   const [showCategoryDataModal, setShowCategoryDataModal] = useState(false);
   const [selectedCategoryForData, setSelectedCategoryForData] = useState(null);
@@ -76,7 +81,7 @@ const AdminProfile = ({ user }) => {
     try {
       // Primero probar la conexión
       await adminService.testConnection();
-      
+
       // Luego cargar datos reales
       await Promise.all([
         loadSystemStats(),
@@ -153,10 +158,10 @@ const AdminProfile = ({ user }) => {
         case 'celular':
           // Para celulares - obtener todos (sin parámetros que puedan causar error)
           const celularResponse = await celularService.getAll();
-          
+
           let celularesRaw = celularResponse.data || celularResponse.celulares || celularResponse || [];
           console.log('📱 Datos raw de celulares:', celularesRaw.slice(0, 2)); // Mostrar solo los primeros 2 para debug
-          
+
           // Si hay paginación, obtener todas las páginas
           if (celularResponse.totalPages && celularResponse.totalPages > 1) {
             for (let page = 2; page <= celularResponse.totalPages; page++) {
@@ -164,7 +169,7 @@ const AdminProfile = ({ user }) => {
                 const pageResponse = await celularService.getAll({ page });
                 const pageData = pageResponse.data || pageResponse.celulares || pageResponse || [];
                 // eslint-disable-next-line no-loop-func
-                const newItems = pageData.filter(newItem => 
+                const newItems = pageData.filter(newItem =>
                   !celularesRaw.some(existingItem => existingItem.id === newItem.id)
                 );
                 celularesRaw = [...celularesRaw, ...newItems];
@@ -174,7 +179,7 @@ const AdminProfile = ({ user }) => {
               }
             }
           }
-          
+
           // Normalizar datos de celulares para la tabla
           data = celularesRaw.map(celular => ({
             id: celular.id,
@@ -190,7 +195,7 @@ const AdminProfile = ({ user }) => {
             ram: celular.ram,
             almacenamiento: celular.almacenamiento
           }));
-          
+
           stats = { total: celularResponse.total || data.length };
           break;
 
@@ -198,7 +203,7 @@ const AdminProfile = ({ user }) => {
           // Para tortas - obtener todas
           const tortaResponse = await tortasService.getAll();
           let tortasRaw = tortaResponse.data || tortaResponse.tortas || tortaResponse || [];
-          
+
           // Normalizar datos de tortas para la tabla
           data = tortasRaw.map(torta => ({
             id: torta.id,
@@ -213,17 +218,17 @@ const AdminProfile = ({ user }) => {
             cobertura: torta.torta_coberturas?.nombre,
             ocasion: torta.torta_ocasiones?.nombre
           }));
-          
+
           stats = { total: tortaResponse.total || data.length };
           break;
 
         case 'lugar':
           // Para lugares - obtener todos
           const lugarResponse = await lugarService.getAll();
-          
+
           let lugaresRaw = lugarResponse.data || lugarResponse.lugares || lugarResponse || [];
           console.log('🏡 Datos raw de lugares:', lugaresRaw.slice(0, 2));
-          
+
           // Normalizar datos de lugares para la tabla
           data = lugaresRaw.map(lugar => ({
             id: lugar.id,
@@ -239,17 +244,17 @@ const AdminProfile = ({ user }) => {
             pais: lugar.pais,
             capacidad: lugar.capacidad
           }));
-          
+
           stats = { total: lugarResponse.total || data.length };
           break;
 
         case 'deporte':
           // Para deportes - obtener todos
           const deporteResponse = await deporteService.getAll();
-          
+
           let deportesRaw = deporteResponse.data || deporteResponse.deportes || deporteResponse || [];
           console.log('🏃 Datos raw de deportes:', deportesRaw.slice(0, 2));
-          
+
           // Normalizar datos de deportes para la tabla
           data = deportesRaw.map(deporte => ({
             id: deporte.id,
@@ -265,7 +270,7 @@ const AdminProfile = ({ user }) => {
             genero: deporte.genero,
             talla: deporte.talla
           }));
-          
+
           stats = { total: deporteResponse.total || data.length };
           break;
 
@@ -412,12 +417,12 @@ const AdminProfile = ({ user }) => {
       console.warn('Backend error detected, skipping user load to prevent infinite loop');
       return;
     }
-    
+
     try {
       setLoading(true);
       setHasAttemptedUsersLoad(true);
       const result = await adminService.getAllUsers(page, 10, search);
-      
+
       if (result && result.users) {
         setAllUsers(result.users);
         setUsersPage(page);
@@ -460,14 +465,14 @@ const AdminProfile = ({ user }) => {
 
   const loadRecipes = async () => {
     try {
-      
+
       // Método 1: Intentar endpoint directo de recetas
       try {
         const directResponse = await fetch('http://localhost:3002/recipes');
-        
+
         if (directResponse.ok) {
           const directData = await directResponse.json();
-          
+
           if (directData.recipes && Array.isArray(directData.recipes)) {
             setRecipes(directData.recipes);
             showNotification(`✅ ${directData.recipes.length} recetas cargadas desde API principal`, 'success');
@@ -478,11 +483,11 @@ const AdminProfile = ({ user }) => {
       } catch (directError) {
         console.log('Direct endpoint error:', directError.message);
       }
-      
+
       // Método 2: Intentar endpoint de admin
       try {
         const adminData = await adminService.getAllRecipes(1, 50);
-        
+
         if (adminData && adminData.recipes && Array.isArray(adminData.recipes)) {
           setRecipes(adminData.recipes);
           showNotification(`✅ ${adminData.recipes.length} recetas cargadas desde Admin API`, 'success');
@@ -491,7 +496,7 @@ const AdminProfile = ({ user }) => {
       } catch (adminError) {
         console.log('Admin endpoint error:', adminError.message);
       }
-      
+
       // Método 3: Datos de prueba como último recurso
       const testRecipes = [
         {
@@ -525,10 +530,10 @@ const AdminProfile = ({ user }) => {
           descripcion: 'Tradicional ají de gallina peruano'
         }
       ];
-      
+
       setRecipes(testRecipes);
       showNotification('⚠️ Usando datos de prueba - Backend no disponible', 'warning');
-      
+
     } catch (error) {
       console.error('Error general loading recipes:', error);
       setRecipes([]);
@@ -569,6 +574,61 @@ const AdminProfile = ({ user }) => {
     } catch (error) {
       console.error('Error changing user role:', error);
       showNotification('Error al cambiar rol del usuario', 'error');
+    }
+  };
+
+  const handleDeleteUser = async (userId, userName) => {
+    setConfirmAction({
+      message: `¿Estás seguro de eliminar permanentemente al usuario "${userName}"? Esta acción no se puede deshacer.`,
+      onConfirm: async () => {
+        try {
+          const result = await adminService.deleteUser(userId);
+          showNotification(result.message, 'success');
+          if (activeSection === 'users') {
+            await loadAllUsers(usersPage, usersSearch);
+          }
+          await loadSystemStats();
+        } catch (error) {
+          console.error('Error deleting user:', error);
+          showNotification('Error al eliminar usuario', 'error');
+        } finally {
+          setShowConfirmModal(false);
+        }
+      }
+    });
+    setShowConfirmModal(true);
+  };
+
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    setEditUserForm({
+      nombres: user.nombres || '',
+      apellidos: user.apellidos || '',
+      email: user.email || '',
+      telefono: user.telefono || '',
+      rolId: user.role?.id || 1,
+    });
+    setShowUserModal(true);
+  };
+
+  const handleSaveUserEdit = async () => {
+    try {
+      // Actualizar rol si cambió
+      if (editUserForm.rolId !== editingUser.role?.id) {
+        await adminService.changeUserRole(editingUser.id, editUserForm.rolId);
+      }
+
+      showNotification('Usuario actualizado exitosamente', 'success');
+      setShowUserModal(false);
+      setEditingUser(null);
+
+      // Recargar usuarios
+      if (activeSection === 'users') {
+        await loadAllUsers(usersPage, usersSearch);
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      showNotification('Error al actualizar usuario', 'error');
     }
   };
 
@@ -635,7 +695,7 @@ const AdminProfile = ({ user }) => {
         <h2>📊 Dashboard General</h2>
         <p>Resumen ejecutivo del sistema CookSync</p>
       </div>
-      
+
       <div className="stats-overview">
         <div className="stat-card">
           <div className="stat-icon">👥</div>
@@ -740,8 +800,8 @@ const AdminProfile = ({ user }) => {
             />
             <button type="submit" className="search-btn">🔍 Buscar</button>
             {usersSearch && (
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="clear-btn"
                 onClick={() => {
                   setUsersSearch('');
@@ -753,14 +813,14 @@ const AdminProfile = ({ user }) => {
             )}
           </form>
         </div>
-        
+
         {backendError ? (
-          <div className="no-data-message" style={{ 
-            padding: '40px', 
-            textAlign: 'center', 
-            background: '#fff3cd', 
-            borderRadius: '8px', 
-            border: '2px solid #ffc107' 
+          <div className="no-data-message" style={{
+            padding: '40px',
+            textAlign: 'center',
+            background: '#fff3cd',
+            borderRadius: '8px',
+            border: '2px solid #ffc107'
           }}>
             <h3 style={{ color: '#856404', marginBottom: '10px' }}>⚠️ Backend No Disponible</h3>
             <p style={{ color: '#856404', marginBottom: '20px' }}>
@@ -775,8 +835,8 @@ const AdminProfile = ({ user }) => {
                 <li>Haz click en el botón de abajo para reintentar</li>
               </ol>
             </div>
-            <button 
-              className="primary-btn" 
+            <button
+              className="primary-btn"
               onClick={() => {
                 setBackendError(false);
                 setHasAttemptedUsersLoad(false);
@@ -810,32 +870,31 @@ const AdminProfile = ({ user }) => {
                       <span>{user.nombres} {user.apellidos}</span>
                     </div>
                     <span>{user.email}</span>
-                    <select
-                      className="role-select"
-                      value={user.role?.id || 1}
-                      onChange={(e) => handleChangeUserRole(user.id, parseInt(e.target.value))}
-                      disabled={user.role?.codigo === 'ADMIN'}
-                    >
-                      {systemRoles.map(role => (
-                        <option key={role.id} value={role.id}>{role.nombre}</option>
-                      ))}
-                    </select>
+                    <span className="role-badge">{user.role?.nombre || 'Sin rol'}</span>
                     <span className={`status-badge ${user.esActivo ? 'active' : 'inactive'}`}>
                       {user.esActivo ? 'Activo' : 'Inactivo'}
                     </span>
                     <div className="action-buttons">
-                      <button 
+                      <button
                         className="action-btn"
-                        onClick={() => showNotification('Función de edición en desarrollo', 'info')}
+                        onClick={() => handleEditUser(user)}
                       >
                         ✏️ Editar
                       </button>
-                      <button 
+                      <button
                         className="action-btn danger"
                         onClick={() => handleToggleUserStatus(user.id)}
                         disabled={user.role?.codigo === 'ADMIN'}
                       >
                         {user.esActivo ? '🚫 Desactivar' : '✅ Activar'}
+                      </button>
+                      <button
+                        className="action-btn delete"
+                        onClick={() => handleDeleteUser(user.id, `${user.nombres} ${user.apellidos}`)}
+                        disabled={user.role?.codigo === 'ADMIN'}
+                        title="Eliminar usuario permanentemente"
+                      >
+                        🗑️ Eliminar
                       </button>
                     </div>
                   </div>
@@ -964,13 +1023,13 @@ const AdminProfile = ({ user }) => {
         <h3 style={{ margin: '0 0 12px 0' }}>Categorías del Sistema</h3>
         <div className="recipes-grid">
           {unifiedCategories.map(uc => (
-            <div key={`${uc.type}-${uc.id}-${uc.nombre}`} className="recipe-card" onClick={() => handleCategoryCardClick(uc)} style={{cursor: 'pointer'}}>
-              <div className="recipe-image" style={{display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <div className="recipe-placeholder" style={{fontSize:'2.2rem'}}>{uc.icon || '🗂️'}</div>
+            <div key={`${uc.type}-${uc.id}-${uc.nombre}`} className="recipe-card" onClick={() => handleCategoryCardClick(uc)} style={{ cursor: 'pointer' }}>
+              <div className="recipe-image" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="recipe-placeholder" style={{ fontSize: '2.2rem' }}>{uc.icon || '🗂️'}</div>
               </div>
               <div className="recipe-status approved">{uc.type}</div>
               <h4>{uc.displayName || uc.nombre}</h4>
-              <p style={{fontSize: '0.9rem', color: '#6b7280', marginTop: '8px'}}>Click para ver datos completos</p>
+              <p style={{ fontSize: '0.9rem', color: '#6b7280', marginTop: '8px' }}>Click para ver datos completos</p>
               <div className="recipe-actions" onClick={(e) => e.stopPropagation()}>
                 <button className="view-btn" onClick={() => handleCategoryCardClick(uc)}>
                   📊 Ver Tabla de Datos
@@ -979,7 +1038,7 @@ const AdminProfile = ({ user }) => {
             </div>
           ))}
           {unifiedCategories.length === 0 && (
-            <div className="no-recipes" style={{gridColumn:'1 / -1'}}>
+            <div className="no-recipes" style={{ gridColumn: '1 / -1' }}>
               <p>No se encontraron categorías del sistema</p>
               <button className="primary-btn" onClick={loadUnifiedCategories}>🔄 Recargar</button>
             </div>
@@ -989,7 +1048,7 @@ const AdminProfile = ({ user }) => {
 
       {/* Categorías de Recetas (CRUD Admin) */}
       <div>
-        <div className="section-header" style={{padding:0, marginTop:12}}>
+        <div className="section-header" style={{ padding: 0, marginTop: 12 }}>
           <div>
             <h3>Categorías de Recetas</h3>
             <p>Crear, editar y eliminar categorías de recetas</p>
@@ -1063,8 +1122,8 @@ const AdminProfile = ({ user }) => {
                         <span>{recipe.id}</span>
                         <div className="user-cell">
                           {recipe.imagenPrincipal ? (
-                            <img 
-                              src={recipe.imagenPrincipal} 
+                            <img
+                              src={recipe.imagenPrincipal}
                               alt={recipe.nombre}
                               style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', marginRight: '8px' }}
                             />
@@ -1081,21 +1140,21 @@ const AdminProfile = ({ user }) => {
                           {recipe.esActivo !== false ? 'Activa' : 'Inactiva'}
                         </span>
                         <div className="action-buttons">
-                          <button 
+                          <button
                             className="action-btn"
                             onClick={() => navigate(`/recipes/${recipe.id}`)}
                             title="Ver receta"
                           >
                             👁️ Ver
                           </button>
-                          <button 
+                          <button
                             className="action-btn"
                             onClick={() => navigate(`/recipes/${recipe.id}/edit`)}
                             title="Editar receta"
                           >
                             ✏️ Editar
                           </button>
-                          <button 
+                          <button
                             className="action-btn danger"
                             onClick={() => handleDeleteRecipe(recipe.id)}
                             title="Eliminar receta"
@@ -1154,7 +1213,7 @@ const AdminProfile = ({ user }) => {
           🔄 Actualizar Datos
         </button>
       </div>
-      
+
       <div className="analytics-grid">
         <div className="analytics-card">
           <h3>Usuarios por Rol</h3>
@@ -1163,7 +1222,7 @@ const AdminProfile = ({ user }) => {
               <div key={role.roleName} className="chart-bar">
                 <span className="chart-label">{role.roleName}</span>
                 <div className="chart-bar-bg">
-                  <div 
+                  <div
                     className="chart-bar-fill"
                     style={{ width: `${systemStats.totalUsers ? (role.count / systemStats.totalUsers) * 100 : 0}%` }}
                   >
@@ -1213,7 +1272,7 @@ const AdminProfile = ({ user }) => {
           🔄 Generar Reportes
         </button>
       </div>
-      
+
       <div className="reports-grid">
         <div className="report-card">
           <div className="report-icon">📄</div>
@@ -1269,7 +1328,7 @@ const AdminProfile = ({ user }) => {
         <h2>⚙️ Configuración</h2>
         <p>Ajustes generales del sistema</p>
       </div>
-      
+
       <div className="settings-grid">
         <div className="settings-card">
           <h3>⚙️ Configuración General</h3>
@@ -1329,7 +1388,7 @@ const AdminProfile = ({ user }) => {
           <button className="primary-btn" onClick={() => showNotification('Backup iniciado', 'success')}>
             🔄 Crear Backup Ahora
           </button>
-          <button className="secondary-btn" style={{marginTop: '10px'}} onClick={() => showNotification('Funcionalidad en desarrollo', 'info')}>
+          <button className="secondary-btn" style={{ marginTop: '10px' }} onClick={() => showNotification('Funcionalidad en desarrollo', 'info')}>
             📂 Restaurar desde Backup
           </button>
         </div>
@@ -1343,7 +1402,7 @@ const AdminProfile = ({ user }) => {
         <h2>🔒 Seguridad</h2>
         <p>Configuración de seguridad del sistema</p>
       </div>
-      
+
       <div className="security-grid">
         <div className="security-card">
           <h3>🔑 Autenticación</h3>
@@ -1415,8 +1474,8 @@ const AdminProfile = ({ user }) => {
             <span className="logo-text">CookSync</span>
           </div>
           <div className="admin-info">
-            <img 
-              src={user.fotoPerfil || '/admin-avatar.png'} 
+            <img
+              src={user.fotoPerfil || '/admin-avatar.png'}
               alt="Admin"
               className="admin-avatar"
             />
@@ -1475,6 +1534,92 @@ const AdminProfile = ({ user }) => {
         </div>
       </div>
 
+      {/* Modal de Edición de Usuario */}
+      {showUserModal && editingUser && (
+        <div className="modal-overlay" onClick={() => setShowUserModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h3>✏️ Editar Usuario</h3>
+              <button className="close-btn" onClick={() => setShowUserModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Nombres</label>
+                <input
+                  type="text"
+                  value={editUserForm.nombres}
+                  onChange={(e) => setEditUserForm({ ...editUserForm, nombres: e.target.value })}
+                  className="form-control"
+                  disabled
+                  style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
+                />
+                <small style={{ color: '#6b7280', fontSize: '0.85rem' }}>Campo no editable</small>
+              </div>
+              <div className="form-group">
+                <label>Apellidos</label>
+                <input
+                  type="text"
+                  value={editUserForm.apellidos}
+                  onChange={(e) => setEditUserForm({ ...editUserForm, apellidos: e.target.value })}
+                  className="form-control"
+                  disabled
+                  style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
+                />
+                <small style={{ color: '#6b7280', fontSize: '0.85rem' }}>Campo no editable</small>
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={editUserForm.email}
+                  onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
+                  className="form-control"
+                  disabled
+                  style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
+                />
+                <small style={{ color: '#6b7280', fontSize: '0.85rem' }}>Campo no editable</small>
+              </div>
+              <div className="form-group">
+                <label>Teléfono</label>
+                <input
+                  type="tel"
+                  value={editUserForm.telefono}
+                  onChange={(e) => setEditUserForm({ ...editUserForm, telefono: e.target.value })}
+                  className="form-control"
+                  disabled
+                  style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
+                />
+                <small style={{ color: '#6b7280', fontSize: '0.85rem' }}>Campo no editable</small>
+              </div>
+              <div className="form-group">
+                <label>Rol *</label>
+                <select
+                  value={editUserForm.rolId}
+                  onChange={(e) => setEditUserForm({ ...editUserForm, rolId: parseInt(e.target.value) })}
+                  className="form-control"
+                  disabled={editingUser.role?.codigo === 'ADMIN'}
+                >
+                  {systemRoles.map(role => (
+                    <option key={role.id} value={role.id}>{role.nombre}</option>
+                  ))}
+                </select>
+                {editingUser.role?.codigo === 'ADMIN' && (
+                  <small style={{ color: '#ef4444', fontSize: '0.85rem' }}>No se puede cambiar el rol del administrador</small>
+                )}
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={() => setShowUserModal(false)}>
+                Cancelar
+              </button>
+              <button className="btn-primary" onClick={handleSaveUserEdit}>
+                💾 Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal de Confirmación */}
       {showConfirmModal && confirmAction && (
         <div className="modal-overlay" onClick={() => setShowConfirmModal(false)}>
@@ -1497,20 +1642,20 @@ const AdminProfile = ({ user }) => {
       {/* Modal de Tabla de Datos de Categoría */}
       {showCategoryDataModal && selectedCategoryForData && (
         <div className="modal-overlay" onClick={() => setShowCategoryDataModal(false)}>
-          <div className="modal-content category-data-modal" onClick={(e) => e.stopPropagation()} style={{maxWidth: '90vw', width: '1200px', maxHeight: '90vh', overflow: 'auto'}}>
-            <div className="modal-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #e5e7eb', paddingBottom: '15px'}}>
+          <div className="modal-content category-data-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '90vw', width: '1200px', maxHeight: '90vh', overflow: 'auto' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #e5e7eb', paddingBottom: '15px' }}>
               <div>
-                <h2 style={{margin: 0, display: 'flex', alignItems: 'center', gap: '10px'}}>
-                  <span style={{fontSize: '2rem'}}>{selectedCategoryForData.icon}</span>
+                <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '2rem' }}>{selectedCategoryForData.icon}</span>
                   {selectedCategoryForData.displayName || selectedCategoryForData.nombre}
                 </h2>
-                <p style={{margin: '5px 0 0 0', color: '#6b7280'}}>
+                <p style={{ margin: '5px 0 0 0', color: '#6b7280' }}>
                   Total de items: {categoryStats.total || categoryData.length}
                   {categoryStats.totalStock && ` | Stock total: ${categoryStats.totalStock}`}
                   {categoryStats.avgPrice && ` | Precio promedio: S/ ${Number(categoryStats.avgPrice).toFixed(2)}`}
                 </p>
               </div>
-              <div style={{display: 'flex', gap: '10px'}}>
+              <div style={{ display: 'flex', gap: '10px' }}>
                 <button className="primary-btn" onClick={handleCreateProduct}>
                   + Nuevo Item
                 </button>
@@ -1521,7 +1666,7 @@ const AdminProfile = ({ user }) => {
             </div>
 
             {loadingCategoryData ? (
-              <div style={{textAlign: 'center', padding: '60px'}}>
+              <div style={{ textAlign: 'center', padding: '60px' }}>
                 <div className="spinner"></div>
                 <p>Cargando datos...</p>
               </div>
@@ -1547,8 +1692,8 @@ const AdminProfile = ({ user }) => {
                           <td>
                             <div className="product-info">
                               {item.imagenUrl || item.imagenPrincipal ? (
-                                <img 
-                                  src={item.imagenUrl || item.imagenPrincipal} 
+                                <img
+                                  src={item.imagenUrl || item.imagenPrincipal}
                                   alt={item.nombre || item.titulo}
                                   className="product-image"
                                 />
@@ -1586,21 +1731,21 @@ const AdminProfile = ({ user }) => {
                           </td>
                           <td>
                             <div className="action-buttons-row">
-                              <button 
+                              <button
                                 className="action-btn edit"
                                 onClick={() => handleEditProduct(item)}
                                 title="Editar"
                               >
                                 ✏️
                               </button>
-                              <button 
+                              <button
                                 className="action-btn toggle"
                                 onClick={() => handleToggleProductStatus(item.id)}
                                 title="Cambiar estado"
                               >
                                 {item.esActivo !== false ? '🚫' : '✅'}
                               </button>
-                              <button 
+                              <button
                                 className="action-btn delete"
                                 onClick={() => handleDeleteProduct(item.id)}
                                 title="Eliminar"
@@ -1616,8 +1761,8 @@ const AdminProfile = ({ user }) => {
                 </div>
               </div>
             ) : (
-              <div style={{textAlign: 'center', padding: '60px', color: '#6b7280'}}>
-                <p style={{fontSize: '1.2rem', marginBottom: '20px'}}>No hay items en esta categoría</p>
+              <div style={{ textAlign: 'center', padding: '60px', color: '#6b7280' }}>
+                <p style={{ fontSize: '1.2rem', marginBottom: '20px' }}>No hay items en esta categoría</p>
                 <button className="primary-btn" onClick={handleCreateProduct}>
                   + Crear Primer Item
                 </button>
@@ -1630,89 +1775,89 @@ const AdminProfile = ({ user }) => {
       {/* Modal de Formulario de Producto */}
       {showProductModal && (
         <div className="modal-overlay" onClick={() => setShowProductModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth: '600px'}}>
-            <div className="modal-header" style={{marginBottom: '20px'}}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <div className="modal-header" style={{ marginBottom: '20px' }}>
               <h3>{editingProduct ? 'Editar Item' : 'Nuevo Item'}</h3>
               <button className="btn-secondary" onClick={() => setShowProductModal(false)}>✕</button>
             </div>
 
-            <div className="settings-form" style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
+            <div className="settings-form" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div className="form-group">
-                <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>Nombre *</label>
-                <input 
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Nombre *</label>
+                <input
                   type="text"
                   value={productFormData.nombre}
-                  onChange={(e) => setProductFormData({...productFormData, nombre: e.target.value})}
+                  onChange={(e) => setProductFormData({ ...productFormData, nombre: e.target.value })}
                   placeholder="Nombre del producto"
-                  style={{width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb'}}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb' }}
                 />
               </div>
 
               <div className="form-group">
-                <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>Descripción</label>
-                <textarea 
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Descripción</label>
+                <textarea
                   value={productFormData.descripcion}
-                  onChange={(e) => setProductFormData({...productFormData, descripcion: e.target.value})}
+                  onChange={(e) => setProductFormData({ ...productFormData, descripcion: e.target.value })}
                   placeholder="Descripción del producto"
                   rows={3}
-                  style={{width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb'}}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb' }}
                 />
               </div>
 
-              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <div className="form-group">
-                  <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>Precio (S/)</label>
-                  <input 
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Precio (S/)</label>
+                  <input
                     type="number"
                     step="0.01"
                     value={productFormData.precio}
-                    onChange={(e) => setProductFormData({...productFormData, precio: parseFloat(e.target.value) || 0})}
+                    onChange={(e) => setProductFormData({ ...productFormData, precio: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
-                    style={{width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb'}}
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb' }}
                   />
                 </div>
 
                 <div className="form-group">
-                  <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>Stock</label>
-                  <input 
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Stock</label>
+                  <input
                     type="number"
                     value={productFormData.stock}
-                    onChange={(e) => setProductFormData({...productFormData, stock: parseInt(e.target.value) || 0})}
+                    onChange={(e) => setProductFormData({ ...productFormData, stock: parseInt(e.target.value) || 0 })}
                     placeholder="0"
-                    style={{width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb'}}
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb' }}
                   />
                 </div>
               </div>
 
               <div className="form-group">
-                <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>URL de Imagen</label>
-                <input 
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>URL de Imagen</label>
+                <input
                   type="text"
                   value={productFormData.imagenUrl}
-                  onChange={(e) => setProductFormData({...productFormData, imagenUrl: e.target.value})}
+                  onChange={(e) => setProductFormData({ ...productFormData, imagenUrl: e.target.value })}
                   placeholder="https://ejemplo.com/imagen.jpg"
-                  style={{width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb'}}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb' }}
                 />
               </div>
 
               <div className="form-group">
-                <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>SKU</label>
-                <input 
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>SKU</label>
+                <input
                   type="text"
                   value={productFormData.sku}
-                  onChange={(e) => setProductFormData({...productFormData, sku: e.target.value})}
+                  onChange={(e) => setProductFormData({ ...productFormData, sku: e.target.value })}
                   placeholder="SKU-001"
-                  style={{width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb'}}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb' }}
                 />
               </div>
             </div>
 
-            <div className="modal-actions" style={{marginTop: '25px', display: 'flex', gap: '10px', justifyContent: 'flex-end'}}>
+            <div className="modal-actions" style={{ marginTop: '25px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button className="btn-secondary" onClick={() => setShowProductModal(false)}>
                 Cancelar
               </button>
-              <button 
-                className="primary-btn" 
+              <button
+                className="primary-btn"
                 onClick={handleSaveProduct}
                 disabled={!productFormData.nombre}
               >

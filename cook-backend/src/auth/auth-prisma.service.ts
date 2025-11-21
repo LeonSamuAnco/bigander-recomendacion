@@ -15,7 +15,7 @@ export class AuthPrismaService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async register(registerUserDto: RegisterUserDto) {
     const {
@@ -96,13 +96,80 @@ export class AuthPrismaService {
           });
         }
 
+        // Crear Vendedor si el rol es Vendedor (rolId = 2)
+        if (rolId === 2) {
+          const newVendor = await prisma.vendor.create({
+            data: {
+              usuarioId: newUser.id,
+              nombreTienda: registerUserDto.nombreTienda || `${nombres} ${apellidos}`,
+              esVerificado: false,
+              horarioAtencion: registerUserDto.horarioAtencion,
+              metodosPago: registerUserDto.metodosPago,
+              tipoServicio: registerUserDto.tipoServicio,
+              whatsapp: registerUserDto.whatsapp,
+              instagram: registerUserDto.instagram,
+              facebook: registerUserDto.facebook,
+              logoUrl: registerUserDto.logoUrl,
+              sitioWeb: registerUserDto.sitioWeb,
+              direccion: registerUserDto.direccionNegocio,
+            },
+          });
+
+          // Guardar categorías seleccionadas
+          if (registerUserDto.categorias && registerUserDto.categorias.length > 0) {
+            await prisma.vendorCategory.createMany({
+              data: registerUserDto.categorias.map((catId) => ({
+                vendedorId: newVendor.id,
+                categoriaId: catId,
+              })),
+            });
+          }
+        }
+
         return newUser;
       });
 
+      // Obtener el usuario completo con todas sus relaciones
+      const fullUser = await this.prisma.user.findUnique({
+        where: { id: result.id },
+        include: {
+          rol: true,
+          tipoDocumento: true,
+          cliente: {
+            include: {
+              plan: true,
+            },
+          },
+          vendedor: {
+            include: {
+              categorias: {
+                include: {
+                  categoria: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!fullUser) {
+        throw new InternalServerErrorException('Error al obtener el usuario registrado');
+      }
+
+      // Crear token JWT para login automático
+      const payload = {
+        sub: fullUser.id,
+        email: fullUser.email,
+        rol: fullUser.rol.codigo,
+      };
+
+      const access_token = this.jwtService.sign(payload);
+
       // Excluir el password del resultado
-      const { passwordHash, ...userResult } = result;
+      const { passwordHash, ...userResult } = fullUser;
       return {
-        ...userResult,
+        access_token,
+        user: userResult,
         message: 'Usuario registrado exitosamente',
       };
     } catch (error: any) {
@@ -138,6 +205,15 @@ export class AuthPrismaService {
         cliente: {
           include: {
             plan: true,
+          },
+        },
+        vendedor: {
+          include: {
+            categorias: {
+              include: {
+                categoria: true,
+              },
+            },
           },
         },
       },
@@ -203,6 +279,15 @@ export class AuthPrismaService {
               plan: true,
             },
           },
+          vendedor: {
+            include: {
+              categorias: {
+                include: {
+                  categoria: true,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -240,22 +325,50 @@ export class AuthPrismaService {
 
       // Preparar datos para actualización
       const updateFields: any = {};
-      
-      if (updateData.nombres) updateFields.nombres = updateData.nombres;
-      if (updateData.apellidos) updateFields.apellidos = updateData.apellidos;
-      if (updateData.email) updateFields.email = updateData.email;
-      if (updateData.telefono) updateFields.telefono = updateData.telefono;
+
+      if (updateData.nombres !== undefined) updateFields.nombres = updateData.nombres;
+      if (updateData.apellidos !== undefined) updateFields.apellidos = updateData.apellidos;
+      if (updateData.email !== undefined) updateFields.email = updateData.email;
+      if (updateData.telefono !== undefined) updateFields.telefono = updateData.telefono;
       if (updateData.fechaNacimiento) updateFields.fechaNacimiento = new Date(updateData.fechaNacimiento);
-      if (updateData.direccion) updateFields.direccion = updateData.direccion;
-      if (updateData.bio) updateFields.bio = updateData.bio;
-      if (updateData.fotoPerfil) updateFields.fotoPerfil = updateData.fotoPerfil;
-      if (updateData.ciudad) updateFields.ciudad = updateData.ciudad;
-      if (updateData.pais) updateFields.pais = updateData.pais;
+      if (updateData.direccion !== undefined) updateFields.direccion = updateData.direccion;
+      if (updateData.bio !== undefined) updateFields.bio = updateData.bio;
+      if (updateData.fotoPerfil !== undefined) updateFields.fotoPerfil = updateData.fotoPerfil;
+      if (updateData.ciudad !== undefined) updateFields.ciudad = updateData.ciudad;
+      if (updateData.pais !== undefined) updateFields.pais = updateData.pais;
 
       // Actualizar contraseña si se proporciona
       if (updateData.password && updateData.password.trim() !== '') {
         const bcrypt = require('bcrypt');
         updateFields.passwordHash = await bcrypt.hash(updateData.password, 10);
+      }
+
+      // Actualizar datos del vendedor si existen
+      const currentUser = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: { vendedor: true }
+      });
+
+      if (currentUser?.vendedor) {
+        const vendorUpdateData: any = {};
+        if (updateData.nombreTienda !== undefined) vendorUpdateData.nombreTienda = updateData.nombreTienda;
+        if (updateData.horarioAtencion !== undefined) vendorUpdateData.horarioAtencion = updateData.horarioAtencion;
+        if (updateData.metodosPago !== undefined) vendorUpdateData.metodosPago = updateData.metodosPago;
+        if (updateData.sitioWeb !== undefined) vendorUpdateData.sitioWeb = updateData.sitioWeb;
+        if (updateData.direccionNegocio !== undefined) vendorUpdateData.direccion = updateData.direccionNegocio;
+        if (updateData.whatsapp !== undefined) vendorUpdateData.whatsapp = updateData.whatsapp;
+        if (updateData.instagram !== undefined) vendorUpdateData.instagram = updateData.instagram;
+        if (updateData.facebook !== undefined) vendorUpdateData.facebook = updateData.facebook;
+        if (updateData.tipoServicio !== undefined) vendorUpdateData.tipoServicio = updateData.tipoServicio;
+        if (updateData.logoUrl !== undefined) vendorUpdateData.logoUrl = updateData.logoUrl;
+        if (updateData.bio !== undefined) vendorUpdateData.descripcion = updateData.bio; // Sync bio to vendor description too
+
+        if (Object.keys(vendorUpdateData).length > 0) {
+          await this.prisma.vendor.update({
+            where: { id: currentUser.vendedor.id },
+            data: vendorUpdateData,
+          });
+        }
       }
 
       // Actualizar usuario
@@ -268,6 +381,15 @@ export class AuthPrismaService {
           cliente: {
             include: {
               plan: true,
+            },
+          },
+          vendedor: {
+            include: {
+              categorias: {
+                include: {
+                  categoria: true,
+                },
+              },
             },
           },
         },
@@ -326,7 +448,7 @@ export class AuthPrismaService {
       let racha = 0;
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
-      
+
       const actividadesPorDia = {};
       activities.forEach(activity => {
         const fecha = new Date(activity.fecha);
@@ -343,7 +465,7 @@ export class AuthPrismaService {
         const fecha = new Date(hoy);
         fecha.setDate(fecha.getDate() - i);
         const fechaStr = fecha.toISOString().split('T')[0];
-        
+
         if (actividadesPorDia[fechaStr] && actividadesPorDia[fechaStr] > 0) {
           racha++;
         } else {

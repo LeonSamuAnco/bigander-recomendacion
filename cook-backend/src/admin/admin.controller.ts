@@ -16,7 +16,7 @@ import { AdminService } from './admin.service';
 
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(private readonly adminService: AdminService) { }
 
   // Endpoint de prueba sin guards
   @Get('test')
@@ -118,6 +118,12 @@ export class AdminController {
     @Body('roleId', ParseIntPipe) newRoleId: number,
   ) {
     return this.adminService.changeUserRole(userId, newRoleId);
+  }
+
+  // Eliminar usuario
+  @Put('users/:id/delete')
+  async deleteUser(@Param('id', ParseIntPipe) userId: number) {
+    return this.adminService.deleteUser(userId);
   }
 
   // Obtener reportes del sistema

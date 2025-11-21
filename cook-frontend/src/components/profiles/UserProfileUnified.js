@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
+import {
   FaUser, FaHeart, FaChartBar, FaSignOutAlt,
   FaUtensils, FaMobileAlt, FaBirthdayCake, FaMapMarkerAlt, FaRunning,
   FaStar, FaTrophy, FaFire, FaEdit, FaCamera, FaCog
@@ -9,6 +9,8 @@ import activityService from '../../services/activityService';
 import favoritesService from '../../services/favoritesService';
 import RecommendationsWidget from '../RecommendationsWidget';
 import EditProfileModal from './EditProfileModal';
+import PantryManager from '../pantry/PantryManager';
+import ShoppingListManager from '../shopping/ShoppingListManager';
 import './UserProfileUnified.css';
 
 const UserProfileUnified = ({ user }) => {
@@ -17,6 +19,8 @@ const UserProfileUnified = ({ user }) => {
   const [profileImage, setProfileImage] = useState(null);
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showPantryModal, setShowPantryModal] = useState(false);
+  const [showShoppingListModal, setShowShoppingListModal] = useState(false);
   // eslint-disable-next-line no-unused-vars
   const [loading, setLoading] = useState(true);
   // eslint-disable-next-line no-unused-vars
@@ -25,7 +29,7 @@ const UserProfileUnified = ({ user }) => {
 
   // Sincronizar userData con user cuando cambie, con fallback a localStorage
   useEffect(() => {
-    
+
     if (user) {
       setUserData(user);
     } else {
@@ -100,10 +104,10 @@ const UserProfileUnified = ({ user }) => {
 
   const loadFavoritos = React.useCallback(async () => {
     try {
-      
+
       // Cargar favoritos agrupados
       const favoritosAgrupados = await favoritesService.getGroupedFavorites();
-      
+
       if (favoritosAgrupados) {
         setFavoritosPorCategoria({
           recetas: favoritosAgrupados.recetas?.length || 0,
@@ -121,7 +125,7 @@ const UserProfileUnified = ({ user }) => {
         setLugaresData(prev => ({ ...prev, favoritas: favoritosAgrupados.lugares || [] }));
         setDeportesData(prev => ({ ...prev, favoritas: favoritosAgrupados.deportes || [] }));
       }
-      
+
     } catch (error) {
       console.error('❌ Error cargando favoritos:', error);
     }
@@ -129,22 +133,22 @@ const UserProfileUnified = ({ user }) => {
 
   const loadHistorial = React.useCallback(async () => {
     try {
-      
+
       // Cargar actividades recientes de cada categoría
       const actividades = await activityService.getRecent(50);
-      
+
       if (actividades && actividades.length > 0) {
         // Filtrar por tipo de actividad
         const recetasVistas = actividades.filter(a => a.tipo === 'RECETA_VISTA');
         const recetasPreparadas = actividades.filter(a => a.tipo === 'RECETA_PREPARADA');
-        
+
         setRecetasData(prev => ({
           ...prev,
           vistas: recetasVistas.slice(0, 10),
           preparadas: recetasPreparadas.slice(0, 10)
         }));
       }
-      
+
     } catch (error) {
       console.error('❌ Error cargando historial:', error);
     } finally {
@@ -155,9 +159,9 @@ const UserProfileUnified = ({ user }) => {
   const loadStats = React.useCallback(async () => {
     try {
       setLoadingStats(true);
-      
+
       const statsData = await activityService.getStats();
-      
+
       if (statsData) {
         setStats({
           puntos: statsData.total || 0,
@@ -166,7 +170,7 @@ const UserProfileUnified = ({ user }) => {
           totalFavoritos: Object.values(favoritosPorCategoria).reduce((a, b) => a + b, 0)
         });
       }
-      
+
     } catch (error) {
       console.error('❌ Error cargando estadísticas:', error);
     } finally {
@@ -181,15 +185,52 @@ const UserProfileUnified = ({ user }) => {
     loadStats();
   }, [loadProfileData, loadFavoritos, loadHistorial, loadStats]);
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-      setShowImageUpload(false);
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('http://localhost:3002/upload/profile', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfileImage(data.url);
+
+        // Actualizar también en el backend el campo fotoPerfil
+        await fetch(`http://localhost:3002/clients/${user.id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ fotoPerfil: data.url })
+        });
+
+        // Actualizar usuario en localStorage
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const updatedUser = { ...storedUser, fotoPerfil: data.url };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setUserData(updatedUser);
+
+        setShowImageUpload(false);
+        alert('✅ Foto de perfil actualizada');
+      } else {
+        console.error('Error subiendo imagen');
+        alert('❌ Error al subir la imagen');
+      }
+    } catch (error) {
+      console.error('Error de red:', error);
+      alert('❌ Error de conexión');
     }
   };
 
@@ -203,11 +244,11 @@ const UserProfileUnified = ({ user }) => {
 
   // Funciones de botones
   const handleGestionarDespensa = () => {
-    navigate('/pantry');
+    setShowPantryModal(true);
   };
 
   const handleListaCompras = () => {
-    navigate('/shopping-lists');
+    setShowShoppingListModal(true);
   };
 
   // eslint-disable-next-line no-unused-vars
@@ -241,7 +282,7 @@ const UserProfileUnified = ({ user }) => {
       lugares: lugaresData.favoritos,
       deportes: deportesData.favoritos
     };
-    
+
     const csv = generateCSV(data);
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -249,7 +290,7 @@ const UserProfileUnified = ({ user }) => {
     link.href = url;
     link.download = 'mis_favoritos_cooksync.csv';
     link.click();
-    
+
     alert('✅ Favoritos exportados correctamente');
   };
 
@@ -300,21 +341,21 @@ const UserProfileUnified = ({ user }) => {
       }
 
       const updatedUser = await response.json();
-      
+
       // Actualizar estado local
       setUserData(updatedUser);
-      
+
       // Actualizar en localStorage también
       localStorage.setItem('user', JSON.stringify(updatedUser));
-      
+
       alert('✅ Perfil actualizado correctamente');
-      
+
       // Registrar actividad
       await activityService.create({
         tipo: 'PERFIL_ACTUALIZADO',
         descripcion: 'Actualizaste tu perfil'
       }).catch(err => console.warn('No se pudo registrar actividad:', err));
-      
+
       // Recargar stats
       loadStats();
     } catch (error) {
@@ -770,7 +811,7 @@ const UserProfileUnified = ({ user }) => {
               ) : (
                 <FaUser />
               )}
-              <button 
+              <button
                 className="avatar-upload-btn"
                 onClick={() => setShowImageUpload(!showImageUpload)}
               >
@@ -858,13 +899,22 @@ const UserProfileUnified = ({ user }) => {
         </div>
       )}
 
-      {/* Modal de Editar Perfil */}
-      <EditProfileModal
-        user={userData || user}
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        onSave={handleSaveProfile}
-      />
+      {/* Modal */}      {showEditModal && (
+        <EditProfileModal
+          user={userData}
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSave={handleSaveProfile}
+        />
+      )}
+
+      {showPantryModal && (
+        <PantryManager user={userData} onClose={() => setShowPantryModal(false)} />
+      )}
+
+      {showShoppingListModal && (
+        <ShoppingListManager user={userData} onClose={() => setShowShoppingListModal(false)} />
+      )}
     </div>
   );
 };

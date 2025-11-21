@@ -36,7 +36,7 @@ const RecipeReviews = ({ recipeId }) => {
         `${API_BASE_URL}/reviews/recipe/${recipeId}?page=${page}&limit=5&orderBy=recent`
       );
       const data = await response.json();
-      
+
       setReviews(data.reviews || []);
       setTotalPages(data.pagination?.totalPages || 1);
     } catch (error) {
@@ -69,7 +69,7 @@ const RecipeReviews = ({ recipeId }) => {
       const response = await fetch(
         `${API_BASE_URL}/reviews/user/${user.id}/recipe/${recipeId}`
       );
-      
+
       if (response.ok) {
         const data = await response.json();
         setUserReview(data);
@@ -89,20 +89,20 @@ const RecipeReviews = ({ recipeId }) => {
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!user) {
       alert('Debes iniciar sesión para dejar una reseña');
       return;
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const url = userReview
         ? `${API_BASE_URL}/reviews/${userReview.id}`
         : `${API_BASE_URL}/reviews`;
-      
+
       const method = userReview ? 'PUT' : 'POST';
-      
+
       const body = userReview
         ? formData
         : { ...formData, recetaId: parseInt(recipeId) };
@@ -140,7 +140,7 @@ const RecipeReviews = ({ recipeId }) => {
     if (!window.confirm('¿Estás seguro de eliminar tu reseña?')) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await fetch(
         `${API_BASE_URL}/reviews/${userReview.id}`,
         {
@@ -283,7 +283,7 @@ const RecipeReviews = ({ recipeId }) => {
               {showForm && (
                 <form onSubmit={handleSubmit} className="review-form">
                   <h3>{userReview ? 'Editar reseña' : 'Escribir reseña'}</h3>
-                  
+
                   <div className="form-group">
                     <label>Calificación *</label>
                     {renderStars(formData.calificacion, true, (rating) =>
@@ -339,7 +339,7 @@ const RecipeReviews = ({ recipeId }) => {
       {/* Lista de reseñas */}
       <div className="reviews-list">
         <h3>Reseñas de usuarios</h3>
-        
+
         {reviews.length === 0 ? (
           <p className="no-reviews">
             Aún no hay reseñas. ¡Sé el primero en dejar una!

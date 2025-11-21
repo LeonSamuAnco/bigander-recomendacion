@@ -65,10 +65,10 @@ const TopBar = () => {
         {isAuthenticated ? (
           <>
             <span className="user-greeting">👋 {user?.nombres || 'Usuario'}</span>
-            
+
             {/* Campana de Notificaciones */}
             <div className="notifications-container" style={{ position: 'relative' }}>
-              <button 
+              <button
                 className="notifications-btn"
                 onClick={() => setShowNotificationsPanel(!showNotificationsPanel)}
                 style={{
@@ -86,7 +86,7 @@ const TopBar = () => {
               >
                 🔔
                 {unreadCount > 0 && (
-                  <span 
+                  <span
                     className="notification-badge"
                     style={{
                       position: 'absolute',
@@ -108,7 +108,7 @@ const TopBar = () => {
                   </span>
                 )}
               </button>
-              
+
               {/* Panel de Notificaciones */}
               {showNotificationsPanel && (
                 <div style={{
@@ -127,7 +127,7 @@ const TopBar = () => {
                 </div>
               )}
             </div>
-            
+
             <button className="nav-btn-primary" onClick={() => navigate(getDashboardRoute())}>
               📊 Dashboard
             </button>
@@ -159,10 +159,10 @@ const AppContent = () => {
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         height: '100vh',
         fontSize: '1.2rem',
         color: '#667eea'
