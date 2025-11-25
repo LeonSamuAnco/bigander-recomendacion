@@ -1,4 +1,4 @@
-# CookSync - Plataforma de Gestión Culinaria y Estilo de Vida
+# bigander-recomendacion - Plataforma de Recomendacion Personalizada
 
 Este repositorio contiene el código fuente de la plataforma CookSync, dividida en Backend (NestJS) y Frontend (React).
 
