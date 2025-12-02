@@ -1,0 +1,50 @@
+@startuml
+title Diagrama de Casos de Uso - Administración de Productos
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+    Shadowing false
+}
+
+actor "Administrador" as Admin
+actor "Sistema de\nArchivos / Cloud" as Storage
+actor "Base de Datos" as DB
+
+rectangle "Gestión de Catálogo" {
+
+    ' --- CASOS PRINCIPALES ---
+    usecase "Crear Nuevo\nProducto" as UC_Create
+    usecase "Actualizar\nInventario" as UC_Update
+    usecase "Desactivar\nProducto" as UC_Delete
+
+    ' --- PROCESOS INTERNOS ---
+    usecase "Subir Imagen\ndel Producto" as UC_Upload
+    usecase "Validar Datos\nObligatorios" as UC_Validate
+    usecase "Indexar para\nBúsqueda" as UC_Index
+
+    ' --- RELACIONES ADMINISTRADOR ---
+    Admin -- UC_Create
+    Admin -- UC_Update
+    Admin -- UC_Delete
+
+    ' --- RELACIONES SISTEMAS EXTERNOS ---
+    UC_Upload -- Storage
+    
+    ' Todas las operaciones de persistencia van a la BD
+    UC_Create -- DB
+    UC_Update -- DB
+    UC_Delete -- DB
+    UC_Index -- DB
+
+    ' --- INCLUDES ---
+    UC_Create ..> UC_Validate : <<include>>
+    UC_Create ..> UC_Upload : <<include>>
+    UC_Create ..> UC_Index : <<include>>
+
+}
+
+@enduml

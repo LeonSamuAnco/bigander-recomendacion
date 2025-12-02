@@ -203,28 +203,117 @@ const ClientProfile = ({ user }) => {
     }));
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-      setShowImageUpload(false);
+      try {
+        // Validar tipo de archivo
+        if (!file.type.startsWith('image/')) {
+          alert('❌ Por favor selecciona un archivo de imagen válido');
+          return;
+        }
+
+        // Validar tamaño (máx 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('❌ La imagen no debe superar los 5MB');
+          return;
+        }
+
+        const token = localStorage.getItem('authToken');
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('http://localhost:3002/upload/profile-image', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+
+          // Actualizar la imagen en el perfil
+          const updateResponse = await fetch(`http://localhost:3002/clients/${user.id}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ fotoPerfil: data.url })
+          });
+
+          if (updateResponse.ok) {
+            setProfileImage(data.url);
+
+            // Actualizar usuario en localStorage
+            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+            storedUser.fotoPerfil = data.url;
+            localStorage.setItem('user', JSON.stringify(storedUser));
+
+            setShowImageUpload(false);
+            alert('✅ Foto de perfil actualizada correctamente');
+          }
+        } else {
+          alert('❌ Error al subir la imagen');
+        }
+      } catch (error) {
+        console.error('Error subiendo imagen:', error);
+        alert('❌ Error al subir la imagen. Por favor, intenta de nuevo.');
+      }
     }
   };
 
   const handleSaveChanges = async () => {
     try {
-      // Aquí implementarías la actualización del perfil
-      setIsEditing(false);
-      alert('✅ Perfil actualizado correctamente');
-      loadClientData();
-      loadProfileData();
+      const token = localStorage.getItem('authToken');
+
+      // Preparar datos para enviar
+      const updatePayload = {
+        nombres: profileData.nombre,
+        email: profileData.email,
+        telefono: profileData.telefono,
+        direccion: profileData.direccion,
+        bio: profileData.bio,
+      };
+
+      // Solo incluir password si se ingresó uno nuevo
+      if (profileData.password && profileData.password.trim() !== '') {
+        updatePayload.password = profileData.password;
+      }
+
+      const response = await fetch(`http://localhost:3002/clients/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatePayload)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Actualizar usuario en localStorage
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const updatedUser = { ...storedUser, ...data.user };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        setCurrentUser(updatedUser);
+        setIsEditing(false);
+        alert('✅ Perfil actualizado correctamente');
+
+        // Recargar datos
+        loadClientData();
+        loadProfileData();
+      } else {
+        const errorData = await response.json();
+        alert(`❌ Error: ${errorData.message || 'No se pudo actualizar el perfil'}`);
+      }
     } catch (error) {
       console.error('Error actualizando perfil:', error);
-      alert('❌ Error al actualizar el perfil');
+      alert('❌ Error al actualizar el perfil. Por favor, intenta de nuevo.');
     }
   };
 
@@ -268,6 +357,9 @@ const ClientProfile = ({ user }) => {
           </button>
           <button className="sidebar-menu-item active">
             <FaUser /> Mi perfil
+          </button>
+          <button onClick={() => navigate('/statistics')} className="sidebar-menu-item">
+            <FaHistory /> Estadísticas
           </button>
           <button onClick={() => navigate('/settings')} className="sidebar-menu-item">
             <FaCog /> Ajustes
@@ -353,7 +445,7 @@ const ClientProfile = ({ user }) => {
         {/* Tarjetas de acceso rápido */}
         <div className="quick-access-grid">
           {/* Tu Plan Actual */}
-          <div className="quick-access-card" onClick={() => navigate('/plans')}>
+          <div className="quick-access-card">
             <div className="quick-access-header">
               <div className="quick-access-icon">
                 🎯
@@ -368,11 +460,16 @@ const ClientProfile = ({ user }) => {
                 <li>{clientData?.plan?.limiteIngredientes || 50} ingredientes en despensa</li>
               </ul>
             </div>
-            <button className="quick-access-action">Mejorar Plan</button>
+            <button
+              className="quick-access-action"
+              onClick={() => navigate('/plans')}
+            >
+              Mejorar Plan
+            </button>
           </div>
 
           {/* Recetas Favoritas */}
-          <div className="quick-access-card" onClick={() => navigate('/favoritas')}>
+          <div className="quick-access-card">
             <div className="quick-access-header">
               <div className="quick-access-icon">
                 ❤️
@@ -386,11 +483,17 @@ const ClientProfile = ({ user }) => {
                 <p>Aún no tienes recetas favoritas</p>
               )}
             </div>
-            <a href="/favoritas" className="quick-access-link">Ver todas las favoritas</a>
+            <button
+              className="quick-access-link"
+              onClick={() => navigate('/favoritas')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              Ver todas las favoritas
+            </button>
           </div>
 
           {/* Mi Despensa */}
-          <div className="quick-access-card" onClick={() => setShowPantryManager(true)}>
+          <div className="quick-access-card">
             <div className="quick-access-header">
               <div className="quick-access-icon">
                 🥫
@@ -405,7 +508,12 @@ const ClientProfile = ({ user }) => {
                 </p>
               )}
             </div>
-            <button className="quick-access-action">Gestionar Despensa</button>
+            <button
+              className="quick-access-action"
+              onClick={() => setShowPantryManager(true)}
+            >
+              Gestionar Despensa
+            </button>
           </div>
 
           {/* Recomendado para ti */}
@@ -419,14 +527,20 @@ const ClientProfile = ({ user }) => {
             <div className="quick-access-content">
               <p>Recetas con los ingredientes que tienes</p>
               <p style={{ fontSize: '0.875rem', color: '#718096', marginTop: '0.5rem' }}>
-                Encontramos 12 recetas que puedes hacer ahora
+                Descubre recetas basadas en tu despensa
               </p>
             </div>
-            <a href="/recipes" className="quick-access-link">Ver más</a>
+            <button
+              className="quick-access-link"
+              onClick={() => navigate('/recipes')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              Ver más
+            </button>
           </div>
 
           {/* Actividad Reciente */}
-          <div className="quick-access-card" onClick={() => navigate('/history')}>
+          <div className="quick-access-card">
             <div className="quick-access-header">
               <div className="quick-access-icon">
                 📊
@@ -440,6 +554,13 @@ const ClientProfile = ({ user }) => {
                 <p>No hay actividad reciente</p>
               )}
             </div>
+            <button
+              className="quick-access-link"
+              onClick={() => navigate('/profile/activity')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              Ver historial completo
+            </button>
           </div>
 
           {/* Acciones Rápidas */}
@@ -467,9 +588,9 @@ const ClientProfile = ({ user }) => {
               </button>
               <button
                 className="quick-access-action"
-                onClick={() => setIsEditing(true)}
+                onClick={() => navigate('/reviews')}
               >
-                ⚙️ Calificar Recetas
+                ⭐ Mis Reseñas
               </button>
             </div>
           </div>

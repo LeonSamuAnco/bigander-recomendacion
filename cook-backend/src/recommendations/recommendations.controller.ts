@@ -11,7 +11,7 @@ export class RecommendationsController {
     private readonly recommendationsService: RecommendationsService,
     private readonly advancedRecommendationsService: AdvancedRecommendationsService,
     private readonly mlRecommendationsService: MLRecommendationsService,
-  ) {}
+  ) { }
 
   /**
    * Obtener recomendaciones personalizadas para el usuario autenticado
@@ -24,6 +24,28 @@ export class RecommendationsController {
   ) {
     const userId = req.user.userId;
     const limitNum = limit ? parseInt(limit) : 12;
+
+    try {
+      // Intentar obtener recomendaciones de ML
+      const mlPredictions = await this.mlRecommendationsService.getMLRecommendations(
+        userId,
+        limitNum,
+      );
+
+      if (mlPredictions.length > 0) {
+        // Mapear al formato esperado por el frontend
+        return mlPredictions.map(pred => ({
+          tipo: pred.tipo,
+          itemId: pred.itemId,
+          score: Math.min(Math.round(pred.predictedRating * 20), 100), // 0-5 -> 0-100
+          razon: pred.explanation,
+          item: this.recommendationsService.formatearItem(pred.item, pred.tipo),
+        }));
+      }
+    } catch (error) {
+      console.error('Error obteniendo recomendaciones ML:', error);
+      // Fallback al servicio tradicional si falla ML
+    }
 
     return await this.recommendationsService.getPersonalizedRecommendations(
       userId,
@@ -45,7 +67,7 @@ export class RecommendationsController {
   ) {
     const userId = req.user.userId;
     const limitNum = limit ? parseInt(limit) : 12;
-    
+
     const contexto = {
       horaActual: hora ? parseInt(hora) : new Date().getHours(),
       diaActual: dia ? parseInt(dia) : new Date().getDay(),
@@ -111,10 +133,10 @@ export class RecommendationsController {
 
     // Eliminar duplicados y combinar scores
     const recomendacionesUnicas = new Map();
-    
+
     todasRecomendaciones.forEach(rec => {
       const key = `${rec.tipo}-${rec.itemId}`;
-      
+
       if (recomendacionesUnicas.has(key)) {
         const existente = recomendacionesUnicas.get(key);
         existente.score = (existente.score + rec.score * rec.peso) / 2;
@@ -161,11 +183,11 @@ export class RecommendationsController {
   @Get('accuracy')
   async getRecommendationAccuracy(@Request() req) {
     const userId = req.user.userId;
-    
+
     // Obtener recomendaciones de los últimos 30 días
     const fechaLimite = new Date();
     fechaLimite.setDate(fechaLimite.getDate() - 30);
-    
+
     // Simular análisis de precisión (en un sistema real, compararías con acciones reales)
     return {
       userId,

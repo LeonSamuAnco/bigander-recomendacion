@@ -2,10 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { FaTimes, FaMapMarkedAlt, FaPhone, FaStar, FaUserTie, FaWhatsapp, FaInstagram, FaClock, FaCreditCard, FaTruck } from 'react-icons/fa';
 import './LugarPurchaseOptions.css';
 
+const API_BASE_URL = 'http://localhost:3002';
+
 const LugarPurchaseOptions = ({ lugar, onClose }) => {
     const [selectedTab, setSelectedTab] = useState('platform');
     const [platformVendors, setPlatformVendors] = useState([]);
     const [loadingVendors, setLoadingVendors] = useState(true);
+    const [expandedVendor, setExpandedVendor] = useState(null);
+    const [vendorProducts, setVendorProducts] = useState({});
+    const [loadingProducts, setLoadingProducts] = useState(false);
 
     // Cargar vendedores de la plataforma
     useEffect(() => {
@@ -13,7 +18,7 @@ const LugarPurchaseOptions = ({ lugar, onClose }) => {
             try {
                 setLoadingVendors(true);
                 // Categoría 17 = Lugares (Agencias, Guías, etc.)
-                const response = await fetch('http://localhost:3002/vendors/by-category/17?limit=10');
+                const response = await fetch(`${API_BASE_URL}/vendors/by-category/17?limit=10`);
                 if (response.ok) {
                     const data = await response.json();
                     setPlatformVendors(data.vendors || []);
@@ -27,6 +32,30 @@ const LugarPurchaseOptions = ({ lugar, onClose }) => {
 
         fetchVendors();
     }, []);
+
+    const handleExpandVendor = async (vendorId, userId) => {
+        if (expandedVendor === vendorId) {
+            setExpandedVendor(null);
+            return;
+        }
+
+        setExpandedVendor(vendorId);
+
+        if (!vendorProducts[vendorId]) {
+            setLoadingProducts(true);
+            try {
+                const response = await fetch(`${API_BASE_URL}/vendors/${userId}/store-products?limit=50`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setVendorProducts(prev => ({ ...prev, [vendorId]: data.products || [] }));
+                }
+            } catch (error) {
+                console.error('Error cargando productos:', error);
+            } finally {
+                setLoadingProducts(false);
+            }
+        }
+    };
 
     return (
         <div className="purchase-modal-overlay" onClick={onClose}>
@@ -53,7 +82,6 @@ const LugarPurchaseOptions = ({ lugar, onClose }) => {
                         <FaUserTie />
                         Guías y Agencias
                     </button>
-                    {/* Podríamos agregar más tabs como "Tours" o "Entradas" en el futuro */}
                 </div>
 
                 <div className="purchase-modal-body">
@@ -123,6 +151,38 @@ const LugarPurchaseOptions = ({ lugar, onClose }) => {
                                                     🗺️ {vendor.stats.totalRecipes} servicios publicados
                                                 </p>
                                             </div>
+
+                                            <div className="vendor-products-section">
+                                                <button
+                                                    className="view-products-btn"
+                                                    onClick={() => handleExpandVendor(vendor.id, vendor.userId)}
+                                                >
+                                                    {expandedVendor === vendor.id ? 'Ocultar Productos' : 'Ver Productos'}
+                                                </button>
+
+                                                {expandedVendor === vendor.id && (
+                                                    <div className="vendor-products-list">
+                                                        {loadingProducts && !vendorProducts[vendor.id] ? (
+                                                            <div className="loading-spinner-small"></div>
+                                                        ) : (vendorProducts[vendor.id] && vendorProducts[vendor.id].length > 0) ? (
+                                                            <div className="products-mini-grid">
+                                                                {vendorProducts[vendor.id].map(product => (
+                                                                    <div key={product.id} className="mini-product-card">
+                                                                        <img src={product.image || 'https://placehold.co/100?text=Producto'} alt={product.name} />
+                                                                        <div className="mini-product-info">
+                                                                            <h5>{product.name}</h5>
+                                                                            <p>S/ {product.price.toFixed(2)}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="no-products-msg">Este vendedor no tiene productos registrados.</p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
                                             <div className="vendor-actions">
                                                 {vendor.whatsapp && (
                                                     <a

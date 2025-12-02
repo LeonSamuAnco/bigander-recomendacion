@@ -1,0 +1,20 @@
+@startuml
+title Actividad: Verificación de Caché
+
+start
+
+:Usuario solicita recomendaciones;
+
+:Recibir GET /api/recommendations;
+
+if (¿Existe en caché Redis?) then (Sí)
+    :Obtener de Redis;
+    :Devolver recomendaciones\ncacheadas;
+    stop
+else (No)
+    :Continuar con\ngeneración;
+endif
+
+stop
+
+@enduml

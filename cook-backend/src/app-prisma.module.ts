@@ -22,6 +22,7 @@ import { AdminModule } from './admin/admin.module';
 import { ProductsModule } from './products/products.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 import { VendorsModule } from './vendors/vendors.module';
+import { ClientsModule } from './clients/clients.module';
 import { LoggerModule } from './common/logger/logger.module';
 
 @Module({
@@ -64,10 +65,12 @@ import { LoggerModule } from './common/logger/logger.module';
     RecommendationsModule,
     // Módulo de vendedores
     VendorsModule,
+    // Módulo de clientes
+    ClientsModule,
     // Módulo de logging estructurado
     LoggerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppPrismaModule {}
+export class AppPrismaModule { }

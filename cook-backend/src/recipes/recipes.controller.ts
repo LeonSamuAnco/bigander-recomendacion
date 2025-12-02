@@ -100,12 +100,6 @@ export class RecipesController {
     }
   }
 
-  // Obtener una receta específica
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.recipesService.findOne(parseInt(id));
-  }
-
   // Obtener todos los ingredientes maestros
   @Get('ingredients/all')
   async findAllIngredients() {
@@ -128,6 +122,12 @@ export class RecipesController {
   @Get('units/all')
   async findAllMeasurementUnits() {
     return this.recipesService.findAllMeasurementUnits();
+  }
+
+  // Obtener una receta específica
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.recipesService.findOne(parseInt(id));
   }
 
   // Obtener recomendaciones inteligentes

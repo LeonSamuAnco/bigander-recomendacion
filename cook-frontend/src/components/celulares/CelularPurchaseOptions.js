@@ -196,9 +196,33 @@ const CelularPurchaseOptions = ({ celular, onClose }) => {
                       )}
                       <div className="vendor-details">
                         {vendor.address && (
-                          <p className="vendor-address">
-                            <FaMapMarkerAlt /> {vendor.address}
-                          </p>
+                          <div className="vendor-address-container">
+                            <p className="vendor-address">
+                              <FaMapMarkerAlt /> {vendor.address}
+                            </p>
+                            <button
+                              className="view-map-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const url = (vendor.latitud && vendor.longitud)
+                                  ? `https://www.google.com/maps/search/?api=1&query=${vendor.latitud},${vendor.longitud}`
+                                  : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(vendor.address)}`;
+                                window.open(url, '_blank');
+                              }}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#4299e1',
+                                cursor: 'pointer',
+                                fontSize: '0.9rem',
+                                textDecoration: 'underline',
+                                marginLeft: '5px',
+                                padding: 0
+                              }}
+                            >
+                              Ver en Mapa
+                            </button>
+                          </div>
                         )}
                         {vendor.horarioAtencion && (
                           <p className="vendor-detail">

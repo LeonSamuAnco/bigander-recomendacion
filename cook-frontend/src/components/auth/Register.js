@@ -73,7 +73,18 @@ const Register = () => {
 
         if (rolesResponse.ok) {
           const rolesData = await rolesResponse.json()
-          setRoles(rolesData)
+          console.log('🔍 Todos los roles:', rolesData)
+
+          // Buscar específicamente Cliente y Vendedor por ID
+          const clienteRole = rolesData.find(role => role.id === 1)
+          const vendedorRole = rolesData.find(role => role.id === 2)
+
+          const filteredRoles = []
+          if (clienteRole) filteredRoles.push(clienteRole)
+          if (vendedorRole) filteredRoles.push(vendedorRole)
+
+          console.log('✅ Roles filtrados:', filteredRoles)
+          setRoles(filteredRoles)
         } else {
           console.error('❌ Error al cargar roles:', rolesResponse.statusText);
         }
@@ -456,7 +467,58 @@ const Register = () => {
                       value={formData.direccionNegocio}
                       onChange={handleChange}
                       placeholder="Av. Comercial 123, Distrito"
+                      required={formData.rolId === 2}
                     />
+                  </div>
+                  <div style={{ marginTop: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (navigator.geolocation) {
+                          const btn = document.getElementById('geo-btn');
+                          if (btn) btn.innerText = 'Obteniendo ubicación...';
+
+                          navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                latitud: position.coords.latitude,
+                                longitud: position.coords.longitude
+                              }));
+                              if (btn) btn.innerText = '✅ Ubicación exacta guardada';
+                              // Opcional: Intentar obtener dirección inversa aquí si se tuviera API Key
+                            },
+                            (error) => {
+                              console.error(error);
+                              if (btn) btn.innerText = '❌ Error al obtener ubicación';
+                              alert('No se pudo obtener la ubicación. Por favor ingrese la dirección manualmente.');
+                            }
+                          );
+                        } else {
+                          alert('Geolocalización no soportada en este navegador');
+                        }
+                      }}
+                      id="geo-btn"
+                      style={{
+                        background: '#4299e1',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 12px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px'
+                      }}
+                    >
+                      📍 Usar mi ubicación actual exacta
+                    </button>
+                    {(formData.latitud && formData.longitud) && (
+                      <p style={{ fontSize: '0.8rem', color: 'green', marginTop: '5px' }}>
+                        Coordenadas: {formData.latitud.toFixed(6)}, {formData.longitud.toFixed(6)}
+                      </p>
+                    )}
                   </div>
                 </div>
 

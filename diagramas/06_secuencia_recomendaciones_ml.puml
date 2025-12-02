@@ -1,0 +1,205 @@
+@startuml
+title Diagrama de Secuencia - Generación de Recomendaciones ML
+
+actor Usuario
+participant "Frontend\n(React)" as Frontend
+participant "API\n(Nest.js)" as API
+participant "MLRecommendations\nService" as MLService
+participant "Recommendations\nService\n(Fallback)" as FallbackService
+participant "Redis\nCache" as Redis
+participant "MySQL\nDatabase" as MySQL
+
+' ============================================
+' INICIO DEL FLUJO
+' ============================================
+
+Usuario -> Frontend: Accede a página de\nrecomendaciones
+activate Frontend
+
+Frontend -> API: GET /api/recommendations\n?tipo=celular&limit=10
+activate API
+
+' ============================================
+' VERIFICACIÓN DE CACHÉ
+' ============================================
+
+API -> Redis: GET recommendations:userId:celular
+activate Redis
+
+alt Existe en caché
+    Redis --> API: Recomendaciones cacheadas
+    API --> Frontend: 200 OK\n{ recommendations: [...] }
+    Frontend --> Usuario: Mostrar recomendaciones
+    deactivate Redis
+    deactivate API
+    deactivate Frontend
+    
+else No existe en caché
+    Redis --> API: null (no existe)
+    deactivate Redis
+    
+    ' ============================================
+    ' OBTENER HISTORIAL DE USUARIO
+    ' ============================================
+    
+    API -> MySQL: SELECT * FROM user_activity\nWHERE usuarioId = ?
+    activate MySQL
+    MySQL --> API: Lista de actividades
+    deactivate MySQL
+    
+    alt Usuario tiene historial
+        ' ============================================
+        ' FLUJO ML
+        ' ============================================
+        
+        API -> MLService: getRecommendations(userId, 'celular', 10)
+        activate MLService
+        
+        ' --- CONSTRUIR VECTOR DE USUARIO ---
+        MLService -> MLService: buildUserVector(userId)
+        note right
+            **Construir UserVector**
+            1. Extraer features de actividades
+            2. Aplicar time-decay
+            3. Contar preferencias por tipo
+            4. Crear vector de 20 dimensiones
+        end note
+        
+        ' --- OBTENER ITEMS CANDIDATOS ---
+        MLService -> MySQL: SELECT * FROM items\nJOIN celulares\nWHERE es_activo = true
+        activate MySQL
+        MySQL --> MLService: Lista de celulares
+        deactivate MySQL
+        
+        ' --- CONSTRUIR VECTORES DE ITEMS ---
+        MLService -> MLService: buildItemVectors('celular')
+        note right
+            **Construir ItemVectors**
+            Para cada item:
+            1. Crear vector de 20 dimensiones
+            2. Asignar 1.0 en dimensión del tipo
+            3. Agregar popularidad y rating
+        end note
+        
+        ' --- CALCULAR SIMILARIDAD ---
+        MLService -> MLService: Para cada item:\ncalculateSimilarity(userVec, itemVec)
+        note right
+            **Similaridad Coseno**
+            similarity = dot(u, i) / (||u|| * ||i||)
+            Rango: [0, 1]
+        end note
+        
+        ' --- PREDECIR RATING ---
+        MLService -> MLService: Para cada item:\npredictRating(userVec, itemVec, similarity)
+        note right
+            **Predicción de Rating**
+            rating = baseRating (3.5)
+                   + similarityBoost (similarity * 1.5)
+                   + typeBoost (preferencias)
+                   + popularityBoost
+            
+            Limitar a [0, 5]
+        end note
+        
+        ' --- CALCULAR CONFIANZA ---
+        MLService -> MLService: Para cada predicción:\ncalculateConfidence()
+        note right
+            **Confianza**
+            confidence = (similarityConf 
+                        + dataConf 
+                        + popularityConf) / 3
+        end note
+        
+        ' --- GENERAR EXPLICACIÓN ---
+        MLService -> MLService: Para cada predicción:\ngenerateExplanation()
+        note right
+            **Explicación**
+            "Basado en tu interés en
+            celulares (85% de similaridad)"
+        end note
+        
+        ' --- ORDENAR Y FILTRAR ---
+        MLService -> MLService: Ordenar por:\n1. predictedRating DESC\n2. confidence DESC\n3. similarity DESC
+        
+        MLService -> MLService: Limitar a 10 resultados
+        
+        ' --- ENRIQUECER CON DATOS COMPLETOS ---
+        MLService -> MySQL: Para cada item:\nSELECT * FROM celulares\nJOIN items, marcas, etc.\nWHERE item_id = ?
+        activate MySQL
+        MySQL --> MLService: Datos completos del item
+        deactivate MySQL
+        
+        MLService --> API: PredictionResult[]\n(con datos enriquecidos)
+        deactivate MLService
+        
+    else Usuario NO tiene historial (Cold Start)
+        ' ============================================
+        ' FLUJO FALLBACK
+        ' ============================================
+        
+        API -> FallbackService: getPopularItems('celular', 10)
+        activate FallbackService
+        
+        FallbackService -> MySQL: SELECT * FROM items\nJOIN celulares\nORDER BY popularidad DESC,\ncalificacion_promedio DESC\nLIMIT 10
+        activate MySQL
+        MySQL --> FallbackService: Items populares
+        deactivate MySQL
+        
+        FallbackService --> API: Lista de items populares
+        deactivate FallbackService
+    end
+    
+    ' ============================================
+    ' ALMACENAR EN CACHÉ
+    ' ============================================
+    
+    API -> Redis: SET recommendations:userId:celular\nVALUE: JSON\nTTL: 300 segundos (5 min)
+    activate Redis
+    Redis --> API: OK
+    deactivate Redis
+    
+    ' ============================================
+    ' RESPUESTA AL CLIENTE
+    ' ============================================
+    
+    API --> Frontend: 200 OK\n{\n  recommendations: [...],\n  total: 10,\n  generatedAt: timestamp,\n  source: "ml" | "fallback"\n}
+    deactivate API
+    
+    Frontend -> Frontend: Renderizar tarjetas\nde recomendaciones
+    
+    Frontend --> Usuario: Mostrar recomendaciones\ncon explicaciones
+    deactivate Frontend
+end
+
+' ============================================
+' INTERACCIÓN DEL USUARIO
+' ============================================
+
+Usuario -> Frontend: Click en un celular
+activate Frontend
+
+Frontend -> API: POST /api/user-activity\n{\n  tipo: "CELULAR VISTO",\n  referenciaId: 123\n}
+activate API
+
+API -> MySQL: INSERT INTO user_activity
+activate MySQL
+MySQL --> API: OK
+deactivate MySQL
+
+API --> Frontend: 201 Created
+deactivate API
+
+Frontend --> Usuario: Mostrar detalles\ndel celular
+deactivate Frontend
+
+note over Redis
+    **Invalidación de Caché**
+    
+    Cuando el usuario interactúa:
+    1. Se registra la actividad
+    2. El caché expira en 5 min
+    3. Próxima solicitud generará
+       nuevas recomendaciones
+end note
+
+@enduml

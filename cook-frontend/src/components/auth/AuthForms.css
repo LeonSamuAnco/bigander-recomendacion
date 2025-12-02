@@ -1,7 +1,8 @@
 /* Estilos modernos para los formularios de autenticación - CookSync */
 .modern-auth-container {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: #f8fafc;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
@@ -157,11 +158,16 @@
   justify-content: center;
   padding: 40px;
   background: white;
+  height: 100vh;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .auth-form-container {
   width: 100%;
   max-width: 480px;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .form-header {
@@ -345,12 +351,12 @@
   transition: all 0.2s ease;
 }
 
-.checkbox-container input[type="checkbox"]:checked + .checkmark {
+.checkbox-container input[type="checkbox"]:checked+.checkmark {
   background: #3b82f6;
   border-color: #3b82f6;
 }
 
-.checkbox-container input[type="checkbox"]:checked + .checkmark::after {
+.checkbox-container input[type="checkbox"]:checked+.checkmark::after {
   content: '✓';
   position: absolute;
   top: -2px;
@@ -455,9 +461,11 @@
 @media (max-width: 480px) {
   .modern-auth-container {
     flex-direction: column;
+    height: auto;
     min-height: 100vh;
+    overflow: visible;
   }
-  
+
   .auth-left-side {
     width: 100%;
     min-height: 200px;
@@ -466,85 +474,86 @@
     align-items: center;
     justify-content: center;
   }
-  
+
   .auth-hero-content {
     text-align: center;
   }
-  
+
   .auth-hero-icon {
     font-size: 2.5rem;
     margin-bottom: 12px;
   }
-  
+
   .auth-hero-title {
     font-size: 1.5rem;
     margin-bottom: 8px;
   }
-  
+
   .auth-hero-subtitle {
     font-size: 0.9rem;
     line-height: 1.4;
   }
-  
+
   .auth-right-side {
     width: 100%;
     padding: 20px 15px;
-    min-height: auto;
+    height: auto;
+    overflow-y: visible;
   }
-  
+
   .auth-form-container {
     padding: 20px;
   }
-  
+
   .auth-form-title {
     font-size: 1.5rem;
     margin-bottom: 6px;
   }
-  
+
   .auth-form-subtitle {
     font-size: 0.85rem;
     margin-bottom: 20px;
   }
-  
+
   .form-group {
     margin-bottom: 16px;
   }
-  
+
   .form-label {
     font-size: 0.85rem;
     margin-bottom: 6px;
   }
-  
+
   .form-input,
   .form-select {
     padding: 10px 12px;
     font-size: 0.9rem;
   }
-  
+
   .submit-button {
     padding: 12px;
     font-size: 0.95rem;
   }
-  
+
   .auth-divider {
     margin: 16px 0;
     font-size: 0.85rem;
   }
-  
+
   .social-login-buttons {
     gap: 8px;
   }
-  
+
   .social-button {
     padding: 10px;
     font-size: 0.85rem;
   }
-  
+
   .auth-footer {
     margin-top: 16px;
     font-size: 0.85rem;
   }
-  
+
   .auth-link {
     font-size: 0.85rem;
   }
@@ -555,38 +564,38 @@
   .modern-auth-container {
     flex-direction: column;
   }
-  
+
   .auth-left-side,
   .auth-right-side {
     width: 100%;
     min-height: auto;
   }
-  
+
   .auth-left-side {
     padding: 30px 20px;
     min-height: 250px;
   }
-  
+
   .auth-hero-icon {
     font-size: 3rem;
   }
-  
+
   .auth-hero-title {
     font-size: 1.85rem;
   }
-  
+
   .auth-hero-subtitle {
     font-size: 1rem;
   }
-  
+
   .auth-right-side {
     padding: 30px 20px;
   }
-  
+
   .auth-form-container {
     padding: 25px;
   }
-  
+
   .auth-form-title {
     font-size: 1.75rem;
   }
@@ -597,26 +606,26 @@
   .modern-auth-container {
     flex-direction: column;
   }
-  
+
   .auth-left-side,
   .auth-right-side {
     width: 100%;
     min-height: auto;
   }
-  
+
   .auth-left-side {
     padding: 40px 30px;
     min-height: 300px;
   }
-  
+
   .auth-hero-title {
     font-size: 2.25rem;
   }
-  
+
   .auth-right-side {
     padding: 40px 30px;
   }
-  
+
   .auth-form-container {
     max-width: 500px;
     margin: 0 auto;
@@ -628,11 +637,11 @@
   .modern-auth-container {
     flex-direction: row;
   }
-  
+
   .auth-left-side {
     width: 45%;
   }
-  
+
   .auth-right-side {
     width: 55%;
   }
@@ -642,28 +651,30 @@
 @media (max-width: 1024px) {
   .modern-auth-container {
     flex-direction: column;
+    height: auto;
+    overflow: visible;
   }
-  
+
   .auth-left-side {
     padding: 40px;
     min-height: 40vh;
   }
-  
+
   .auth-welcome h1 {
     font-size: 36px;
   }
-  
+
   .auth-features {
     flex-direction: row;
     flex-wrap: wrap;
     gap: 12px;
   }
-  
+
   .feature-item {
     flex: 1;
     min-width: 200px;
   }
-  
+
   .auth-image {
     height: 150px;
   }
@@ -673,20 +684,22 @@
   .auth-left-side {
     padding: 30px 20px;
   }
-  
+
   .auth-right-side {
     padding: 30px 20px;
+    height: auto;
+    overflow-y: visible;
   }
-  
+
   .auth-welcome h1 {
     font-size: 28px;
   }
-  
+
   .form-row {
     flex-direction: column;
     gap: 24px;
   }
-  
+
   .auth-features {
     flex-direction: column;
   }
@@ -696,19 +709,21 @@
   .auth-left-side {
     padding: 20px;
   }
-  
+
   .auth-right-side {
     padding: 20px;
+    height: auto;
+    overflow-y: visible;
   }
-  
+
   .form-header h2 {
     font-size: 24px;
   }
-  
+
   .auth-welcome h1 {
     font-size: 24px;
   }
-  
+
   .auth-welcome p {
     font-size: 16px;
   }
@@ -720,6 +735,7 @@
     opacity: 0;
     transform: translateX(-30px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -731,6 +747,7 @@
     opacity: 0;
     transform: translateX(30px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -814,7 +831,7 @@
   background: #f0f9ff;
 }
 
-.category-checkbox input[type="checkbox"]:checked + .category-label {
+.category-checkbox input[type="checkbox"]:checked+.category-label {
   background: #3b82f6;
   border-color: #3b82f6;
   color: white;
@@ -848,12 +865,12 @@
   .categories-section {
     padding: 16px;
   }
-  
+
   .category-label {
     padding: 10px 12px;
     font-size: 13px;
   }
-  
+
   .category-icon {
     font-size: 16px;
   }

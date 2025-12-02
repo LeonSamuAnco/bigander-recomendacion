@@ -19,7 +19,7 @@ const DeporteCard = ({ deporte }) => {
   useEffect(() => {
     const loadFavoriteStatus = async () => {
       try {
-        const result = await favoritesService.checkIsFavorite('deporte', deporte.id);
+        const result = await favoritesService.checkIsFavorite('deporte', deporte.item_id);
         setIsFavorite(result.isFavorite);
         setFavoriteId(result.favoriteId);
       } catch (error) {
@@ -30,11 +30,11 @@ const DeporteCard = ({ deporte }) => {
     if (isAuthenticated) {
       loadFavoriteStatus();
     }
-  }, [isAuthenticated, deporte.id]);
+  }, [isAuthenticated, deporte.item_id]);
 
   const handleToggleFavorite = async (event) => {
     event.stopPropagation();
-    
+
     if (!isAuthenticated) {
       if (window.confirm('👉 Primero debes iniciar sesión para poder agregar a favoritos.\n\n¿Deseas ir a la página de inicio de sesión?')) {
         window.location.href = '/login';
@@ -50,7 +50,7 @@ const DeporteCard = ({ deporte }) => {
         setIsFavorite(false);
         setFavoriteId(null);
       } else {
-        const result = await favoritesService.addToFavorites('deporte', deporte.id);
+        const result = await favoritesService.addToFavorites('deporte', deporte.item_id);
         setIsFavorite(true);
         setFavoriteId(result.id);
       }
@@ -64,7 +64,7 @@ const DeporteCard = ({ deporte }) => {
 
   const nombre = deporte.items?.nombre || 'Sin nombre';
   const descripcion = deporte.items?.descripcion || 'Sin descripción';
-  const imagen = deporte.items?.imagen_principal_url || 'https://via.placeholder.com/300x300?text=Sin+Imagen';
+  const imagen = deporte.items?.imagen_principal_url || 'https://placehold.co/300x200?text=Sin+Imagen';
   const marca = deporte.deporte_marcas?.nombre || 'Sin marca';
   const deporteTipo = deporte.deporte_tipos?.nombre || 'Sin tipo';
   const equipamientoTipo = deporte.deporte_equipamiento_tipos?.nombre || '';
@@ -96,13 +96,13 @@ const DeporteCard = ({ deporte }) => {
             </span>
           )}
         </div>
-        
+
         {/* Botón de favoritos */}
         <button
           className="favorite-btn"
           onClick={handleToggleFavorite}
           disabled={toggling}
-          title={isAuthenticated 
+          title={isAuthenticated
             ? (isFavorite ? "Quitar de favoritos" : "Agregar a favoritos")
             : "Inicia sesión para agregar a favoritos"
           }

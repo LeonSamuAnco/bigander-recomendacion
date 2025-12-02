@@ -1,0 +1,183 @@
+@startuml
+title Diagrama de Actividad - Generación de Recomendaciones ML
+
+|Usuario|
+start
+:Solicita recomendaciones;
+
+|Sistema|
+:Recibir solicitud\nGET /api/recommendations?tipo=celular&limit=10;
+
+' ============================================
+' VERIFICACIÓN DE CACHÉ
+' ============================================
+
+|Redis Cache|
+if (¿Existe en caché?) then (Sí)
+    :Obtener recomendaciones\nde Redis;
+    |Sistema|
+    :Devolver recomendaciones\ncacheadas (200 OK);
+    |Usuario|
+    :Mostrar recomendaciones;
+    stop
+else (No)
+    |Sistema|
+    :Continuar con\ngeneración ML;
+endif
+
+' ============================================
+' OBTENCIÓN DE DATOS DEL USUARIO
+' ============================================
+
+|MySQL Database|
+:Obtener historial\nde usuario desde\nuser_activity;
+
+|Sistema|
+if (¿Usuario tiene historial?) then (No)
+    ' ============================================
+    ' FALLBACK: USUARIO NUEVO (COLD START)
+    ' ============================================
+    
+    :Usar RecommendationsService\n(Fallback);
+    
+    |MySQL Database|
+    :Obtener items más populares\npor tipo;
+    
+    |Sistema|
+    :Ordenar por:\n- Calificación promedio\n- Veces visto/usado\n- Fecha de creación;
+    
+    :Limitar a N resultados;
+    
+else (Sí)
+    ' ============================================
+    ' GENERACIÓN ML
+    ' ============================================
+    
+    :Usar MLRecommendationsService;
+    
+    ' --- PASO 1: CONSTRUIR VECTOR DE USUARIO ---
+    partition "1. Construir Vector de Usuario" {
+        :Extraer características\nde actividades;
+        
+        :Aplicar time-decay:\npeso = 1 / (días + 1);
+        
+        note right
+            **Time Decay**
+            - Hoy: peso 1.0
+            - Ayer: peso 0.5
+            - Hace 7 días: peso 0.125
+        end note
+        
+        :Contar interacciones\npor tipo (con peso);
+        
+        :Crear UserVector:\n- features[20]\n- preferences Map<tipo, count>\n- totalInteractions;
+    }
+    
+    ' --- PASO 2: CONSTRUIR VECTORES DE ITEMS ---
+    partition "2. Construir Vectores de Items" {
+        |MySQL Database|
+        :Obtener items candidatos\npor tipo solicitado;
+        
+        |Sistema|
+        :Para cada item:\nCrear ItemVector con\nfeatures[20];
+        
+        note right
+            **Vectores de Items**
+            Cada tipo tiene su dimensión:
+            - Receta: [1, 0, 0, 0, 0, ...]
+            - Celular: [0, 1, 0, 0, 0, ...]
+            - Torta: [0, 0, 0, 1, 0, ...]
+        end note
+    }
+    
+    ' --- PASO 3: CALCULAR SIMILARIDAD ---
+    partition "3. Calcular Similaridad Coseno" {
+        :Para cada item:\nCalcular similaridad\nentre UserVector e ItemVector;
+        
+        :Fórmula:\nsimilarity = dot(userVec, itemVec)\n/ (norm(userVec) * norm(itemVec));
+        
+        note right
+            **Similaridad Coseno**
+            Rango: [0, 1]
+            - 0: Totalmente diferente
+            - 1: Idéntico
+        end note
+    }
+    
+    ' --- PASO 4: PREDECIR RATING ---
+    partition "4. Predecir Rating" {
+        :Para cada item:\nCalcular rating predicho;
+        
+        :baseRating = 3.5;
+        :similarityBoost = similarity * 1.5;
+        
+        :Calcular typeBoost\nbasado en preferencias;
+        
+        if (Usuario tiene interacción\ncon este tipo?) then (Sí)
+            :typeBoost = 1.0 + (ratio * 2.0);
+        else (No)
+            :typeBoost = -2.0\n(penalización);
+        endif
+        
+        :popularityBoost =\nf(popularidad del item);
+        
+        :predictedRating =\nbaseRating + similarityBoost\n+ typeBoost + popularityBoost;
+        
+        :Limitar rating a [0, 5];
+    }
+    
+    ' --- PASO 5: CALCULAR CONFIANZA ---
+    partition "5. Calcular Confianza" {
+        :Para cada predicción:\nCalcular confidence;
+        
+        :confidence =\n(similarityConf + dataConf\n+ popularityConf) / 3;
+        
+        :Escalar similarity para display:\nsimilarity_display = similarity * 5;
+    }
+    
+    ' --- PASO 6: GENERAR EXPLICACIÓN ---
+    partition "6. Generar Explicación" {
+        :Para cada predicción:\nGenerar texto explicativo;
+        
+        :Ejemplo:\n"Basado en tu interés en\ncelulares (85% de similaridad)";
+    }
+    
+    ' --- PASO 7: ORDENAR Y FILTRAR ---
+    partition "7. Ordenar Resultados" {
+        :Ordenar por:\n1. predictedRating (desc)\n2. confidence (desc)\n3. similarity (desc);
+        
+        :Filtrar items con\nrating < 0;
+        
+        :Limitar a N resultados;
+    }
+endif
+
+' ============================================
+' ALMACENAMIENTO EN CACHÉ
+' ============================================
+
+|Redis Cache|
+:Almacenar recomendaciones\nen Redis;
+
+note right
+    **Caché Redis**
+    - Key: recommendations:userId:tipo
+    - TTL: 5 minutos
+    - Formato: JSON
+end note
+
+' ============================================
+' RESPUESTA AL USUARIO
+' ============================================
+
+|Sistema|
+:Formatear respuesta JSON:\n{\n  recommendations: [...],\n  total: N,\n  generatedAt: timestamp\n};
+
+:Devolver 200 OK;
+
+|Usuario|
+:Mostrar recomendaciones\nen interfaz;
+
+stop
+
+@enduml

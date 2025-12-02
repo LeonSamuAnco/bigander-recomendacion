@@ -128,10 +128,13 @@ model Product {
   nombre      String          @db.VarChar(200)
   precio      Decimal?        @db.Decimal(10, 2)
   sku         String?         @unique @db.VarChar(100)
+  vendedorId  Int?            @map("vendedor_id")
   categoria   ProductCategory @relation(fields: [categoriaId], references: [id])
+  vendedor    Vendor?         @relation(fields: [vendedorId], references: [id])
   recipe      Recipe?
 
   @@index([categoriaId], map: "products_categoria_id_fkey")
+  @@index([vendedorId], map: "products_vendedor_id_fkey")
   @@map("products")
 }
 
@@ -170,6 +173,8 @@ model Vendor {
   calificacion    Decimal? @default(0.00) @db.Decimal(3, 2)
   
   // Nuevos campos para "Dónde Comprar"
+  latitud         Decimal? @db.Decimal(10, 8)
+  longitud        Decimal? @db.Decimal(11, 8)
   horarioAtencion String?  @map("horario_atencion") @db.VarChar(255)
   metodosPago     String?  @map("metodos_pago") @db.VarChar(255)
   tipoServicio    String?  @map("tipo_servicio") @db.VarChar(255)
@@ -183,6 +188,7 @@ model Vendor {
   
   usuario         User     @relation(fields: [usuarioId], references: [id])
   categorias      VendorCategory[]
+  products        Product[]
 
   @@map("vendedores")
 }

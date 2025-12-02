@@ -1,0 +1,47 @@
+@startuml
+title Clases: Motor de Recomendaciones ML
+
+class MLRecommendationsService {
+    + getRecommendations(userId, tipo, limit)
+    - buildUserVector(userId)
+    - buildItemVectors(tipo)
+    - calculateSimilarity(userVec, itemVec)
+    - predictRating(userVec, itemVec, similarity)
+}
+
+class UserVector {
+    + userId: number
+    + features: number[]
+    + preferences: Map<string, number>
+    + totalInteractions: number
+}
+
+class ItemVector {
+    + itemId: number
+    + tipo: string
+    + features: number[]
+    + popularity: number
+}
+
+class PredictionResult {
+    + itemId: number
+    + predictedRating: number
+    + confidence: number
+    + similarity: number
+    + explanation: string
+}
+
+MLRecommendationsService --> UserVector : construye
+MLRecommendationsService --> ItemVector : construye
+MLRecommendationsService --> PredictionResult : genera
+
+note right of MLRecommendationsService
+    **Algoritmo:**
+    1. Construir UserVector (20 dims)
+    2. Construir ItemVectors (20 dims)
+    3. Calcular similaridad coseno
+    4. Predecir rating
+    5. Ordenar resultados
+end note
+
+@enduml

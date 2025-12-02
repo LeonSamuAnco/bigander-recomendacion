@@ -117,7 +117,7 @@ const DeporteDetailPage = () => {
 
   const nombre = deporte.items?.nombre || 'Sin nombre';
   const descripcion = deporte.items?.descripcion || 'Sin descripción';
-  const imagen = deporte.items?.imagen_principal_url || 'https://via.placeholder.com/600x600?text=Sin+Imagen';
+  const imagen = deporte.items?.imagen_principal_url || 'https://placehold.co/600x600?text=Sin+Imagen';
   const marca = deporte.deporte_marcas?.nombre || 'Sin marca';
   const deporteTipo = deporte.deporte_tipos?.nombre || '';
   const equipamientoTipo = deporte.deporte_equipamiento_tipos?.nombre || '';

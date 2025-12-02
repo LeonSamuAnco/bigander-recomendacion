@@ -1,0 +1,77 @@
+@startuml
+title Modelo de Datos - Sistema de Favoritos (Enfoque Tech)
+
+skinparam linetype ortho
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+class Usuario {
+    **PK: id_usuario**
+    nombre
+    email
+    password_hash
+    fecha_registro
+    ultimo_acceso
+    es_activo
+}
+
+class Favorite {
+    **PK: id**
+    <color:goldenrod>FK: usuarioId</color>
+    tipo (ENUM: celular, accesorio, laptop)
+    referenciaId
+    esActivo
+    createdAt
+    updatedAt
+}
+
+class Items {
+    **PK: item_id**
+    nombre
+    imagen_principal_url
+    descripcion_corta
+    precio_base
+    es_activo
+}
+
+class Celulares {
+    **PK: celular_id**
+    <color:goldenrod>FK: item_id</color>
+    <color:goldenrod>FK: marca_id</color>
+    modelo
+    procesador
+    memoria_ram
+    almacenamiento
+    bateria_mah
+}
+
+class CelularMarcas {
+    **PK: id**
+    nombre
+    pais_origen
+    website_oficial
+}
+
+' Relaciones
+Usuario "1" -- "0..*" Favorite : "gestiona >"
+Favorite ..> Items : "referencia (referenciaId) >"
+
+' Relación de Herencia/Detalle
+Items "1" -- "0..1" Celulares : "es un >"
+Celulares ..> CelularMarcas : "pertenece a >"
+
+note right of Favorite
+    **Referencia a Productos**
+    El favorito apunta a la tabla
+    central 'Items' mediante
+    'referenciaId'.
+    
+    Si tipo='celular', el Item
+    tiene datos extendidos en
+    la tabla 'Celulares'.
+end note
+
+@enduml

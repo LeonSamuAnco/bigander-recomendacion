@@ -104,4 +104,12 @@ export class RegisterUserDto {
   @IsOptional()
   @IsString()
   direccionNegocio?: string;
+
+  @IsOptional()
+  @IsNumber()
+  latitud?: number;
+
+  @IsOptional()
+  @IsNumber()
+  longitud?: number;
 }

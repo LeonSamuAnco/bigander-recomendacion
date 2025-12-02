@@ -20,9 +20,10 @@ export class ProductsController {
   async findAll(
     @Query('search') search?: string,
     @Query('categoryId') categoryId?: string,
+    @Query('vendorId') vendorId?: string,
   ) {
     try {
-      return await this.productsService.findAll({ search, categoryId });
+      return await this.productsService.findAll({ search, categoryId, vendorId });
     } catch (error) {
       console.error('❌ Error in findAll:', error);
       return [];

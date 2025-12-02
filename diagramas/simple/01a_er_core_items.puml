@@ -1,0 +1,125 @@
+@startuml
+title Modelo de Datos - Core (Items, Categorías y Metadatos)
+
+skinparam linetype ortho
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+' --- TABLA CENTRAL ---
+class Items {
+    **PK: item_id**
+    nombre
+    descripcion
+    imagen_principal_url
+    es_activo
+    fecha_creacion
+}
+
+' --- CELULARES Y SUS METADATOS ---
+class Celulares {
+    **PK: celular_id**
+    <color:goldenrod>FK: item_id</color>
+    <color:goldenrod>FK: marca_id</color>
+    <color:goldenrod>FK: sistema_operativo_id</color>
+    <color:goldenrod>FK: gama_id</color>
+    memoria_ram_gb
+    almacenamiento_gb
+    pantalla_pulgadas
+    bateria_mah
+}
+
+class CelularMarcas {
+    **PK: id**
+    nombre
+    pais_origen
+}
+
+class CelularSistemas {
+    **PK: id**
+    nombre
+    version
+}
+
+' --- TORTAS Y SUS METADATOS ---
+class Tortas {
+    **PK: torta_id**
+    <color:goldenrod>FK: item_id</color>
+    <color:goldenrod>FK: sabor_id</color>
+    <color:goldenrod>FK: relleno_id</color>
+    <color:goldenrod>FK: cobertura_id</color>
+    es_personalizable
+    tiempo_preparacion_dias
+}
+
+class TortaSabores {
+    **PK: id**
+    nombre
+    descripcion
+}
+
+class TortaRellenos {
+    **PK: id**
+    nombre
+}
+
+' --- LUGARES Y SUS METADATOS ---
+class Lugares {
+    **PK: lugar_id**
+    <color:goldenrod>FK: item_id</color>
+    <color:goldenrod>FK: tipo_id</color>
+    <color:goldenrod>FK: rango_precio_id</color>
+    ciudad
+    pais
+    direccion
+    latitud
+    longitud
+}
+
+class LugarTipos {
+    **PK: id**
+    nombre
+    icono
+}
+
+' --- DEPORTES Y SUS METADATOS ---
+class Deportes {
+    **PK: deporte_id**
+    <color:goldenrod>FK: item_id</color>
+    <color:goldenrod>FK: marca_id</color>
+    <color:goldenrod>FK: tipo_id</color>
+    talla
+    color
+    material
+}
+
+class DeporteMarcas {
+    **PK: id**
+    nombre
+}
+
+' --- RELACIONES ---
+
+' Items a Categorías
+Items "1" -- "0..1" Celulares
+Items "1" -- "0..1" Tortas
+Items "1" -- "0..1" Lugares
+Items "1" -- "0..1" Deportes
+
+' Celulares a Metadatos
+Celulares ..> CelularMarcas
+Celulares ..> CelularSistemas
+
+' Tortas a Metadatos
+Tortas ..> TortaSabores
+Tortas ..> TortaRellenos
+
+' Lugares a Metadatos
+Lugares ..> LugarTipos
+
+' Deportes a Metadatos
+Deportes ..> DeporteMarcas
+
+@enduml

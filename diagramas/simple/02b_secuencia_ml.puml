@@ -1,0 +1,57 @@
+@startuml
+title Secuencia - Generación de Recomendaciones ML
+
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor Black
+    LifeLineBorderColor Black
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor White
+    ActorBackgroundColor White
+}
+
+actor "Usuario" as User
+participant "Frontend" as Front
+participant "API (Node.js)" as API
+participant "Redis" as Cache
+database "MySQL" as DB
+participant "Sistema de\nRecomendación" as ML
+
+autonumber
+
+User -> Front: Accede a la página de inicio
+activate Front
+
+Front -> API: GET /api/recommendations
+activate API
+
+API -> Cache: Verificar caché
+activate Cache
+Cache -->> API: Cache Miss (No encontrado)
+deactivate Cache
+
+API -> DB: Obtener historial del usuario
+activate DB
+DB -->> API: Devuelve historial de interacciones
+deactivate DB
+
+API -> ML: Solicitar recomendaciones (con historial)
+activate ML
+
+ML -> ML: Procesar con ML (Vectores)
+
+ML -->> API: Devuelve lista de recomendaciones
+deactivate ML
+
+API -> Cache: Almacenar nuevas recomendaciones
+activate Cache
+Cache -->> API: (Confirmación)
+deactivate Cache
+
+API -->> Front: Devuelve 200 OK (recomendaciones)
+deactivate API
+
+Front -->> User: Mostrar items recomendados
+deactivate Front
+
+@enduml

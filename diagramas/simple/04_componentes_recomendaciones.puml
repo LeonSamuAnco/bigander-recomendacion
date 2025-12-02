@@ -1,0 +1,39 @@
+@startuml
+title Componentes: Sistema de Recomendaciones
+
+package "Frontend" {
+    [React App] as Frontend
+}
+
+package "Backend API" {
+    [API REST] as API
+    [MLRecommendationsService] as MLService
+    [RecommendationsService] as FallbackService
+}
+
+package "Persistencia" {
+    database "MySQL" as MySQL
+    database "Redis" as Redis
+}
+
+Frontend --> API : HTTP/HTTPS
+API --> MLService : usa
+API --> FallbackService : fallback
+MLService --> MySQL : lee historial
+MLService --> Redis : caché
+FallbackService --> MySQL : lee populares
+
+note right of MLService
+    **Motor ML**
+    - Construye vectores
+    - Calcula similaridad
+    - Predice ratings
+end note
+
+note right of FallbackService
+    **Fallback**
+    - Items populares
+    - Para usuarios nuevos
+end note
+
+@enduml

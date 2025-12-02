@@ -1,0 +1,32 @@
+@startuml
+title Flujo: Fallback para Usuarios Nuevos (Cold Start)
+
+participant API
+participant FallbackService
+participant MySQL
+
+API -> FallbackService: getPopularItems('celular', 10)
+activate FallbackService
+
+FallbackService -> MySQL: SELECT * FROM items\nJOIN celulares\nORDER BY popularidad DESC\nLIMIT 10
+activate MySQL
+
+MySQL --> FallbackService: Items populares
+deactivate MySQL
+
+FallbackService --> API: Lista de items
+deactivate FallbackService
+
+note right of FallbackService
+    **Fallback usado cuando:**
+    - Usuario nuevo (sin historial)
+    - Error en ML
+    - Historial insuficiente
+    
+    **Criterios de ordenamiento:**
+    1. Popularidad
+    2. Calificación promedio
+    3. Fecha de creación
+end note
+
+@enduml

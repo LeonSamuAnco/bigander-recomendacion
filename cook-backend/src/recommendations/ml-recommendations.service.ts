@@ -255,22 +255,45 @@ export class MLRecommendationsService {
     // Modelo simple: rating base + boost por similaridad + ajustes por tipo
     let baseRating = 3.5; // Rating base
 
-    // Boost por similaridad (0-1.5 puntos)
-    const similarityBoost = similarity * 1.5;
+    // Boost por similaridad (0-2.0 puntos)
+    const similarityBoost = similarity * 2.0;
 
     // Ajuste por tipo de item basado en preferencias del usuario
     const typePreference = userVector.preferences.get(itemVector.tipo) || 0;
-    const typeBoost = Math.min(typePreference / 10, 1.0); // Máximo 1 punto
 
     // Ajuste por popularidad del item (si está disponible)
     const popularityBoost = this.getPopularityBoost(itemVector);
+
+    const totalPreferences = Array.from(userVector.preferences.values()).reduce((a, b) => a + b, 0);
+    let typeBoost = 0;
+
+    if (totalPreferences > 0) {
+      // Si el usuario tiene historial, aplicamos lógica ponderada
+      if (typePreference === 0) {
+        // PENALIZACIÓN: Si no hay interacción, penalizamos pero permitimos que aparezca si es muy popular
+        // o muy similar en otras características.
+        typeBoost = -2.0;
+      } else {
+        // BOOST: Si hay interacción, damos boost.
+        // Calculamos el ratio de interés en este tipo
+        const ratio = typePreference / totalPreferences;
+        // Boost base de 1.0 por tener interés + hasta 2.0 extra según el ratio
+        typeBoost = 1.0 + (ratio * 2.0);
+      }
+    } else {
+      // Si es un usuario nuevo (Cold Start), damos un pequeño boost suave para no ser agresivos
+      typeBoost = 0.0;
+    }
 
     const predictedRating = Math.min(
       baseRating + similarityBoost + typeBoost + popularityBoost,
       5.0
     );
 
-    return Math.round(predictedRating * 10) / 10; // Redondear a 1 decimal
+    // Asegurar que no baje de 0
+    const finalRating = Math.max(0, Math.round(predictedRating * 10) / 10);
+
+    return finalRating;
   }
 
   /**
@@ -323,11 +346,19 @@ export class MLRecommendationsService {
   ): void {
     const tiposCounts = new Map<string, number>();
     const horariosCount = new Array(24).fill(0);
+    const now = new Date().getTime();
 
     actividades.forEach(act => {
-      // Contar por tipo
+      // Calcular peso basado en recencia (Time Decay)
+      // Actividades más recientes tienen más peso
+      const actTime = new Date(act.fecha).getTime();
+      const daysDiff = (now - actTime) / (1000 * 60 * 60 * 24);
+      // Peso = 1 / (días + 1). Hoy = 1, Ayer = 0.5, Hace 7 días = 0.125
+      const weight = 1 / (Math.max(0, daysDiff) + 1);
+
+      // Contar por tipo con peso
       const tipo = this.extractTipoFromActivity(act.tipo);
-      tiposCounts.set(tipo, (tiposCounts.get(tipo) || 0) + 1);
+      tiposCounts.set(tipo, (tiposCounts.get(tipo) || 0) + weight);
 
       // Contar por horario
       const hora = new Date(act.fecha).getHours();
@@ -460,21 +491,23 @@ export class MLRecommendationsService {
     const features = new Array(50).fill(0);
 
     // Características básicas (dimensiones 0-9)
-    features[0] = receta.categoriaRecetaId || 0;
-    features[1] = receta.tiempoTotal || 0;
-    features[2] = receta.porciones || 0;
-    features[3] = receta.dificultad?.id || 0;
-    features[4] = receta.calificacionPromedio || 0;
-    features[5] = receta.popularidad || 0;
-    features[6] = receta.esDestacada ? 1 : 0;
-    features[7] = receta.esVerificada ? 1 : 0;
-    features[8] = receta.ingredientes?.length || 0;
+    features[0] = 1; // Es Receta
+    // Mover atributos específicos a 10+
+    features[10] = receta.categoriaRecetaId || 0;
+    features[11] = receta.tiempoTotal || 0;
+    features[12] = receta.porciones || 0;
+    features[13] = receta.dificultad?.id || 0;
+    features[14] = receta.calificacionPromedio || 0;
+    features[15] = receta.popularidad || 0;
+    features[16] = receta.esDestacada ? 1 : 0;
+    features[17] = receta.esVerificada ? 1 : 0;
+    features[18] = receta.ingredientes?.length || 0;
 
-    // Características de ingredientes (dimensiones 10-29)
+    // Características de ingredientes (dimensiones 20-29) - COINCIDEN con User Vector
     if (receta.ingredientes) {
-      const ingredientesIds = receta.ingredientes.map(i => i.ingredienteMaestroId).slice(0, 20);
+      const ingredientesIds = receta.ingredientes.map(i => i.ingredienteMaestroId).slice(0, 10);
       ingredientesIds.forEach((id, index) => {
-        if (index < 20) features[10 + index] = id || 0;
+        if (index < 10) features[20 + index] = id || 0;
       });
     }
 
@@ -489,12 +522,14 @@ export class MLRecommendationsService {
     const features = new Array(50).fill(0);
 
     // Características básicas
-    features[0] = celular.marca_id || 0;
-    features[1] = celular.gama_id || 0;
-    features[2] = celular.memoria_ram_gb || 0;
-    features[3] = celular.almacenamiento_interno_gb || 0;
-    features[4] = celular.conectividad_5g ? 1 : 0;
-    features[5] = celular.sistema_operativo_id || 0;
+    features[1] = 1; // Es Celular
+    // Mover atributos a 10+
+    features[10] = celular.marca_id || 0;
+    features[11] = celular.gama_id || 0;
+    features[12] = celular.memoria_ram_gb || 0;
+    features[13] = celular.almacenamiento_interno_gb || 0;
+    features[14] = celular.conectividad_5g ? 1 : 0;
+    features[15] = celular.sistema_operativo_id || 0;
 
     this.normalizeVector(features);
     return features;
@@ -506,8 +541,10 @@ export class MLRecommendationsService {
   private buildLugarVector(lugar: any): number[] {
     const features = new Array(50).fill(0);
 
-    features[0] = lugar.lugar_tipo_id || 0;
-    features[1] = lugar.rango_precio_id || 0;
+    features[2] = 1; // Es Lugar
+    // Mover atributos a 10+
+    features[10] = lugar.lugar_tipo_id || 0;
+    features[11] = lugar.rango_precio_id || 0;
 
     this.normalizeVector(features);
     return features;
@@ -535,11 +572,13 @@ export class MLRecommendationsService {
   ): string[] {
     const explanations: string[] = [];
 
-    explanations.push(`Similaridad con tus preferencias: ${Math.round(similarity * 100)}%`);
+    // Escalar similaridad para display (igual que en confidence)
+    const displaySimilarity = similarity > 0 ? Math.min(similarity * 5, 1.0) : 0;
+    explanations.push(`Similaridad con tus preferencias: ${Math.round(displaySimilarity * 100)}%`);
 
     const typePreference = userVector.preferences.get(itemVector.tipo) || 0;
     if (typePreference > 0) {
-      explanations.push(`Has mostrado interés en ${itemVector.tipo}s (${typePreference} interacciones)`);
+      explanations.push(`Has mostrado interés en ${itemVector.tipo}s (${Math.round(typePreference)} puntos de interés)`);
     }
 
     return explanations;
@@ -592,11 +631,12 @@ export class MLRecommendationsService {
   }
 
   private extractTipoFromActivity(tipoActividad: string): string {
-    if (tipoActividad.includes('RECETA')) return 'receta';
-    if (tipoActividad.includes('CELULAR')) return 'celular';
-    if (tipoActividad.includes('LUGAR')) return 'lugar';
-    if (tipoActividad.includes('TORTA')) return 'torta';
-    if (tipoActividad.includes('DEPORTE')) return 'deporte';
+    const tipoUpper = tipoActividad.toUpperCase();
+    if (tipoUpper.includes('RECETA')) return 'receta';
+    if (tipoUpper.includes('CELULAR')) return 'celular';
+    if (tipoUpper.includes('LUGAR')) return 'lugar';
+    if (tipoUpper.includes('TORTA')) return 'torta';
+    if (tipoUpper.includes('DEPORTE')) return 'deporte';
     return 'unknown';
   }
 
@@ -631,18 +671,20 @@ export class MLRecommendationsService {
     // En un sistema real, esto vendría de los vectores de usuario/item entrenados (SVD)
     // Aquí usamos una heurística basada en la "sorpresa" o diversidad
 
-    // Si el usuario tiene muchas interacciones de un tipo, reducimos un poco la predicción 
-    // para ese tipo para dar oportunidad a otros (diversidad), o viceversa.
+    // ELIMINADO: Penalización por diversidad forzada. El usuario quiere ver lo que le gusta.
 
     const typePreference = userVector.preferences.get(prediction.tipo) || 0;
     const totalInteractions = Array.from(userVector.preferences.values()).reduce((a, b) => a + b, 0);
 
     if (totalInteractions > 0) {
       const ratio = typePreference / totalInteractions;
-      // Si el usuario está muy sesgado hacia un tipo (>80%), penalizamos levemente para diversificar
-      if (ratio > 0.8) return -0.2;
-      // Si es un tipo nuevo para el usuario pero popular, bonificamos (serendipia)
-      if (ratio < 0.1 && prediction.predictedRating > 4.0) return 0.3;
+
+      // Si el usuario tiene mucha afinidad por este tipo, le damos un pequeño boost extra
+      // en lugar de penalizarlo.
+      if (ratio > 0.5) return 0.2;
+
+      // ELIMINADO: Serendipia. El usuario reportó que esto causaba recomendaciones irrelevantes.
+      // if (ratio < 0.1 && prediction.predictedRating > 4.0) return 0.3;
     }
 
     return 0;

@@ -3,10 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
-  async findAll(params: { search?: string; categoryId?: string; [key: string]: any }) {
-    const { search, categoryId, ...dynamicFilters } = params;
+  async findAll(params: { search?: string; categoryId?: string; vendorId?: string;[key: string]: any }) {
+    const { search, categoryId, vendorId, ...dynamicFilters } = params;
     const where: Prisma.ProductWhereInput = {
       esActivo: true,
     };
@@ -19,6 +19,10 @@ export class ProductsService {
 
     if (categoryId) {
       where.categoriaId = parseInt(categoryId, 10);
+    }
+
+    if (vendorId) {
+      where.vendedorId = parseInt(vendorId, 10);
     }
 
     if (Object.keys(dynamicFilters).length > 0) {
@@ -34,6 +38,7 @@ export class ProductsService {
       where,
       include: {
         categoria: true,
+        vendedor: true,
       },
     });
   }
@@ -43,6 +48,7 @@ export class ProductsService {
       where: { id },
       include: {
         categoria: true,
+        vendedor: true,
       },
     });
   }
@@ -60,7 +66,8 @@ export class ProductsService {
         descripcion: data.descripcion || '',
         precio: data.precio || 0,
         stock: data.stock || 0,
-        categoriaId: data.categoriaId,
+        categoriaId: parseInt(data.categoriaId),
+        vendedorId: data.vendedorId ? parseInt(data.vendedorId) : null,
         imagenUrl: data.imagenUrl || null,
         sku: data.sku || null,
         atributos: data.atributos || {},
@@ -68,25 +75,33 @@ export class ProductsService {
       },
       include: {
         categoria: true,
+        vendedor: true,
       },
     });
   }
 
   async update(id: number, data: any) {
+    const updateData: any = {
+      nombre: data.nombre,
+      descripcion: data.descripcion,
+      precio: data.precio,
+      stock: data.stock,
+      categoriaId: data.categoriaId ? parseInt(data.categoriaId) : undefined,
+      imagenUrl: data.imagenUrl,
+      sku: data.sku,
+      atributos: data.atributos,
+    };
+
+    if (data.vendedorId) {
+      updateData.vendedorId = parseInt(data.vendedorId);
+    }
+
     return this.prisma.product.update({
       where: { id },
-      data: {
-        nombre: data.nombre,
-        descripcion: data.descripcion,
-        precio: data.precio,
-        stock: data.stock,
-        categoriaId: data.categoriaId,
-        imagenUrl: data.imagenUrl,
-        sku: data.sku,
-        atributos: data.atributos,
-      },
+      data: updateData,
       include: {
         categoria: true,
+        vendedor: true,
       },
     });
   }
@@ -113,12 +128,12 @@ export class ProductsService {
     const total = await this.prisma.product.count({
       where: { categoriaId: categoryId, esActivo: true },
     });
-    
+
     const totalStock = await this.prisma.product.aggregate({
       where: { categoriaId: categoryId, esActivo: true },
       _sum: { stock: true },
     });
-    
+
     const avgPrice = await this.prisma.product.aggregate({
       where: { categoriaId: categoryId, esActivo: true },
       _avg: { precio: true },

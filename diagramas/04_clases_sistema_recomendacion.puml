@@ -1,0 +1,245 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+' ============================================
+' SERVICIOS PRINCIPALES
+' ============================================
+
+class RecommendationsController {
+    - mlRecommendationsService: MLRecommendationsService
+    - recommendationsService: RecommendationsService
+    - logger: Logger
+    --
+    + getPersonalizedRecommendations(req, tipo, limit): Promise<any>
+    + getMLRecommendations(req, tipo, limit): Promise<any>
+    + getAdvancedRecommendations(req, filters): Promise<any>
+    + getHybridRecommendations(req, tipo, limit): Promise<any>
+}
+
+class MLRecommendationsService {
+    - prisma: PrismaService
+    - redis: RedisService
+    - logger: Logger
+    --
+    + getRecommendations(userId, tipo, limit): Promise<PredictionResult[]>
+    - buildUserVector(userId): Promise<UserVector>
+    - buildItemVectors(tipo): Promise<ItemVector[]>
+    - calculateSimilarity(userVec, itemVec): number
+    - predictRating(userVec, itemVec, similarity): number
+    - extractActivityFeatures(activities, features, preferences): void
+    - extractTipoFromActivity(tipo): string
+    - applyMatrixFactorization(userVec, prediction): number
+    - calculateLatentFactor(userVec, prediction): number
+    - calculateConfidence(userVec, itemVec, similarity): number
+    - generateExplanation(userVec, itemVec, similarity): string
+}
+
+class RecommendationsService {
+    - prisma: PrismaService
+    - logger: Logger
+    --
+    + getPopularItems(tipo, limit): Promise<any[]>
+    + getSimilarItems(itemId, tipo, limit): Promise<any[]>
+    + getRecommendationsByCategory(userId, tipo): Promise<any[]>
+}
+
+class FavoritesService {
+    - prisma: PrismaService
+    - logger: Logger
+    --
+    + create(userId, createFavoriteDto): Promise<Favorite>
+    + findAllByUser(userId, filters): Promise<any>
+    + remove(id, userId): Promise<any>
+    + checkIsFavorite(userId, tipo, referenciaId): Promise<any>
+    + getStats(userId): Promise<any>
+    + syncFavorites(userId): Promise<any>
+    - validateReference(tipo, referenciaId): Promise<void>
+    - enrichFavoritesData(favorites): Promise<any[]>
+}
+
+class UserActivityService {
+    - prisma: PrismaService
+    - logger: Logger
+    --
+    + create(userId, activityDto): Promise<UserActivity>
+    + findByUser(userId, filters): Promise<UserActivity[]>
+    + getStats(userId): Promise<any>
+}
+
+' ============================================
+' MODELOS Y DTOs
+' ============================================
+
+class UserVector {
+    + userId: number
+    + features: number[]
+    + preferences: Map<string, number>
+    + totalInteractions: number
+    + recentActivity: Date
+}
+
+class ItemVector {
+    + itemId: number
+    + tipo: string
+    + features: number[]
+    + popularity: number
+    + avgRating: number
+}
+
+class PredictionResult {
+    + itemId: number
+    + tipo: string
+    + predictedRating: number
+    + confidence: number
+    + similarity: number
+    + explanation: string
+    + data: any
+}
+
+class CreateFavoriteDto {
+    + tipo: FavoriteType
+    + referenciaId: number
+}
+
+enum FavoriteType {
+    RECETA
+    CELULAR
+    TORTA
+    LUGAR
+    DEPORTE
+    PRODUCTO
+    INGREDIENTE
+}
+
+' ============================================
+' ENTIDADES DE BASE DE DATOS
+' ============================================
+
+class Favorite {
+    + id: number
+    + usuarioId: number
+    + tipo: FavoriteType
+    + referenciaId: number
+    + esActivo: boolean
+    + createdAt: Date
+    + updatedAt: Date
+}
+
+class UserActivity {
+    + id: number
+    + usuarioId: number
+    + tipo: string
+    + referenciaId: number
+    + fecha: Date
+    + metadata: JSON
+}
+
+class User {
+    + id: number
+    + nombre: string
+    + email: string
+    + password_hash: string
+}
+
+class Item {
+    + item_id: number
+    + nombre: string
+    + descripcion: string
+    + imagen_principal_url: string
+}
+
+' ============================================
+' RELACIONES
+' ============================================
+
+RecommendationsController --> MLRecommendationsService : "usa"
+RecommendationsController --> RecommendationsService : "fallback"
+
+MLRecommendationsService --> UserVector : "construye"
+MLRecommendationsService --> ItemVector : "construye"
+MLRecommendationsService --> PredictionResult : "genera"
+MLRecommendationsService --> UserActivity : "lee"
+MLRecommendationsService --> Item : "lee"
+
+RecommendationsService --> Item : "lee"
+RecommendationsService --> UserActivity : "lee"
+
+FavoritesService --> Favorite : "CRUD"
+FavoritesService --> CreateFavoriteDto : "usa"
+FavoritesService --> Item : "valida"
+
+UserActivityService --> UserActivity : "CRUD"
+
+Favorite --> User : "pertenece a"
+Favorite --> Item : "referencia"
+UserActivity --> User : "pertenece a"
+UserActivity --> Item : "referencia"
+
+CreateFavoriteDto --> FavoriteType : "usa"
+Favorite --> FavoriteType : "usa"
+
+' ============================================
+' NOTAS
+' ============================================
+
+note right of MLRecommendationsService
+  **Motor de Recomendaciones ML**
+  
+  Algoritmo:
+  1. Construir vector de usuario
+     (features + preferencias)
+  2. Construir vectores de items
+  3. Calcular similaridad coseno
+  4. Predecir rating con:
+     - Base rating (3.5)
+     - Similarity boost
+     - Type preference boost
+     - Popularity boost
+  5. Aplicar time-decay
+  6. Ordenar por rating predicho
+  
+  Caché: Redis (5 min TTL)
+end note
+
+note right of FavoritesService
+  **Servicio de Favoritos**
+  
+  Características:
+  - Multi-tipo (7 tipos soportados)
+  - Validación de referencias
+  - Enriquecimiento de datos
+  - Soft delete (esActivo)
+  - Estadísticas por tipo
+  
+  Usa item_id como clave
+  para celulares, tortas,
+  lugares y deportes.
+end note
+
+note bottom of UserVector
+  **Vector de Usuario**
+  
+  Features (20 dimensiones):
+  [0-4]: Conteo por tipo
+  [5-9]: Horarios activos
+  [10-14]: Categorías preferidas
+  [15-19]: Características adicionales
+  
+  Preferences: Map<tipo, count>
+  con time-decay aplicado
+end note
+
+note bottom of ItemVector
+  **Vector de Item**
+  
+  Features (20 dimensiones):
+  [tipo]: 1.0 en dimensión específica
+  [otras]: 0.0
+  
+  Ejemplo:
+  - Celular: [0, 1, 0, 0, 0, ...]
+  - Torta: [0, 0, 0, 1, 0, ...]
+end note
+
+@enduml

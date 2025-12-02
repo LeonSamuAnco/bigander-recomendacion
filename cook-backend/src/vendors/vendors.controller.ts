@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Put,
   Param,
   Query,
@@ -8,7 +9,11 @@ import {
   ParseIntPipe,
   UseGuards,
   Request,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { VendorsService } from './vendors.service';
 
@@ -110,5 +115,62 @@ export class VendorsController {
   @Get(':id/settings')
   async getVendorSettings(@Param('id', ParseIntPipe) vendorId: number) {
     return this.vendorsService.getVendorSettings(vendorId);
+  }
+
+  // --- Gestión de Productos Físicos ---
+
+  // Obtener productos físicos de la tienda
+  @Get(':id/store-products')
+  async getStoreProducts(
+    @Param('id', ParseIntPipe) userId: number,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page ? parseInt(page) : 1;
+    const limitNum = limit ? parseInt(limit) : 10;
+    return this.vendorsService.getStoreProducts(userId, pageNum, limitNum);
+  }
+
+  // Crear producto físico
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/store-products')
+  async createStoreProduct(
+    @Param('id', ParseIntPipe) userId: number,
+    @Body() createData: any,
+  ) {
+    return this.vendorsService.createStoreProduct(userId, createData);
+  }
+
+  // Actualizar producto físico
+  @UseGuards(JwtAuthGuard)
+  @Put(':id/store-products/:productId')
+  async updateStoreProduct(
+    @Param('id', ParseIntPipe) userId: number,
+    @Param('productId', ParseIntPipe) productId: number,
+    @Body() updateData: any,
+  ) {
+    return this.vendorsService.updateStoreProduct(userId, productId, updateData);
+  }
+
+  // Toggle producto físico
+  @UseGuards(JwtAuthGuard)
+  @Put(':id/store-products/:productId/toggle')
+  async toggleStoreProduct(
+    @Param('id', ParseIntPipe) userId: number,
+    @Param('productId', ParseIntPipe) productId: number,
+  ) {
+    return this.vendorsService.toggleStoreProduct(userId, productId);
+  }
+
+  // Importar productos desde Excel
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/products/import')
+  @UseInterceptors(FileInterceptor('file'))
+  async importProducts(
+    @Param('id', ParseIntPipe) userId: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('Archivo requerido');
+    return this.vendorsService.importProducts(userId, file);
   }
 }

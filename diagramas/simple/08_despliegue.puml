@@ -1,0 +1,42 @@
+@startuml
+title Diagrama de Despliegue - Bigander S.A.C.
+
+skinparam componentStyle uml2
+skinparam linetype ortho
+
+node "Dispositivos de Clientes\n(Navegador Web)" as Client #d4edda
+node "Portal de Vendedor" as Vendor #d4edda
+node "Panel de Administración" as Admin #d4edda
+
+node "Servidor Web (Nginx)" as WebServer #fff3cd {
+    component "Balanceador de Carga\ny Reverse Proxy" as Nginx
+}
+
+node "Servidor de Aplicación (EC2, etc.)" as AppServer #fff3cd {
+    component "Frontend (Next.js)" as Next
+    component "API REST (Nest.js)" as Nest
+}
+
+node "Servicios de Datos" as DataServices #fff3cd {
+    database "MySQL Database" as MySQL
+    database "Redis Cache" as Redis
+    database "Elasticsearch" as Elastic
+    component "MinIO Storage" as MinIO
+}
+
+' Conexiones Cliente -> Web Server
+Client --> Nginx : HTTPS 443
+Vendor --> Nginx : HTTPS 443
+Admin --> Nginx : HTTPS 443
+
+' Conexiones Web Server -> App Server
+Nginx --> Next : Sirve el Frontend
+Nginx --> Nest : Redirige peticiones de API
+
+' Conexiones App Server -> Datos
+Nest --> MySQL : TCP 3306
+Nest --> Redis : TCP 6379
+Nest --> Elastic : HTTP 9200
+Nest --> MinIO : HTTP 9000
+
+@enduml

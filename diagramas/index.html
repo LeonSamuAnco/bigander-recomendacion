@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagramas UML - CookSync</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .stat-number {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        .diagrams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .diagram-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .diagram-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .diagram-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .diagram-number {
+            background: #667eea;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-right: 15px;
+        }
+
+        .diagram-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .diagram-description {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .diagram-features {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .diagram-features li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #555;
+        }
+
+        .diagram-features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .diagram-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #dee2e6;
+        }
+
+        .legend {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .legend-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .legend-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        .icon-new { background: #28a745; }
+        .icon-updated { background: #ffc107; }
+        .icon-minor { background: #17a2b8; }
+
+        footer {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 2px solid #e9ecef;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .diagrams-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Diagramas UML - CookSync</h1>
+            <p class="subtitle">Sistema de Recomendaciones con Machine Learning</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">6</div>
+                <div class="stat-label">Diagramas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">1,280+</div>
+                <div class="stat-label">Líneas de Código</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Actualizado</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Servicios ML</div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-title">🏷️ Leyenda de Cambios</div>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-icon icon-new">N</div>
+                    <span>Diagrama completamente nuevo</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon icon-updated">U</div>
+                    <span>Actualizado significativamente</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon icon-minor">M</div>
+                    <span>Ajustes menores</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="diagrams-grid">
+            <!-- Diagrama 1 -->
+            <div class="diagram-card">
+                <div class="diagram-header">
+                    <div class="diagram-number">1</div>
+                    <div class="diagram-title">Entidad-Relación</div>
+                </div>
+                <div class="diagram-description">
+                    Modelo de base de datos completo con tabla <code>items</code> como centro y tablas específicas por categoría.
+                </div>
+                <ul class="diagram-features">
+                    <li>Tabla items central</li>
+                    <li>Favoritos multi-tipo</li>
+                    <li>Actividades de usuario</li>
+                    <li>Metadatos completos</li>
+                </ul>
+                <div class="diagram-actions">
+                    <a href="01_entidad_relacion_corregido.puml" class="btn btn-primary">Ver Código</a>
+                    <span class="btn btn-secondary" style="background: #ffc107; color: white;">Actualizado</span>
+                </div>
+            </div>
+
+            <!-- Diagrama 2 -->
+            <div class="diagram-card">
+                <div class="diagram-header">
+                    <div class="diagram-number">2</div>
+                    <div class="diagram-title">Componentes</div>
+                </div>
+                <div class="diagram-description">
+                    Arquitectura de componentes con servicios ML, favoritos y capa de persistencia.
+                </div>
+                <ul class="diagram-features">
+                    <li>MLRecommendationsService</li>
+                    <li>FavoritesService</li>
+                    <li>Modelos ML (UserVector, ItemVector)</li>
+                    <li>Conexiones con BD</li>
+                </ul>
+                <div class="diagram-actions">
+                    <a href="02_componentes_corregido.puml" class="btn btn-primary">Ver Código</a>
+                    <span class="btn btn-secondary" style="background: #ffc107; color: white;">Actualizado</span>
+                </div>
+            </div>
+
+            <!-- Diagrama 3 -->
+            <div class="diagram-card">
+                <div class="diagram-header">
+                    <div class="diagram-number">3</div>
+                    <div class="diagram-title">Despliegue</div>
+                </div>
+                <div class="diagram-description">
+                    Infraestructura física del sistema con nodos, puertos y protocolos especificados.
+                </div>
+                <ul class="diagram-features">
+                    <li>Nginx como Reverse Proxy</li>
+                    <li>Node.js + Nest.js (Puerto 3002)</li>
+                    <li>MySQL, Redis, Elasticsearch</li>
+                    <li>Puertos documentados</li>
+                </ul>
+                <div class="diagram-actions">
+                    <a href="03_despliegue_corregido.puml" class="btn btn-primary">Ver Código</a>
+                    <span class="btn btn-secondary" style="background: #17a2b8; color: white;">Ajustes</span>
+                </div>
+            </div>
+
+            <!-- Diagrama 4 -->
+            <div class="diagram-card">
+                <div class="diagram-header">
+                    <div class="diagram-number">4</div>
+                    <div class="diagram-title">Clases</div>
+                </div>
+                <div class="diagram-description">
+                    Diagrama de clases del sistema de recomendaciones con métodos y relaciones completas.
+                </div>
+                <ul class="diagram-features">
+                    <li>Métodos públicos y privados</li>
+                    <li>Relaciones entre servicios</li>
+                    <li>Enums y DTOs</li>
+                    <li>Notas sobre algoritmos</li>
+                </ul>
+                <div class="diagram-actions">
+                    <a href="04_clases_sistema_recomendacion.puml" class="btn btn-primary">Ver Código</a>
+                    <span class="btn btn-secondary" style="background: #ffc107; color: white;">Actualizado</span>
+                </div>
+            </div>
+
+            <!-- Diagrama 5 -->
+            <div class="diagram-card">
+                <div class="diagram-header">
+                    <div class="diagram-number">5</div>
+                    <div class="diagram-title">Actividad</div>
+                </div>
+                <div class="diagram-description">
+                    Flujo de actividad completo del algoritmo ML con 7 pasos detallados.
+                </div>
+                <ul class="diagram-features">
+                    <li>Verificación de caché</li>
+                    <li>Construcción de vectores</li>
+                    <li>Similaridad coseno</li>
+                    <li>Predicción de ratings</li>
+                </ul>
+                <div class="diagram-actions">
+                    <a href="05_actividad_recomendaciones_ml.puml" class="btn btn-primary">Ver Código</a>
+                    <span class="btn btn-secondary" style="background: #ffc107; color: white;">Actualizado</span>
+                </div>
+            </div>
+
+            <!-- Diagrama 6 -->
+            <div class="diagram-card">
+                <div class="diagram-header">
+                    <div class="diagram-number">6</div>
+                    <div class="diagram-title">Secuencia</div>
+                </div>
+                <div class="diagram-description">
+                    Diagrama de secuencia mostrando la interacción temporal entre todos los componentes.
+                </div>
+                <ul class="diagram-features">
+                    <li>Flujo completo ML</li>
+                    <li>Casos alternativos (caché, fallback)</li>
+                    <li>Registro de actividades</li>
+                    <li>Interacción con BD</li>
+                </ul>
+                <div class="diagram-actions">
+                    <a href="06_secuencia_recomendaciones_ml.puml" class="btn btn-primary">Ver Código</a>
+                    <span class="btn btn-secondary" style="background: #28a745; color: white;">Nuevo</span>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p><strong>CookSync</strong> - Sistema de Recomendaciones con Machine Learning</p>
+            <p>Fecha de actualización: 2025-11-21 | Versión: 1.0</p>
+            <p style="margin-top: 15px;">
+                📖 <a href="README.md" style="color: #667eea; text-decoration: none;">Ver Documentación Completa</a> | 
+                📊 <a href="RESUMEN_VISUAL.md" style="color: #667eea; text-decoration: none;">Ver Resumen Visual</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

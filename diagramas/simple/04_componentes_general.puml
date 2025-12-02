@@ -1,0 +1,40 @@
+@startuml
+title Diagrama de Componentes - Bigander S.A.C.
+
+skinparam componentStyle uml2
+skinparam linetype ortho
+
+package "Aplicación Cliente (Navegador Web)" {
+    component "Frontend (React/Next.js)" as Frontend #87CEFA
+}
+
+package "Servidor Backend (Nest.js)" {
+    component "API REST" as API #87CEFA
+    
+    component "Motor de Recomendación" as ML #87CEFA
+    component "Módulo de Autenticación" as Auth #87CEFA
+    component "Módulo de Gestión de Productos" as Products #87CEFA
+}
+
+package "Capa de Persistencia y Datos" {
+    database "Caché\n(Redis)" as Redis
+    database "Base de Datos\n(MySQL)" as MySQL
+    database "Motor de Búsqueda\n(Elasticsearch)" as Elastic
+}
+
+' Relaciones
+Frontend --> API : consume (HTTP/HTTPS)
+
+API --> ML
+API --> Auth
+API --> Products
+
+ML --> Redis : lee/escribe caché
+ML --> MySQL : lee historial
+
+Auth --> MySQL : valida credenciales
+
+Products --> MySQL : CRUD de productos
+Products --> Elastic : indexa productos
+
+@enduml

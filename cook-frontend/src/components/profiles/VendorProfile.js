@@ -53,6 +53,20 @@ const VendorProfile = ({ user }) => {
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
 
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [currentProduct, setCurrentProduct] = useState(null);
+  const [productForm, setProductForm] = useState({
+    name: '',
+    description: '',
+    price: '',
+    stock: '',
+    categoryId: '1',
+    image: '',
+    sku: ''
+  });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [importingProducts, setImportingProducts] = useState(false);
+
   const handleDiaChange = (dia) => {
     setHorarioDias(prev => ({ ...prev, [dia]: !prev[dia] }));
   };
@@ -118,7 +132,8 @@ const VendorProfile = ({ user }) => {
 
   const loadProducts = async (page = 1) => {
     try {
-      const data = await vendorService.getVendorProducts(user.id, page, 10);
+      // Usar getStoreProducts para productos físicos
+      const data = await vendorService.getStoreProducts(user.id, page, 10);
       setProducts(data.products || []);
       setProductsPage(page);
     } catch (error) {
@@ -334,11 +349,127 @@ const VendorProfile = ({ user }) => {
 
   const handleToggleProduct = async (productId) => {
     try {
-      await vendorService.toggleProduct(user.id, productId);
+      await vendorService.toggleStoreProduct(user.id, productId);
       showNotification('Estado del producto actualizado', 'success');
       loadProducts(productsPage);
     } catch (error) {
       showNotification('Error al actualizar producto', 'error');
+    }
+  };
+
+  const handleOpenProductModal = (product = null) => {
+    if (product) {
+      setCurrentProduct(product);
+      setProductForm({
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        stock: product.stock,
+        categoryId: product.categoryId || '1',
+        image: product.image || '',
+        sku: product.sku || ''
+      });
+    } else {
+      setCurrentProduct(null);
+      setProductForm({
+        name: '',
+        description: '',
+        price: '',
+        stock: '',
+        categoryId: '1',
+        image: '',
+        sku: ''
+      });
+    }
+    setIsProductModalOpen(true);
+  };
+
+  const handleSaveProduct = async (e) => {
+    e.preventDefault();
+    try {
+      if (currentProduct) {
+        await vendorService.updateStoreProduct(user.id, currentProduct.id, productForm);
+        showNotification('Producto actualizado', 'success');
+      } else {
+        await vendorService.createStoreProduct(user.id, productForm);
+        showNotification('Producto creado', 'success');
+      }
+      setIsProductModalOpen(false);
+      loadProducts(productsPage);
+    } catch (error) {
+      showNotification('Error al guardar producto', 'error');
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      showNotification('Por favor selecciona una imagen válida', 'error');
+      return;
+    }
+
+    // Validar tamaño (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification('La imagen no debe superar 5MB', 'error');
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+
+      // Verificar si hay token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showNotification('Por favor, cierra sesión y vuelve a entrar para subir imágenes', 'warning');
+        setUploadingImage(false);
+        return;
+      }
+
+      const response = await vendorService.uploadImage(file);
+      setProductForm({ ...productForm, image: response.url });
+      showNotification('Imagen subida exitosamente', 'success');
+    } catch (error) {
+      console.error('Error al subir imagen:', error);
+      showNotification('No se pudo subir la imagen. Puedes continuar sin imagen.', 'warning');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleImportProducts = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    const validTypes = [
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/csv'
+    ];
+
+    if (!validTypes.includes(file.type) && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls') && !file.name.endsWith('.csv')) {
+      showNotification('Por favor selecciona un archivo Excel (.xlsx, .xls) o CSV', 'error');
+      return;
+    }
+
+    try {
+      setImportingProducts(true);
+      const response = await vendorService.importProducts(user.id, file);
+      showNotification(
+        `${response.message}. Productos creados: ${response.createdCount}`,
+        response.errors.length > 0 ? 'warning' : 'success'
+      );
+      loadProducts(productsPage);
+
+      // Resetear el input
+      e.target.value = '';
+    } catch (error) {
+      showNotification('Error al importar productos', 'error');
+    } finally {
+      setImportingProducts(false);
     }
   };
 
@@ -462,9 +593,31 @@ const VendorProfile = ({ user }) => {
     <div className="vendor-content-section">
       <div className="section-header">
         <h2>🛍️ Gestión de Productos</h2>
-        <button className="primary-btn" onClick={() => navigate('/recipes/create')}>
-          + Nueva Receta
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <label className="import-btn" style={{
+            padding: '10px 20px',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            borderRadius: '6px',
+            cursor: importingProducts ? 'not-allowed' : 'pointer',
+            opacity: importingProducts ? 0.6 : 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            {importingProducts ? '⏳ Importando...' : '📊 Importar Excel'}
+            <input
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleImportProducts}
+              disabled={importingProducts}
+              style={{ display: 'none' }}
+            />
+          </label>
+          <button className="primary-btn" onClick={() => handleOpenProductModal()}>
+            + Nuevo Producto
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -481,32 +634,23 @@ const VendorProfile = ({ user }) => {
                   {product.image ? (
                     <img src={product.image} alt={product.name} />
                   ) : (
-                    <div className="image-placeholder">🍽️</div>
+                    <div className="image-placeholder">🛍️</div>
                   )}
                 </div>
                 <div className="product-info">
                   <h4>{product.name}</h4>
                   <p>S/ {product.price.toFixed(2)}</p>
+                  <p className="stock-info">Stock: {product.stock}</p>
                   <span className={`product-status ${product.status}`}>
                     {product.status === 'active' ? 'Activo' : 'Inactivo'}
                   </span>
-                  <div className="product-meta">
-                    <span>⭐ {product.rating?.toFixed(1) || 0}</span>
-                    <span>👁️ {product.views || 0} vistas</span>
-                  </div>
                 </div>
                 <div className="product-actions">
                   <button
                     className="edit-btn"
-                    onClick={() => navigate(`/recipes/${product.id}/edit`)}
+                    onClick={() => handleOpenProductModal(product)}
                   >
                     Editar
-                  </button>
-                  <button
-                    className="view-btn"
-                    onClick={() => navigate(`/recipes/${product.id}`)}
-                  >
-                    Ver
                   </button>
                   <button
                     className="toggle-btn"
@@ -520,11 +664,124 @@ const VendorProfile = ({ user }) => {
           ) : (
             <div className="no-products">
               <p>No tienes productos publicados</p>
-              <button className="primary-btn" onClick={() => navigate('/recipes/create')}>
-                Crear Primera Receta
+              <button className="primary-btn" onClick={() => handleOpenProductModal()}>
+                Crear Primer Producto
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal de Producto */}
+      {isProductModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>{currentProduct ? 'Editar Producto' : 'Nuevo Producto'}</h3>
+              <button className="close-btn" onClick={() => setIsProductModalOpen(false)}>×</button>
+            </div>
+            <form onSubmit={handleSaveProduct} className="product-form">
+              <div className="form-group">
+                <label>Nombre del Producto</label>
+                <input
+                  type="text"
+                  value={productForm.name}
+                  onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Descripción</label>
+                <textarea
+                  value={productForm.description}
+                  onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Precio (S/)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={productForm.price}
+                    onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Stock</label>
+                  <input
+                    type="number"
+                    value={productForm.stock}
+                    onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Imagen del Producto</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {productForm.image && (
+                    <div style={{
+                      width: '100%',
+                      maxWidth: '200px',
+                      height: '200px',
+                      border: '2px dashed #ddd',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <img
+                        src={productForm.image}
+                        alt="Preview"
+                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                      />
+                    </div>
+                  )}
+                  <label style={{
+                    padding: '10px 20px',
+                    backgroundColor: uploadingImage ? '#ccc' : '#2196F3',
+                    color: 'white',
+                    borderRadius: '6px',
+                    cursor: uploadingImage ? 'not-allowed' : 'pointer',
+                    textAlign: 'center',
+                    display: 'inline-block',
+                    maxWidth: '200px'
+                  }}>
+                    {uploadingImage ? '⏳ Subiendo...' : '📷 Seleccionar Imagen'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                  <small style={{ color: '#666' }}>
+                    Formatos: JPG, PNG, GIF. Máximo 5MB
+                  </small>
+                </div>
+              </div>
+              <div className="form-group">
+                <label>SKU (Opcional)</label>
+                <input
+                  type="text"
+                  value={productForm.sku}
+                  onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="cancel-btn" onClick={() => setIsProductModalOpen(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="save-btn">
+                  {currentProduct ? 'Guardar Cambios' : 'Crear Producto'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

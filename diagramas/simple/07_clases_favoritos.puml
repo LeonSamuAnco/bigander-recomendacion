@@ -1,0 +1,50 @@
+@startuml
+title Clases: Sistema de Favoritos
+
+class FavoritesService {
+    + create(userId, createFavoriteDto)
+    + findAllByUser(userId, filters)
+    + remove(id, userId)
+    + checkIsFavorite(userId, tipo, referenciaId)
+    - validateReference(tipo, referenciaId)
+    - enrichFavoritesData(favorites)
+}
+
+class CreateFavoriteDto {
+    + tipo: FavoriteType
+    + referenciaId: number
+}
+
+enum FavoriteType {
+    RECETA
+    CELULAR
+    TORTA
+    LUGAR
+    DEPORTE
+}
+
+class Favorite {
+    + id: number
+    + usuarioId: number
+    + tipo: FavoriteType
+    + referenciaId: number
+    + esActivo: boolean
+    + createdAt: Date
+}
+
+FavoritesService --> CreateFavoriteDto : usa
+FavoritesService --> Favorite : CRUD
+CreateFavoriteDto --> FavoriteType : usa
+Favorite --> FavoriteType : usa
+
+note right of FavoritesService
+    **Características:**
+    - Multi-tipo (5 tipos)
+    - Validación de referencias
+    - Enriquecimiento de datos
+    - Soft delete
+    
+    Usa item_id como clave
+end note
+
+@enduml

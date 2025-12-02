@@ -1,0 +1,43 @@
+@startuml
+title Flujo: Registro de Actividad de Usuario
+
+actor Usuario
+participant Frontend
+participant API
+participant MySQL
+participant Redis
+
+Usuario -> Frontend: Click en producto
+activate Frontend
+
+Frontend -> API: POST /api/user-activity\n{\n  tipo: "CELULAR VISTO",\n  referenciaId: 123\n}
+activate API
+
+API -> MySQL: INSERT INTO user_activity
+activate MySQL
+MySQL --> API: OK
+deactivate MySQL
+
+API -> Redis: DELETE recommendations:userId:*
+activate Redis
+note right: Invalidar caché
+Redis --> API: OK
+deactivate Redis
+
+API --> Frontend: 201 Created
+deactivate API
+
+Frontend --> Usuario: Continuar navegación
+deactivate Frontend
+
+note right of Redis
+    **Invalidación de Caché**
+    
+    Cuando el usuario interactúa:
+    1. Se registra la actividad
+    2. Se invalida el caché
+    3. Próxima solicitud generará
+       nuevas recomendaciones
+end note
+
+@enduml

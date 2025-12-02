@@ -51,7 +51,7 @@ const RecommendationsPage = () => {
     link.href = url;
     link.download = 'mis_recomendaciones_cooksync.csv';
     link.click();
-    
+
     alert('✅ Recomendaciones exportadas correctamente');
   };
 
@@ -63,8 +63,8 @@ const RecommendationsPage = () => {
     return csv;
   };
 
-  const filteredRecommendations = filter === 'all' 
-    ? recommendations 
+  const filteredRecommendations = filter === 'all'
+    ? recommendations
     : recommendations.filter(rec => rec.tipo === filter);
 
   return (
@@ -74,7 +74,7 @@ const RecommendationsPage = () => {
         <button className="back-button" onClick={() => navigate(-1)}>
           <FaArrowLeft /> Volver
         </button>
-        
+
         <div className="header-content">
           <h1>✨ Recomendaciones Personalizadas</h1>
           <p>Sugerencias basadas en tu actividad y preferencias</p>
@@ -113,43 +113,43 @@ const RecommendationsPage = () => {
         <div className="filter-group">
           <FaFilter className="filter-icon" />
           <span className="filter-label">Filtrar por:</span>
-          
-          <button 
+
+          <button
             className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
             onClick={() => setFilter('all')}
           >
             Todas
           </button>
-          
-          <button 
+
+          <button
             className={`filter-btn ${filter === 'receta' ? 'active' : ''}`}
             onClick={() => setFilter('receta')}
           >
             🍳 Recetas
           </button>
-          
-          <button 
+
+          <button
             className={`filter-btn ${filter === 'celular' ? 'active' : ''}`}
             onClick={() => setFilter('celular')}
           >
             📱 Celulares
           </button>
-          
-          <button 
+
+          <button
             className={`filter-btn ${filter === 'torta' ? 'active' : ''}`}
             onClick={() => setFilter('torta')}
           >
             🎂 Tortas
           </button>
-          
-          <button 
+
+          <button
             className={`filter-btn ${filter === 'lugar' ? 'active' : ''}`}
             onClick={() => setFilter('lugar')}
           >
             📍 Lugares
           </button>
-          
-          <button 
+
+          <button
             className={`filter-btn ${filter === 'deporte' ? 'active' : ''}`}
             onClick={() => setFilter('deporte')}
           >
@@ -179,7 +179,7 @@ const RecommendationsPage = () => {
                     index + 1,
                     'page'
                   );
-                  
+
                   const route = recommendationsService.getRouteByType(rec.tipo, rec.itemId);
                   navigate(route);
                 }}
@@ -203,7 +203,7 @@ const RecommendationsPage = () => {
                       alt={rec.item.nombre}
                       className="rec-image"
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/300x200?text=Sin+Imagen';
+                        e.target.src = 'https://placehold.co/300x200?text=Sin+Imagen';
                       }}
                     />
                   ) : (
@@ -211,7 +211,7 @@ const RecommendationsPage = () => {
                       <span>{recommendationsService.getIconByType(rec.tipo)}</span>
                     </div>
                   )}
-                  
+
                   {/* Score badge */}
                   <div className="rec-score-badge">
                     <span className="score-value">{rec.score}</span>
@@ -222,7 +222,7 @@ const RecommendationsPage = () => {
                 {/* Contenido */}
                 <div className="rec-content">
                   <h3 className="rec-title">{rec.item?.nombre || 'Sin título'}</h3>
-                  
+
                   {rec.item?.descripcion && (
                     <p className="rec-description">
                       {rec.item.descripcion.length > 120
@@ -247,7 +247,7 @@ const RecommendationsPage = () => {
             <div className="empty-icon">✨</div>
             <h2>No hay recomendaciones disponibles</h2>
             <p>
-              {filter === 'all' 
+              {filter === 'all'
                 ? 'Explora más contenido para recibir recomendaciones personalizadas'
                 : `No hay recomendaciones de ${recommendationsService.formatTypeName(filter)} disponibles`
               }

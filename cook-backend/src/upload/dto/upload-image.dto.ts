@@ -5,6 +5,7 @@ export enum ImageType {
   RECIPE = 'recipe',
   PRODUCT = 'product',
   INGREDIENT = 'ingredient',
+  GENERAL = 'general',
 }
 
 export class UploadImageDto {

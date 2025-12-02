@@ -1,0 +1,48 @@
+@startuml
+title Secuencia - Autenticación de Usuario
+
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor Black
+    LifeLineBorderColor Black
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor White
+    ActorBackgroundColor White
+}
+
+actor "Usuario" as User
+participant "Frontend" as Front
+participant "API (Node.js)" as API
+database "Base de Datos" as DB
+
+autonumber
+
+User -> Front: Ingresa credenciales
+activate Front
+
+Front -> API: POST /api/auth/login
+activate API
+
+API -> DB: Obtener usuario y hash por email
+activate DB
+DB -->> API: Devuelve usuario y hash
+deactivate DB
+
+API -> API: Comparar hash con contraseña
+
+API -> DB: Registrar inicio de sesión
+activate DB
+DB -->> API: Confirmación de registro
+deactivate DB
+
+API -> API: Generar JWT
+
+API -->> Front: Devuelve 200 OK (token, userData)
+deactivate API
+
+Front -> Front: Almacenar token
+
+Front -->> User: Redirigir a dashboard
+deactivate Front
+
+@enduml

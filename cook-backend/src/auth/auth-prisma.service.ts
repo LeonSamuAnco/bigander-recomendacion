@@ -112,6 +112,8 @@ export class AuthPrismaService {
               logoUrl: registerUserDto.logoUrl,
               sitioWeb: registerUserDto.sitioWeb,
               direccion: registerUserDto.direccionNegocio,
+              latitud: registerUserDto.latitud,
+              longitud: registerUserDto.longitud,
             },
           });
 

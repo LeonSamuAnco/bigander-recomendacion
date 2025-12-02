@@ -1,0 +1,54 @@
+@startuml
+title Diagrama de Actividad - Flujo de Recomendación ML
+
+|Usuario|
+start
+:Ingresa a Sección\n(ej. Celulares);
+
+|Frontend (React)|
+:Solicitar Recomendaciones\n(GET /api/recommendations);
+
+|API Backend (NestJS)|
+:Recibir solicitud;
+if (¿Existe en Caché?) then (Sí)
+    :Recuperar de Redis;
+else (No)
+    |Motor ML (Service)|
+    :Obtener Historial\nde Usuario;
+    
+    if (¿Tiene Historial?) then (No - Cold Start)
+        :Obtener Items\nPopulares (Fallback);
+    else (Sí)
+        :Construir Vector\nde Usuario;
+        
+        :Construir Vectores\nde Items Candidatos;
+        
+        :Calcular Similaridad\n(Coseno);
+        
+        if (¿Similaridad > Umbral?) then (Sí)
+            :Calcular Rating Predicho\n(Base + Boosts);
+        else (No)
+            :Descartar Item\no Penalizar;
+        endif
+        
+        :Ordenar Resultados\npor Score;
+    endif
+    
+    |API Backend (NestJS)|
+    :Almacenar en Redis\n(TTL 5 min);
+endif
+
+|Base de Datos|
+:Consultar Detalles Completos\n(Enriquecer Datos);
+
+|API Backend (NestJS)|
+:Formatear Respuesta JSON;
+
+|Frontend (React)|
+:Renderizar Tarjetas\nde Productos;
+
+|Usuario|
+:Visualizar Recomendaciones;
+stop
+
+@enduml

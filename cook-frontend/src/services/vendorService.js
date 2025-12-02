@@ -591,6 +591,185 @@ const vendorService = {
       console.error('Error marking notification as read:', error);
       throw error;
     }
+  },
+
+  // --- Gestión de Productos Físicos ---
+
+  // Obtener productos físicos
+  async getStoreProducts(vendorId, page = 1, limit = 10) {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/vendors/${vendorId}/store-products?page=${page}&limit=${limit}`,
+        { headers: getAuthHeaders() }
+      );
+
+      if (response.ok) {
+        return await response.json();
+      }
+
+      return {
+        products: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 0,
+      };
+    } catch (error) {
+      console.error('Error getting store products:', error);
+      return {
+        products: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 0,
+      };
+    }
+  },
+
+  // Crear producto físico
+  async createStoreProduct(vendorId, data) {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/vendors/${vendorId}/store-products`,
+        {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (response.ok) {
+        return await response.json();
+      }
+
+      throw new Error('Failed to create product');
+    } catch (error) {
+      console.error('Error creating store product:', error);
+      throw error;
+    }
+  },
+
+  // Actualizar producto físico
+  async updateStoreProduct(vendorId, productId, data) {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/vendors/${vendorId}/store-products/${productId}`,
+        {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (response.ok) {
+        return await response.json();
+      }
+
+      throw new Error('Failed to update product');
+    } catch (error) {
+      console.error('Error updating store product:', error);
+      throw error;
+    }
+  },
+
+  // Toggle producto físico
+  async toggleStoreProduct(vendorId, productId) {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/vendors/${vendorId}/store-products/${productId}/toggle`,
+        {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (response.ok) {
+        return await response.json();
+      }
+
+      throw new Error('Failed to toggle product');
+    } catch (error) {
+      console.error('Error toggling store product:', error);
+      throw error;
+    }
+  },
+
+  // Subir imagen genérica
+  async uploadImage(file) {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        throw new Error('No hay token de autenticación. Por favor, inicia sesión nuevamente.');
+      }
+
+      console.log('📤 Subiendo imagen...', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        hasToken: !!token
+      });
+
+      const response = await fetch(`${API_BASE_URL}/upload/image`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      console.log('📥 Respuesta del servidor:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
+
+      if (response.status === 401) {
+        throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Error del servidor:', errorData);
+        throw new Error(errorData.message || 'Error al subir imagen');
+      }
+
+      const result = await response.json();
+      console.log('✅ Imagen subida exitosamente:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Error uploading image:', error);
+      throw error;
+    }
+  },
+
+  // Importar productos desde Excel
+  async importProducts(vendorId, file) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/vendors/${vendorId}/products/import`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al importar productos');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error importing products:', error);
+      throw error;
+    }
   }
 };
 

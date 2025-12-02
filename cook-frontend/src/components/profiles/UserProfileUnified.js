@@ -66,6 +66,10 @@ const UserProfileUnified = ({ user }) => {
     otros: 5
   });
 
+  const totalFavoritos = React.useMemo(() => {
+    return Object.values(favoritosPorCategoria).reduce((a, b) => a + b, 0);
+  }, [favoritosPorCategoria]);
+
   const [recetasData, setRecetasData] = useState({
     favoritas: [],
     preparadas: [],
@@ -156,6 +160,28 @@ const UserProfileUnified = ({ user }) => {
     }
   }, []);
 
+  const loadPantry = React.useCallback(async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`http://localhost:3002/pantry/my-pantry`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setRecetasData(prev => ({
+          ...prev,
+          despensa: data || []
+        }));
+      }
+    } catch (error) {
+      console.error('Error cargando despensa:', error);
+    }
+  }, []);
+
   const loadStats = React.useCallback(async () => {
     try {
       setLoadingStats(true);
@@ -163,12 +189,12 @@ const UserProfileUnified = ({ user }) => {
       const statsData = await activityService.getStats();
 
       if (statsData) {
-        setStats({
+        setStats(prev => ({
+          ...prev,
           puntos: statsData.total || 0,
           nivel: Math.floor((statsData.total || 0) / 50) + 1,
-          racha: statsData.ultimaSemana || 0,
-          totalFavoritos: Object.values(favoritosPorCategoria).reduce((a, b) => a + b, 0)
-        });
+          racha: statsData.ultimaSemana || 0
+        }));
       }
 
     } catch (error) {
@@ -176,14 +202,15 @@ const UserProfileUnified = ({ user }) => {
     } finally {
       setLoadingStats(false);
     }
-  }, [favoritosPorCategoria]);
+  }, []);
 
   useEffect(() => {
     loadProfileData();
     loadFavoritos();
     loadHistorial();
     loadStats();
-  }, [loadProfileData, loadFavoritos, loadHistorial, loadStats]);
+    loadPantry();
+  }, [loadProfileData, loadFavoritos, loadHistorial, loadStats, loadPantry]);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -207,7 +234,7 @@ const UserProfileUnified = ({ user }) => {
         setProfileImage(data.url);
 
         // Actualizar también en el backend el campo fotoPerfil
-        await fetch(`http://localhost:3002/clients/${user.id}`, {
+        await fetch('http://localhost:3002/auth/update-profile', {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -408,11 +435,11 @@ const UserProfileUnified = ({ user }) => {
           </div>
           <div className="tab-card-stats">
             <div className="stat-box">
-              <span className="stat-number">{recetasData.favoritas.length || 15}</span>
+              <span className="stat-number">{recetasData.favoritas.length}</span>
               <span className="stat-label">Favoritas</span>
             </div>
             <div className="stat-box">
-              <span className="stat-number">{recetasData.preparadas.length || 8}</span>
+              <span className="stat-number">{recetasData.preparadas.length}</span>
               <span className="stat-label">Preparadas</span>
             </div>
           </div>
@@ -428,7 +455,7 @@ const UserProfileUnified = ({ user }) => {
           </div>
           <div className="tab-card-content">
             <p>
-              <strong>{recetasData.despensa.length || 28}</strong> ingredientes
+              <strong>{recetasData.despensa.length}</strong> ingredientes
             </p>
             <p className="text-warning">⚠️ 3 próximos a vencer</p>
           </div>
@@ -456,7 +483,7 @@ const UserProfileUnified = ({ user }) => {
           </div>
           <div className="tab-card-stats">
             <div className="stat-box">
-              <span className="stat-number">{celularesData.favoritos.length || 3}</span>
+              <span className="stat-number">{celularesData.favoritos.length}</span>
               <span className="stat-label">Guardados</span>
             </div>
           </div>
@@ -512,13 +539,13 @@ const UserProfileUnified = ({ user }) => {
       <div className="tab-sections-grid">
         {/* Favoritas */}
         <div className="tab-card">
-          <div className="tab-card-header">
-            <h3>🎂 Favoritas</h3>
-          </div>
-          <div className="tab-card-stats">
-            <div className="stat-box">
-              <span className="stat-number">{tortasData.favoritas.length || 4}</span>
-              <span className="stat-label">Guardadas</span>
+          <div className="stat-card">
+            <div className="stat-icon-container">
+              <FaHeart className="stat-icon" />
+            </div>
+            <div className="stat-info">
+              <span className="stat-value">{totalFavoritos}</span>
+              <span className="stat-label">Favoritos</span>
             </div>
           </div>
           <button className="btn-link">Ver todas →</button>
@@ -530,7 +557,7 @@ const UserProfileUnified = ({ user }) => {
             <h3>📦 Pedidos</h3>
           </div>
           <div className="tab-card-content">
-            <p><strong>{tortasData.pedidos.length || 2}</strong> pedidos realizados</p>
+            <p><strong>{tortasData.pedidos.length}</strong> pedidos realizados</p>
           </div>
           <button className="btn-link">Ver historial →</button>
         </div>
@@ -567,7 +594,7 @@ const UserProfileUnified = ({ user }) => {
           </div>
           <div className="tab-card-stats">
             <div className="stat-box">
-              <span className="stat-number">{lugaresData.visitados.length || 5}</span>
+              <span className="stat-number">{lugaresData.visitados.length}</span>
               <span className="stat-label">Lugares</span>
             </div>
           </div>
@@ -581,7 +608,7 @@ const UserProfileUnified = ({ user }) => {
           </div>
           <div className="tab-card-stats">
             <div className="stat-box">
-              <span className="stat-number">{lugaresData.pendientes.length || 10}</span>
+              <span className="stat-number">{lugaresData.pendientes.length}</span>
               <span className="stat-label">Por visitar</span>
             </div>
           </div>
@@ -665,7 +692,7 @@ const UserProfileUnified = ({ user }) => {
   const renderFavoritosTab = () => (
     <div className="tab-content">
       <div className="favorites-unified-header">
-        <h2>⭐ Todos mis Favoritos ({stats.totalFavoritos})</h2>
+        <h2>⭐ Todos mis Favoritos ({totalFavoritos})</h2>
       </div>
 
       <div className="favorites-summary">

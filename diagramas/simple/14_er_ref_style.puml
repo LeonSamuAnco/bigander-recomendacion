@@ -1,0 +1,75 @@
+@startuml
+title Diagrama E.R - CookSync (Productos Tecnológicos)
+
+skinparam linetype ortho
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+' --- TABLAS PRINCIPALES ---
+
+entity "Usuario" as User {
+    *id : int <<PK>>
+    --
+    nombre : string
+    email : string
+    password : string
+    fecha_registro : date
+}
+
+entity "Items" as Item {
+    *id : int <<PK>>
+    --
+    nombre : string
+    descripcion : string
+    imagen : string
+    tipo : string
+}
+
+' --- TABLA HIJA (PRODUCTOS TECNOLÓGICOS) ---
+
+entity "Productos" as Prod {
+    *id : int <<PK>>
+    --
+    *item_id : int <<FK>>
+    marca : string
+    modelo : string
+    especificaciones : json
+    stock : int
+    precio : decimal
+}
+
+' --- TABLAS RELACIONALES ---
+
+entity "Favoritos" as Fav {
+    *id : int <<PK>>
+    --
+    *usuario_id : int <<FK>>
+    *item_id : int <<FK>>
+    fecha : date
+}
+
+entity "Actividad" as Act {
+    *id : int <<PK>>
+    --
+    *usuario_id : int <<FK>>
+    *item_id : int <<FK>>
+    tipo_evento : string
+}
+
+' --- RELACIONES ---
+
+' Herencia
+Item ||..|| Prod : "Hereda"
+
+' Relaciones Usuario
+User ||--o{ Fav : "Tiene"
+User ||--o{ Act : "Genera"
+
+' Relaciones Items
+Fav }o--|| Item : "Referencia"
+Act }o--|| Item : "Referencia"
+
+@enduml

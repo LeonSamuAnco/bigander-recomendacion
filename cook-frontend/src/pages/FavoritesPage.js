@@ -9,15 +9,15 @@ const FavoritesPage = () => {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, receta, celular, torta, lugar, deporte, producto, ingrediente
-  const [stats, setStats] = useState({ 
-    total: 0, 
-    recetas: 0, 
-    celulares: 0, 
-    tortas: 0, 
-    lugares: 0, 
-    deportes: 0, 
-    productos: 0, 
-    ingredientes: 0 
+  const [stats, setStats] = useState({
+    total: 0,
+    recetas: 0,
+    celulares: 0,
+    tortas: 0,
+    lugares: 0,
+    deportes: 0,
+    productos: 0,
+    ingredientes: 0
   });
 
   const loadFavorites = React.useCallback(async () => {
@@ -26,9 +26,22 @@ const FavoritesPage = () => {
       const tipo = filter === 'all' ? null : filter;
       const response = await favoritesService.getMyFavorites(tipo);
 
+      console.log('📦 Respuesta de favoritos:', response);
+
       // Manejar diferentes estructuras de respuesta
-      const favoritesData = response.favorites || response.data || response || [];
-      setFavorites(Array.isArray(favoritesData) ? favoritesData : []);
+      // El backend devuelve: { data: [...], meta: {...} }
+      let favoritesData = [];
+
+      if (response.data && Array.isArray(response.data)) {
+        favoritesData = response.data;
+      } else if (response.favorites && Array.isArray(response.favorites)) {
+        favoritesData = response.favorites;
+      } else if (Array.isArray(response)) {
+        favoritesData = response;
+      }
+
+      console.log('✅ Favoritos procesados:', favoritesData.length);
+      setFavorites(favoritesData);
     } catch (error) {
       console.error('❌ Error cargando favoritos:', error);
       setFavorites([]);
@@ -96,7 +109,7 @@ const FavoritesPage = () => {
   const renderFavoriteCard = (favorite) => {
     // Extraer datos según la estructura y tipo
     let title, image, description, rating, author, brand, location;
-    
+
     switch (favorite.tipo) {
       case 'receta':
         title = favorite.data?.nombre || 'Sin título';
@@ -105,35 +118,35 @@ const FavoritesPage = () => {
         rating = favorite.data?.calificacionPromedio || 0;
         author = favorite.data?.usuario?.nombres || 'Desconocido';
         break;
-        
+
       case 'celular':
-        title = favorite.data?.nombre || 'Sin título';
-        image = favorite.data?.imagen_principal_url || '/placeholder-phone.jpg';
-        description = favorite.data?.descripcion || '';
+        title = favorite.data?.items?.nombre || favorite.data?.nombre || 'Sin título';
+        image = favorite.data?.items?.imagen_principal_url || favorite.data?.imagen_principal_url || '/placeholder-phone.jpg';
+        description = favorite.data?.items?.descripcion || favorite.data?.descripcion || '';
         brand = favorite.data?.celular_marcas?.nombre || 'Marca desconocida';
         break;
-        
+
       case 'torta':
-        title = favorite.data?.nombre || 'Sin título';
-        image = favorite.data?.imagen_principal_url || '/placeholder-cake.jpg';
-        description = favorite.data?.descripcion || '';
+        title = favorite.data?.items?.nombre || favorite.data?.nombre || 'Sin título';
+        image = favorite.data?.items?.imagen_principal_url || favorite.data?.imagen_principal_url || '/placeholder-cake.jpg';
+        description = favorite.data?.items?.descripcion || favorite.data?.descripcion || '';
         brand = favorite.data?.torta_sabores?.nombre || 'Sabor desconocido';
         break;
-        
+
       case 'lugar':
-        title = favorite.data?.nombre || 'Sin título';
-        image = favorite.data?.imagen_principal_url || '/placeholder-place.jpg';
-        description = favorite.data?.descripcion || '';
+        title = favorite.data?.items?.nombre || favorite.data?.nombre || 'Sin título';
+        image = favorite.data?.items?.imagen_principal_url || favorite.data?.imagen_principal_url || '/placeholder-place.jpg';
+        description = favorite.data?.items?.descripcion || favorite.data?.descripcion || '';
         location = `${favorite.data?.ciudad || ''}, ${favorite.data?.pais || ''}`.trim().replace(/^,\s*|,\s*$/g, '') || 'Ubicación desconocida';
         break;
-        
+
       case 'deporte':
-        title = favorite.data?.nombre || 'Sin título';
-        image = favorite.data?.imagen_principal_url || '/placeholder-sport.jpg';
-        description = favorite.data?.descripcion || '';
+        title = favorite.data?.items?.nombre || favorite.data?.nombre || 'Sin título';
+        image = favorite.data?.items?.imagen_principal_url || favorite.data?.imagen_principal_url || '/placeholder-sport.jpg';
+        description = favorite.data?.items?.descripcion || favorite.data?.descripcion || '';
         brand = favorite.data?.deporte_marcas?.nombre || 'Marca desconocida';
         break;
-        
+
       default:
         title = favorite.data?.nombre || 'Sin título';
         image = favorite.data?.imagenUrl || '/placeholder-recipe.jpg';
@@ -141,7 +154,7 @@ const FavoritesPage = () => {
         rating = favorite.data?.calificacionPromedio || 0;
         author = favorite.data?.usuario?.nombres || 'Desconocido';
     }
-    
+
     const createdAt = new Date(favorite.createdAt).toLocaleDateString();
 
     return (
@@ -163,7 +176,7 @@ const FavoritesPage = () => {
           <h3 className="favorite-title" onClick={() => handleItemClick(favorite)}>
             {title}
           </h3>
-          
+
           {description && (
             <p className="favorite-description">
               {description.substring(0, 100)}{description.length > 100 ? '...' : ''}
@@ -177,7 +190,7 @@ const FavoritesPage = () => {
                 <span>{rating.toFixed(1)}</span>
               </div>
             )}
-            
+
             {favorite.tipo === 'receta' && author && (
               <div className="favorite-author">
                 <FaUser className="author-icon" />
@@ -204,13 +217,13 @@ const FavoritesPage = () => {
           </div>
 
           <div className="favorite-actions">
-            <button 
+            <button
               className="btn-view"
               onClick={() => handleItemClick(favorite)}
             >
               Ver detalles
             </button>
-            <button 
+            <button
               className="btn-remove"
               onClick={() => handleRemoveFavorite(favorite.id)}
             >
@@ -261,49 +274,49 @@ const FavoritesPage = () => {
       </div>
 
       <div className="favorites-filters">
-        <button 
+        <button
           className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
           onClick={() => setFilter('all')}
         >
           Todos ({stats.total})
         </button>
-        <button 
+        <button
           className={`filter-btn ${filter === 'receta' ? 'active' : ''}`}
           onClick={() => setFilter('receta')}
         >
           🍳 Recetas ({stats.recetas || 0})
         </button>
-        <button 
+        <button
           className={`filter-btn ${filter === 'celular' ? 'active' : ''}`}
           onClick={() => setFilter('celular')}
         >
           📱 Celulares ({stats.celulares || 0})
         </button>
-        <button 
+        <button
           className={`filter-btn ${filter === 'torta' ? 'active' : ''}`}
           onClick={() => setFilter('torta')}
         >
           🎂 Tortas ({stats.tortas || 0})
         </button>
-        <button 
+        <button
           className={`filter-btn ${filter === 'lugar' ? 'active' : ''}`}
           onClick={() => setFilter('lugar')}
         >
           📍 Lugares ({stats.lugares || 0})
         </button>
-        <button 
+        <button
           className={`filter-btn ${filter === 'deporte' ? 'active' : ''}`}
           onClick={() => setFilter('deporte')}
         >
           ⚽ Deportes ({stats.deportes || 0})
         </button>
-        <button 
+        <button
           className={`filter-btn ${filter === 'producto' ? 'active' : ''}`}
           onClick={() => setFilter('producto')}
         >
           🛒 Productos ({stats.productos || 0})
         </button>
-        <button 
+        <button
           className={`filter-btn ${filter === 'ingrediente' ? 'active' : ''}`}
           onClick={() => setFilter('ingrediente')}
         >
@@ -324,7 +337,7 @@ const FavoritesPage = () => {
             </div>
             <h2>No tienes favoritos todavía</h2>
             <p>Explora nuestras recetas y guarda tus favoritas aquí</p>
-            <button 
+            <button
               className="btn-explore"
               onClick={() => navigate('/home')}
             >

@@ -8,9 +8,9 @@ const TortaCard = ({ torta, onClick }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteId, setFavoriteId] = useState(null);
   const [toggling, setToggling] = useState(false);
-  
+
   const { items, torta_sabores, torta_ocasiones, es_personalizable } = torta;
-  
+
   // Obtener el precio más bajo de las variaciones
   const getPrecioMinimo = () => {
     if (!items.torta_variaciones || items.torta_variaciones.length === 0) {
@@ -26,7 +26,7 @@ const TortaCard = ({ torta, onClick }) => {
   useEffect(() => {
     const loadFavoriteStatus = async () => {
       try {
-        const result = await favoritesService.checkIsFavorite('torta', torta.id);
+        const result = await favoritesService.checkIsFavorite('torta', torta.item_id);
         setIsFavorite(result.isFavorite);
         setFavoriteId(result.favoriteId);
       } catch (error) {
@@ -37,11 +37,11 @@ const TortaCard = ({ torta, onClick }) => {
     if (isAuthenticated) {
       loadFavoriteStatus();
     }
-  }, [isAuthenticated, torta.id]);
+  }, [isAuthenticated, torta.item_id]);
 
   const handleToggleFavorite = async (event) => {
     event.stopPropagation();
-    
+
     if (!isAuthenticated) {
       if (window.confirm('👉 Primero debes iniciar sesión para poder agregar a favoritos.\n\n¿Deseas ir a la página de inicio de sesión?')) {
         window.location.href = '/login';
@@ -57,7 +57,7 @@ const TortaCard = ({ torta, onClick }) => {
         setIsFavorite(false);
         setFavoriteId(null);
       } else {
-        const result = await favoritesService.addToFavorites('torta', torta.id);
+        const result = await favoritesService.addToFavorites('torta', torta.item_id);
         setIsFavorite(true);
         setFavoriteId(result.id);
       }
@@ -80,13 +80,13 @@ const TortaCard = ({ torta, onClick }) => {
         {es_personalizable && (
           <span className="badge-personalizable">Personalizable</span>
         )}
-        
+
         {/* Botón de favoritos */}
         <button
           className="favorite-btn"
           onClick={handleToggleFavorite}
           disabled={toggling}
-          title={isAuthenticated 
+          title={isAuthenticated
             ? (isFavorite ? "Quitar de favoritos" : "Agregar a favoritos")
             : "Inicia sesión para agregar a favoritos"
           }
@@ -104,7 +104,7 @@ const TortaCard = ({ torta, onClick }) => {
         </div>
 
         <h3 className="torta-title">{items.nombre}</h3>
-        
+
         <p className="torta-description">
           {items.descripcion?.substring(0, 80)}
           {items.descripcion?.length > 80 ? '...' : ''}
@@ -117,7 +117,7 @@ const TortaCard = ({ torta, onClick }) => {
               <span className="price-value">${precioMinimo.toFixed(2)}</span>
             </div>
           )}
-          
+
           <button className="btn-ver-mas">Ver Detalles</button>
         </div>
       </div>

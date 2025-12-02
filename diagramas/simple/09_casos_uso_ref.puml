@@ -1,0 +1,49 @@
+@startuml
+title Diagrama de Casos de Uso - Sistema CookSync
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+    Shadowing false
+}
+
+actor "Usuario" as User
+actor "Motor de IA\n(Sistema ML)" as ML
+
+rectangle "Sistema CookSync" {
+
+    ' --- CASOS PRINCIPALES ---
+    usecase "Solicitar\nRecomendaciones" as UC_Rec
+    usecase "Explorar\nCategorías" as UC_Explore
+    usecase "Ver Detalles\nde Producto" as UC_View
+    usecase "Gestionar\nFavoritos" as UC_Fav
+
+    ' --- PROCESOS INTERNOS ---
+    usecase "Calcular\nSimilaridad" as UC_Sim
+    usecase "Analizar\nHistorial" as UC_Hist
+    usecase "Registrar\nInteracción" as UC_Log
+    usecase "Validar\nExistencia" as UC_Val
+
+    ' --- RELACIONES USUARIO ---
+    User -- UC_Rec
+    User -- UC_Explore
+    User -- UC_View
+    User -- UC_Fav
+
+    ' --- RELACIONES MOTOR IA ---
+    UC_Sim -- ML
+    UC_Hist -- ML
+    UC_Log -- ML
+
+    ' --- INCLUDES ---
+    UC_Rec ..> UC_Sim : <<include>>
+    UC_Rec ..> UC_Hist : <<include>>
+    UC_View ..> UC_Log : <<include>>
+    UC_Fav ..> UC_Val : <<include>>
+
+}
+
+@enduml

@@ -23,7 +23,7 @@ import { multerConfig } from './config/multer.config';
 export class UploadController {
   private readonly logger = new Logger(UploadController.name);
 
-  constructor(private readonly uploadService: UploadService) {}
+  constructor(private readonly uploadService: UploadService) { }
 
   /**
    * Upload de imagen de perfil
@@ -32,6 +32,26 @@ export class UploadController {
   @Post('profile')
   @UseInterceptors(FileInterceptor('image', multerConfig))
   async uploadProfileImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req,
+  ): Promise<ImageResponseDto> {
+    if (!file) {
+      throw new BadRequestException('No se proporcionó ningún archivo');
+    }
+
+    this.logger.log(
+      `Upload de imagen de perfil para usuario ${req.user.userId}`,
+    );
+    return await this.uploadService.uploadProfileImage(req.user.userId, file);
+  }
+
+  /**
+   * Upload de imagen de perfil (alias para compatibilidad)
+   * POST /upload/profile-image
+   */
+  @Post('profile-image')
+  @UseInterceptors(FileInterceptor('file', multerConfig))
+  async uploadProfileImageAlias(
     @UploadedFile() file: Express.Multer.File,
     @Request() req,
   ): Promise<ImageResponseDto> {
@@ -117,5 +137,20 @@ export class UploadController {
   async getImageInfo(@Param('path') imagePath: string) {
     this.logger.log(`Obteniendo info de imagen: ${imagePath}`);
     return await this.uploadService.getImageInfo(imagePath);
+  }
+
+  /**
+   * Upload de imagen genérica (devuelve URL)
+   * POST /upload/image
+   */
+  @Post('image')
+  @UseInterceptors(FileInterceptor('image', multerConfig))
+  async uploadGenericImage(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<ImageResponseDto> {
+    if (!file) {
+      throw new BadRequestException('No se proporcionó ningún archivo');
+    }
+    return await this.uploadService.uploadGenericImage(file);
   }
 }

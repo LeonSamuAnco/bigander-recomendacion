@@ -1,0 +1,27 @@
+@startuml
+title Actividad: Fallback (Usuario Nuevo)
+
+start
+
+:Usuario sin historial detectado;
+
+:Consultar items populares\npor tipo;
+
+:Ordenar por:\n1. Popularidad\n2. Calificación promedio\n3. Fecha de creación;
+
+:Limitar a N resultados;
+
+:Almacenar en Redis (5 min);
+
+:Devolver items populares;
+
+stop
+
+note right
+    **Fallback usado cuando:**
+    - Usuario nuevo
+    - Sin historial suficiente
+    - Error en ML
+end note
+
+@enduml

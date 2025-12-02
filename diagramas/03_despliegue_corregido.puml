@@ -1,0 +1,157 @@
+@startuml
+!define RECTANGLE class
+
+skinparam component {
+    BackgroundColor<<frontend>> LightBlue
+    BackgroundColor<<backend>> LightYellow
+    BackgroundColor<<data>> LightGray
+    BorderColor Black
+}
+
+' ============================================
+' CAPA DE PRESENTACIÓN
+' ============================================
+
+node "Dispositivos de Clientes\n(Navegador Web)" as ClientDevices {
+    component "Frontend\n(React/Next.js)" <<frontend>> as Frontend
+}
+
+' ============================================
+' CAPA DE SERVIDOR WEB
+' ============================================
+
+node "Servidor Web (Nginx)" as WebServer {
+    component "Balanceador de Carga\ny Reverse Proxy" as LoadBalancer
+}
+
+' ============================================
+' CAPA DE APLICACIÓN
+' ============================================
+
+node "Servidor de Aplicación\n(Node.js + Nest.js)" as AppServer {
+    component "API REST\n(Nest.js)" <<backend>> as API
+    
+    package "Servicios de Negocio" {
+        component "MLRecommendationsService\n(Motor ML)" <<backend>> as MLService
+        component "RecommendationsService\n(Fallback)" <<backend>> as RecService
+        component "FavoritesService" <<backend>> as FavService
+        component "AuthService" <<backend>> as AuthService
+        component "ProductsService" <<backend>> as ProdService
+    }
+}
+
+' ============================================
+' CAPA DE DATOS
+' ============================================
+
+node "Servicios de Datos" as DataServices {
+    database "MySQL Database\n(Puerto 3306)" <<data>> as MySQL {
+        [users]
+        [items]
+        [celulares]
+        [tortas]
+        [lugares]
+        [deportes_equipamiento]
+        [favorites]
+        [user_activity]
+        [recetas]
+    }
+    
+    database "Redis Cache\n(Puerto 6379)" <<data>> as Redis {
+        [recommendations_cache]
+        [search_cache]
+        [session_cache]
+    }
+    
+    database "Elasticsearch\n(Puerto 9200)" <<data>> as Elastic {
+        [items_index]
+        [products_index]
+    }
+}
+
+' ============================================
+' CONEXIONES
+' ============================================
+
+ClientDevices -down-> WebServer : "HTTPS 443"
+WebServer -down-> AppServer : "HTTP 3002\n(Reverse Proxy)"
+
+AppServer -down-> MySQL : "TCP 3306"
+AppServer -down-> Redis : "TCP 6379"
+AppServer -down-> Elastic : "HTTP 9200"
+
+' Conexiones internas del servidor de aplicación
+API -down-> MLService
+API -down-> RecService
+API -down-> FavService
+API -down-> AuthService
+API -down-> ProdService
+
+MLService -down-> Redis : "lee/escribe caché"
+MLService -down-> MySQL : "lee historial"
+RecService -down-> MySQL : "lee items"
+FavService -down-> MySQL : "CRUD favoritos"
+AuthService -down-> MySQL : "valida usuarios"
+AuthService -down-> Redis : "sesiones JWT"
+ProdService -down-> MySQL : "CRUD productos"
+ProdService -down-> Elastic : "indexa búsquedas"
+
+' ============================================
+' NOTAS
+' ============================================
+
+note right of WebServer
+  **Nginx como Reverse Proxy**
+  
+  - Balancea carga entre instancias
+  - Sirve archivos estáticos del Frontend
+  - Redirige peticiones de API al backend
+  - Maneja SSL/TLS (HTTPS)
+end note
+
+note right of AppServer
+  **Servidor Backend Nest.js**
+  
+  Puertos:
+  - 3002: API REST
+  
+  Servicios principales:
+  - ML Recommendations (con caché)
+  - Autenticación JWT
+  - Gestión de Favoritos
+  - CRUD de Productos
+  - Registro de Actividades
+end note
+
+note bottom of MySQL
+  **Base de Datos Relacional**
+  
+  - Almacena datos estructurados
+  - Usuarios, Items, Favoritos
+  - Actividades de usuario
+  - Tablas específicas por categoría
+  
+  Puerto: 3306
+end note
+
+note bottom of Redis
+  **Caché en Memoria**
+  
+  - Recomendaciones (TTL: 5 min)
+  - Búsquedas frecuentes
+  - Sesiones de usuario
+  
+  Puerto: 6379
+end note
+
+note bottom of Elastic
+  **Motor de Búsqueda**
+  
+  - Índices de productos
+  - Búsqueda full-text
+  - Filtros avanzados
+  
+  Puerto: 9200
+end note
+
+@enduml

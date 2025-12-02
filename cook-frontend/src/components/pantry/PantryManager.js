@@ -18,7 +18,7 @@ const PantryManager = ({ user, onClose }) => {
   const loadPantryItems = useCallback(async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:3002/clients/${user.id}/pantry`, {
+      const response = await fetch(`http://localhost:3002/pantry/my-pantry`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -27,14 +27,14 @@ const PantryManager = ({ user, onClose }) => {
 
       if (response.ok) {
         const data = await response.json();
-        setPantryItems(data.items || []);
+        setPantryItems(data || []); // data is array directly or object with items? Controller returns findAllByUser which usually returns array
       }
     } catch (error) {
       console.error('Error cargando despensa:', error);
     } finally {
       setLoading(false);
     }
-  }, [user.id]);
+  }, []);
 
   const loadAvailableIngredients = useCallback(async () => {
     try {
@@ -57,7 +57,7 @@ const PantryManager = ({ user, onClose }) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:3002/clients/${user.id}/pantry`, {
+      const response = await fetch(`http://localhost:3002/pantry`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -88,7 +88,7 @@ const PantryManager = ({ user, onClose }) => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:3002/clients/${user.id}/pantry/${itemId}`, {
+      const response = await fetch(`http://localhost:3002/pantry/${itemId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

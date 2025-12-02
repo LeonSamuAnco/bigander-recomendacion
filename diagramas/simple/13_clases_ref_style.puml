@@ -1,0 +1,148 @@
+@startuml
+title Diagrama de Clases - Sistema de Recomendación (Completo y Conectado)
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 60
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+' --- NIVEL 1: USUARIO ---
+class "Usuario" as User {
+    +id: UUID
+    +nombre: string
+    +email: string
+    +passwordHash: string
+    +fechaRegistro: DateTime
+    +ultimoAcceso: DateTime
+    +estado: boolean
+    --
+    +verificarContrasena(): boolean
+    +actualizarUltimoAcceso(): void
+}
+
+' --- NIVEL 2: CLIENTE ---
+class "Cliente" as Client {
+    +usuarioId: UUID
+    +preferencias: JSON
+    +puntosFidelidad: number
+    --
+    +obtenerRecomendaciones(): Item[]
+    +agregarFavorito(itemId: UUID): void
+}
+
+' --- NIVEL 3: DATOS DEL CLIENTE ---
+class "PerfilUsuario" as Profile {
+    +id: UUID
+    +usuarioId: UUID
+    +categoriasPreferidas: JSON
+    +rangoPrecios: JSON
+    +marcasFavoritas: string[]
+    +ultimaActualizacion: DateTime
+    --
+    +actualizarPerfil(): void
+    +calcularAfinidad(itemId: UUID): number
+}
+
+class "Busqueda" as Search {
+    +id: UUID
+    +usuarioId: UUID
+    +terminoBusqueda: string
+    +resultadosEncontrados: number
+    +fecha: DateTime
+    +filtrosAplicados: JSON
+}
+
+class "Favorito" as Fav {
+    +id: UUID
+    +usuarioId: UUID
+    +itemId: UUID
+    +fechaAgregado: DateTime
+}
+
+class "HistorialInteraccion" as Hist {
+    +id: UUID
+    +usuarioId: UUID
+    +itemId: UUID
+    +tipoInteraccion: string
+    +duracionSegundos: number
+    +fecha: DateTime
+    --
+    +registrarInteraccion(): void
+}
+
+class "Recomendacion" as Rec {
+    +id: UUID
+    +usuarioId: UUID
+    +itemId: UUID
+    +puntuacion: number
+    +razon: string
+    +fechaGenerada: DateTime
+    +visto: boolean
+    +clicado: boolean
+    --
+    +generarRecomendacion(): void
+}
+
+' --- NIVEL 4: PRODUCTOS ---
+class "Item" as Item {
+    +id: UUID
+    +nombre: string
+    +descripcion: string
+    +precio: number
+    +stock: number
+    +puntuacionPromedio: number
+    +vecesVisto: number
+    --
+    +calcularPrecioConDescuento(): number
+    +verificarDisponibilidad(): boolean
+}
+
+class "Categoria" as Cat {
+    +id: UUID
+    +nombre: string
+    +descripcion: string
+    +imagenUrl: string
+    --
+    +obtenerItemsPopulares(limite: number): Item[]
+}
+
+class "SimilitudItem" as Sim {
+    +id: UUID
+    +itemOrigenId: UUID
+    +itemSimilarId: UUID
+    +puntuacionSimilitud: number
+    +factoresSimilitud: JSON
+    --
+    +calcularSimilitud(): number
+}
+
+' ==========================================
+' CONEXIONES (ARQUITECTURA DE ÁRBOL)
+' ==========================================
+
+' 1. Usuario -> Cliente
+User <|-- Client
+
+' 2. Cliente -> Sus Componentes
+Client *-- Profile
+Client *-- Search
+Client *-- Fav
+Client *-- Hist
+Client *-- Rec
+
+' 3. Componentes -> Item
+Fav ..> Item
+Hist ..> Item
+Rec ..> Item
+
+' 4. Estructura de Producto
+Cat o-- Item
+Item *-- Sim
+' NOTA: SimilitudItem se conecta aquí abajo, NO debe definirse de nuevo
+
+@enduml

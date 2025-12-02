@@ -253,4 +253,17 @@ export class UploadService {
       throw new NotFoundException('Imagen no encontrada');
     }
   }
+  /**
+   * Upload de imagen genérica
+   */
+  async uploadGenericImage(
+    file: Express.Multer.File,
+  ): Promise<ImageResponseDto> {
+    // Procesar imagen (800x800 genérico)
+    return await this.processImage(file, ImageType.GENERAL, {
+      width: 800,
+      height: 800,
+      quality: 85,
+    });
+  }
 }

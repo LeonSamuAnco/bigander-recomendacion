@@ -1,0 +1,48 @@
+@startuml
+title Diagrama de Casos de Uso - Módulo de Favoritos
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam usecase {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+    Shadowing false
+}
+
+actor "Usuario" as User
+actor "Base de Datos" as DB
+
+rectangle "Módulo de Favoritos" {
+
+    ' --- CASOS PRINCIPALES ---
+    usecase "Agregar a\nFavoritos" as UC_Add
+    usecase "Eliminar de\nFavoritos" as UC_Remove
+    usecase "Visualizar Lista\nde Favoritos" as UC_List
+
+    ' --- PROCESOS INTERNOS ---
+    usecase "Validar Existencia\ndel Item" as UC_Validate
+    usecase "Enriquecer Datos\n(Detalles)" as UC_Enrich
+    usecase "Verificar Límite\n(Opcional)" as UC_Limit
+
+    ' --- RELACIONES USUARIO ---
+    User -- UC_Add
+    User -- UC_Remove
+    User -- UC_List
+
+    ' --- RELACIONES BASE DE DATOS ---
+    UC_Validate -- DB
+    UC_Enrich -- DB
+    UC_Limit -- DB
+
+    ' --- INCLUDES ---
+    ' Al agregar, se valida que exista y se verifica el límite
+    UC_Add ..> UC_Validate : <<include>>
+    UC_Add ..> UC_Limit : <<include>>
+
+    ' Al listar, se traen detalles completos
+    UC_List ..> UC_Enrich : <<include>>
+
+}
+
+@enduml

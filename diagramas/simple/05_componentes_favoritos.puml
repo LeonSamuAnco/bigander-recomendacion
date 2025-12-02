@@ -1,0 +1,40 @@
+@startuml
+title Componentes: Sistema de Favoritos
+
+package "Frontend" {
+    [React App] as Frontend
+}
+
+package "Backend API" {
+    [API REST] as API
+    [FavoritesService] as FavService
+}
+
+package "Persistencia" {
+    database "MySQL" as MySQL {
+        [favorites]
+        [items]
+        [celulares]
+        [tortas]
+        [lugares]
+    }
+}
+
+Frontend --> API : HTTP/HTTPS
+API --> FavService : usa
+FavService --> favorites : CRUD
+FavService --> items : valida
+FavService --> celulares : enriquece
+FavService --> tortas : enriquece
+FavService --> lugares : enriquece
+
+note right of FavService
+    **Favoritos Multi-tipo**
+    - Validación de referencias
+    - Enriquecimiento de datos
+    - Soft delete (esActivo)
+    
+    Usa item_id como clave
+end note
+
+@enduml

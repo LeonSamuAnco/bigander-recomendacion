@@ -72,7 +72,7 @@ const LugarDetailPage = () => {
 
   const nombre = lugar.items?.nombre || 'Sin nombre';
   const descripcion = lugar.items?.descripcion || 'Sin descripción';
-  const imagen = lugar.items?.imagen_principal_url || 'https://via.placeholder.com/800x500?text=Sin+Imagen';
+  const imagen = lugar.items?.imagen_principal_url || 'https://placehold.co/800x500?text=Sin+Imagen';
   const tipo = lugar.lugar_tipos?.nombre || 'Sin tipo';
   const tipoIcono = lugar.lugar_tipos?.icono || 'fas fa-map-marker-alt';
   const rangoPrecio = lugar.lugar_rangos_precio;

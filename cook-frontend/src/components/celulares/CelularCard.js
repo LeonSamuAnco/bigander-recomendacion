@@ -8,14 +8,14 @@ const CelularCard = ({ celular, onClick }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteId, setFavoriteId] = useState(null);
   const [toggling, setToggling] = useState(false);
-  
+
   const { items, celular_marcas, celular_gamas, celular_sistemas_operativos } = celular;
 
   // Cargar estado de favorito al montar el componente
   useEffect(() => {
     const loadFavoriteStatus = async () => {
       try {
-        const result = await favoritesService.checkIsFavorite('celular', celular.id);
+        const result = await favoritesService.checkIsFavorite('celular', celular.item_id);
         setIsFavorite(result.isFavorite);
         setFavoriteId(result.favoriteId);
       } catch (error) {
@@ -26,11 +26,11 @@ const CelularCard = ({ celular, onClick }) => {
     if (isAuthenticated) {
       loadFavoriteStatus();
     }
-  }, [isAuthenticated, celular.id]);
+  }, [isAuthenticated, celular.item_id]);
 
   const handleToggleFavorite = async (event) => {
     event.stopPropagation();
-    
+
     if (!isAuthenticated) {
       if (window.confirm('👉 Primero debes iniciar sesión para poder agregar a favoritos.\n\n¿Deseas ir a la página de inicio de sesión?')) {
         window.location.href = '/login';
@@ -46,7 +46,7 @@ const CelularCard = ({ celular, onClick }) => {
         setIsFavorite(false);
         setFavoriteId(null);
       } else {
-        const result = await favoritesService.addToFavorites('celular', celular.id);
+        const result = await favoritesService.addToFavorites('celular', celular.item_id);
         setIsFavorite(true);
         setFavoriteId(result.id);
       }
@@ -69,13 +69,13 @@ const CelularCard = ({ celular, onClick }) => {
         {celular.conectividad_5g && (
           <span className="badge-5g">5G</span>
         )}
-        
+
         {/* Botón de favoritos */}
         <button
           className="favorite-btn"
           onClick={handleToggleFavorite}
           disabled={toggling}
-          title={isAuthenticated 
+          title={isAuthenticated
             ? (isFavorite ? "Quitar de favoritos" : "Agregar a favoritos")
             : "Inicia sesión para agregar a favoritos"
           }
@@ -87,7 +87,7 @@ const CelularCard = ({ celular, onClick }) => {
       <div className="celular-content">
         <div className="celular-brand">{celular_marcas.nombre}</div>
         <h3 className="celular-name">{items.nombre}</h3>
-        
+
         <div className="celular-specs">
           <span className="spec-item">
             <span className="spec-icon">💾</span>

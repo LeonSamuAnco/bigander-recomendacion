@@ -1,0 +1,29 @@
+@startuml
+title Diagrama de Actividad - Generación de Recomendaciones
+
+start
+
+:Recibir solicitud de recomendaciones;
+
+if (¿Existen recomendaciones en caché?) then (sí)
+    :Obtener recomendaciones desde Redis;
+else (no)
+    :Obtener historial de usuario desde MySQL;
+    
+    if (¿Usuario tiene historial?) then (sí)
+        :Generar recomendaciones personalizadas
+        (Filtrado colaborativo / por contenido);
+    else (no - Cold Start)
+        :Generar recomendaciones de fallback
+        (Items más populares / Novedades);
+    endif
+    
+    :Almacenar nuevas recomendaciones en Redis
+    (con tiempo de expiración);
+endif
+
+:Enviar lista de recomendaciones;
+
+stop
+
+@enduml

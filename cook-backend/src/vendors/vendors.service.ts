@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
 import { PrismaService } from '../prisma/prisma.service';
+import * as xlsx from 'xlsx';
 
 @Injectable()
 export class VendorsService {
@@ -664,13 +665,15 @@ export class VendorsService {
             name: `${user.nombres} ${user.apellidos}`,
             email: user.email,
             phone: user.telefono,
-            address: user.direccion,
+            address: vendor.direccion || user.direccion,
             bio: user.bio,
             photo: vendor.logoUrl || user.fotoPerfil, // Priorizar logo del negocio
             city: user.ciudad,
             country: user.pais,
             category: vc.categoria.nombre,
             // Nuevos campos
+            latitud: vendor.latitud,
+            longitud: vendor.longitud,
             horarioAtencion: vendor.horarioAtencion,
             metodosPago: vendor.metodosPago,
             tipoServicio: vendor.tipoServicio,
@@ -694,6 +697,303 @@ export class VendorsService {
     } catch (error) {
       console.error('Error getting vendors by category:', error);
       throw new BadRequestException('Error al obtener vendedores');
+    }
+  }
+  // Obtener productos físicos de la tienda del vendedor
+  async getStoreProducts(userId: number, page = 1, limit = 10) {
+    try {
+      // Obtener ID del vendedor
+      const vendor = await this.prisma.vendor.findUnique({
+        where: { usuarioId: userId },
+      });
+
+      if (!vendor) {
+        return { products: [], total: 0, page, limit, totalPages: 0 };
+      }
+
+      const skip = (page - 1) * limit;
+
+      const [products, total] = await Promise.all([
+        this.prisma.product.findMany({
+          where: {
+            vendedorId: vendor.id,
+          },
+          include: {
+            categoria: true,
+          },
+          skip,
+          take: limit,
+          orderBy: {
+            createdAt: 'desc',
+          },
+        }),
+        this.prisma.product.count({
+          where: {
+            vendedorId: vendor.id,
+          },
+        }),
+      ]);
+
+      return {
+        products: products.map(p => ({
+          id: p.id,
+          name: p.nombre,
+          description: p.descripcion,
+          price: parseFloat(p.precio?.toString() || '0'),
+          stock: p.stock,
+          image: p.imagenUrl,
+          status: p.esActivo ? 'active' : 'inactive',
+          category: p.categoria?.nombre || 'General',
+          categoryId: p.categoriaId,
+          sku: p.sku,
+          createdAt: p.createdAt,
+        })),
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      console.error('Error getting store products:', error);
+      return { products: [], total: 0, page, limit, totalPages: 0 };
+    }
+  }
+
+  // Crear producto de tienda
+  async createStoreProduct(userId: number, data: any) {
+    try {
+      console.log('📦 Creando producto para userId:', userId);
+      console.log('📦 Datos recibidos:', JSON.stringify(data, null, 2));
+
+      const vendor = await this.prisma.vendor.findUnique({
+        where: { usuarioId: userId },
+      });
+
+      if (!vendor) {
+        throw new NotFoundException('Vendedor no encontrado');
+      }
+
+      console.log('✅ Vendedor encontrado:', vendor.id);
+
+      // Validar campos requeridos
+      if (!data.name || data.name.trim() === '') {
+        throw new BadRequestException('El nombre del producto es requerido');
+      }
+
+      if (!data.price || isNaN(parseFloat(data.price))) {
+        throw new BadRequestException('El precio del producto es requerido y debe ser un número válido');
+      }
+
+      // Verificar o crear categoría por defecto
+      let categoryId = data.categoryId ? parseInt(data.categoryId) : 1;
+
+      // Verificar si la categoría existe
+      const categoryExists = await this.prisma.productCategory.findUnique({
+        where: { id: categoryId },
+      });
+
+      if (!categoryExists) {
+        console.log(`⚠️ Categoría ${categoryId} no existe, creando categoría por defecto...`);
+
+        // Crear categoría "Productos de Tienda" por defecto
+        const defaultCategory = await this.prisma.productCategory.create({
+          data: {
+            nombre: 'Productos de Tienda',
+            descripcion: 'Categoría por defecto para productos físicos de vendedores',
+            esActivo: true,
+          },
+        });
+
+        categoryId = defaultCategory.id;
+        console.log(`✅ Categoría por defecto creada con ID: ${categoryId}`);
+      }
+
+      // Preparar datos con valores por defecto
+      const productData = {
+        nombre: data.name.trim(),
+        descripcion: data.description?.trim() || '',
+        precio: parseFloat(data.price),
+        stock: data.stock ? parseInt(data.stock) : 0,
+        categoriaId: categoryId,
+        vendedorId: vendor.id,
+        imagenUrl: data.image || null,
+        sku: data.sku?.trim() || null,
+        esActivo: true,
+      };
+
+      console.log('📦 Datos a crear:', JSON.stringify(productData, null, 2));
+
+      const product = await this.prisma.product.create({
+        data: productData,
+        include: {
+          categoria: true,
+          vendedor: true,
+        },
+      });
+
+      console.log('✅ Producto creado exitosamente:', product.id);
+
+      return {
+        success: true,
+        message: 'Producto creado exitosamente',
+        product,
+      };
+    } catch (error) {
+      console.error('❌ Error creating store product:', error);
+      console.error('❌ Error stack:', error.stack);
+
+      // Mensajes de error más específicos
+      if (error.code === 'P2003') {
+        throw new BadRequestException('Error: La categoría seleccionada no existe. Por favor, intenta de nuevo.');
+      }
+
+      if (error.code === 'P2002') {
+        throw new BadRequestException('Error: Ya existe un producto con ese SKU. Por favor, usa un SKU diferente.');
+      }
+
+      throw new BadRequestException(`Error al crear el producto: ${error.message}`);
+    }
+  }
+
+  // Importar productos desde Excel
+  async importProducts(userId: number, file: Express.Multer.File) {
+    try {
+      const vendor = await this.prisma.vendor.findUnique({
+        where: { usuarioId: userId },
+      });
+
+      if (!vendor) {
+        throw new NotFoundException('Vendedor no encontrado');
+      }
+
+      const workbook = xlsx.read(file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const data = xlsx.utils.sheet_to_json(sheet);
+
+      let createdCount = 0;
+      const errors: any[] = [];
+
+      for (const item of data as any[]) {
+        try {
+          // Mapeo de columnas (flexible)
+          const nombre = item['Nombre'] || item['nombre'] || item['Name'];
+          const precio = item['Precio'] || item['precio'] || item['Price'];
+          const stock = item['Stock'] || item['stock'] || 0;
+          const descripcion = item['Descripcion'] || item['descripcion'] || '';
+          const categoriaId = item['CategoriaId'] || item['categoriaId'] || 1;
+          const sku = item['SKU'] || item['sku'] || null;
+          const imagenUrl = item['Imagen'] || item['imagen'] || item['Image'] || null;
+
+          if (!nombre || !precio) continue;
+
+          await this.prisma.product.create({
+            data: {
+              nombre: String(nombre),
+              descripcion: String(descripcion),
+              precio: parseFloat(precio),
+              stock: parseInt(stock),
+              categoriaId: parseInt(categoriaId),
+              vendedorId: vendor.id,
+              sku: sku ? String(sku) : null,
+              imagenUrl: imagenUrl ? String(imagenUrl) : null,
+              esActivo: true,
+            },
+          });
+          createdCount++;
+        } catch (err) {
+          errors.push({ item, error: err.message });
+        }
+      }
+
+      return {
+        success: true,
+        message: `Importados ${createdCount} productos. ${errors.length} errores.`,
+        createdCount,
+        errors,
+      };
+    } catch (error) {
+      console.error('Error importing products:', error);
+      throw new BadRequestException('Error al importar productos');
+    }
+  }
+
+  // Actualizar producto de tienda
+  async updateStoreProduct(userId: number, productId: number, data: any) {
+    try {
+      const vendor = await this.prisma.vendor.findUnique({
+        where: { usuarioId: userId },
+      });
+
+      if (!vendor) {
+        throw new NotFoundException('Vendedor no encontrado');
+      }
+
+      // Verificar propiedad
+      const existingProduct = await this.prisma.product.findFirst({
+        where: { id: productId, vendedorId: vendor.id },
+      });
+
+      if (!existingProduct) {
+        throw new NotFoundException('Producto no encontrado o no pertenece al vendedor');
+      }
+
+      const product = await this.prisma.product.update({
+        where: { id: productId },
+        data: {
+          nombre: data.name,
+          descripcion: data.description,
+          precio: data.price ? parseFloat(data.price) : undefined,
+          stock: data.stock ? parseInt(data.stock) : undefined,
+          categoriaId: data.categoryId ? parseInt(data.categoryId) : undefined,
+          imagenUrl: data.image,
+          sku: data.sku,
+        },
+      });
+
+      return {
+        success: true,
+        message: 'Producto actualizado exitosamente',
+        product,
+      };
+    } catch (error) {
+      console.error('Error updating store product:', error);
+      throw new BadRequestException('Error al actualizar el producto');
+    }
+  }
+
+  // Toggle estado producto
+  async toggleStoreProduct(userId: number, productId: number) {
+    try {
+      const vendor = await this.prisma.vendor.findUnique({
+        where: { usuarioId: userId },
+      });
+
+      if (!vendor) {
+        throw new NotFoundException('Vendedor no encontrado');
+      }
+
+      const product = await this.prisma.product.findFirst({
+        where: { id: productId, vendedorId: vendor.id },
+      });
+
+      if (!product) {
+        throw new NotFoundException('Producto no encontrado');
+      }
+
+      const updated = await this.prisma.product.update({
+        where: { id: productId },
+        data: { esActivo: !product.esActivo },
+      });
+
+      return {
+        success: true,
+        message: `Producto ${updated.esActivo ? 'activado' : 'desactivado'}`,
+        product: updated,
+      };
+    } catch (error) {
+      console.error('Error toggling store product:', error);
+      throw new BadRequestException('Error al cambiar estado del producto');
     }
   }
 }

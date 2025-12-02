@@ -120,7 +120,7 @@ const RecommendationsWidget = ({ limit = 6 }) => {
                   alt={rec.item.nombre}
                   className="rec-image"
                   onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/300x200?text=Sin+Imagen';
+                    e.target.src = 'https://placehold.co/300x200?text=Sin+Imagen';
                   }}
                 />
               ) : (

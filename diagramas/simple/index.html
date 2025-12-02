@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagramas Simplificados - CookSync</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            color: #666;
+        }
+
+        .category {
+            margin-bottom: 40px;
+        }
+
+        .category-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .diagrams-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .diagram-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+            border-left: 4px solid #667eea;
+        }
+
+        .diagram-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .diagram-name {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .diagram-desc {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .complexity {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .complexity-1 {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .complexity-2 {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .complexity-3 {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .btn-view {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+
+        .btn-view:hover {
+            background: #5568d3;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Diagramas Simplificados</h1>
+            <p class="subtitle">Un proceso por diagrama - Fácil de entender</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number">15</div>
+                <div class="stat-label">Diagramas</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">30-80</div>
+                <div class="stat-label">Líneas/Diagrama</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">1-5</div>
+                <div class="stat-label">Min. Comprensión</div>
+            </div>
+        </div>
+
+        <!-- Modelo de Datos -->
+        <div class="category">
+            <h2 class="category-title">1️⃣ Modelo de Datos (Entidad-Relación)</h2>
+            <div class="diagrams-list">
+                <div class="diagram-item">
+                    <div class="diagram-name">01a - Estructura Core</div>
+                    <div class="diagram-desc">Tabla items central + categorías específicas</div>
+                    <span class="complexity complexity-2">⭐⭐ Simple</span>
+                    <br>
+                    <a href="01a_er_core_items.puml" class="btn-view">Ver Código</a>
+                </div>
+                <div class="diagram-item">
+                    <div class="diagram-name">01b - Sistema de Favoritos</div>
+                    <div class="diagram-desc">Usuario → Favorite → Items (multi-tipo)</div>
+                    <span class="complexity complexity-2">⭐⭐ Simple</span>
+                    <br>
+                    <a href="01b_er_favoritos.puml" class="btn-view">Ver Código</a>
+                </div>
+                <div class="diagram-item">
+                    <div class="diagram-name">01c - Registro de Actividades</div>
+                    <div class="diagram-desc">Usuario → UserActivity → Items (para ML)</div>
+                    <span class="complexity complexity-2">⭐⭐ Simple</span>
+                    <br>
+                    <a href="01c_er_actividades.puml" class="btn-view">Ver Código</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diagramas de Secuencia -->
+        <div class="category">
+            <h2 class="category-title">2️⃣ Diagramas de Secuencia</h2>
+            <div class="diagrams-list">
+                <div class="diagram-item">
+                    <div class="diagram-name">02a - Verificación de Caché</div>
+                    <div class="diagram-desc">Usuario → Frontend → API → Redis</div>
+                    <span class="complexity complexity-1">⭐ Muy Simple</span>
+                    <br>
+                    <a href="02a_secuencia_cache.puml" class="btn-view">Ver Código</a>
+                </div>
+                <div class="diagram-item">
+                    <div class="diagram-name">02b - Generación ML</div>
+                    <div class="diagram-desc">API → MLService → MySQL (algoritmo completo)</div>
+                    <span class="complexity complexity-3">⭐⭐⭐ Moderado</span>
+                    <br>
+                    <a href="02b_secuencia_ml.puml" class="btn-view">Ver Código</a>
+                </div>
+                <div class="diagram-item">
+                    <div class="diagram-name">02c - Fallback (Cold Start)</div>
+                    <div class="diagram-desc">API → FallbackService → Items populares</div>
+                    <span class="complexity complexity-2">⭐⭐ Simple</span>
+                    <br>
+                    <a href="02c_secuencia_fallback.puml" class="btn-view">Ver Código</a>
+                </div>
+                <div class="diagram-name">03a - Verificación de Caché</div>
+                <div class="diagram-desc">Decisión: ¿Existe en caché?</div>
+                <span class="complexity complexity-1">⭐ Muy Simple</span>
+                <br>
+                <a href="03a_actividad_cache.puml" class="btn-view">Ver Código</a>
+            </div>
+            <div class="diagram-item">
+                <div class="diagram-name">03b - Algoritmo ML</div>
+                <div class="diagram-desc">Vectores → Similaridad → Predicción</div>
+                <span class="complexity complexity-3">⭐⭐⭐ Moderado</span>
+                <br>
+                <a href="03b_actividad_ml.puml" class="btn-view">Ver Código</a>
+            </div>
+            <div class="diagram-item">
+                <div class="diagram-name">03c - Fallback</div>
+                <div class="diagram-desc">Flujo para usuarios nuevos</div>
+                <span class="complexity complexity-1">⭐ Muy Simple</span>
+                <br>
+                <div class="diagram-item">
+                    <div class="diagram-name">05 - Sistema de Favoritos</div>
+                    <div class="diagram-desc">Frontend → API → FavoritesService → MySQL</div>
+                    <span class="complexity complexity-2">⭐⭐ Simple</span>
+                    <br>
+                    <a href="05_componentes_favoritos.puml" class="btn-view">Ver Código</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diagramas de Clases -->
+        <div class="category">
+            <h2 class="category-title">5️⃣ Diagramas de Clases</h2>
+            <div class="diagrams-list">
+                <div class="diagram-item">
+                    <div class="diagram-name">06 - Motor ML</div>
+                    <div class="diagram-desc">MLRecommendationsService + modelos</div>
+                    <span class="complexity complexity-3">⭐⭐⭐ Moderado</span>
+                    <br>
+                    <a href="06_clases_ml.puml" class="btn-view">Ver Código</a>
+                </div>
+                <div class="diagram-item">
+                    <div class="diagram-name">07 - Sistema de Favoritos</div>
+                    <div class="diagram-desc">FavoritesService + DTOs + Enums</div>
+                    <span class="complexity complexity-2">⭐⭐ Simple</span>
+                    <br>
+                    <a href="07_clases_favoritos.puml" class="btn-view">Ver Código</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diagrama de Despliegue -->
+        <div class="category">
+            <h2 class="category-title">6️⃣ Diagrama de Despliegue</h2>
+            <div class="diagrams-list">
+                <div class="diagram-item">
+                    <div class="diagram-name">08 - Arquitectura General</div>
+                    <div class="diagram-desc">Cliente → Nginx → Node.js → Datos</div>
+                    <span class="complexity complexity-2">⭐⭐ Simple</span>
+                    <br>
+                    <a href="08_despliegue.puml" class="btn-view">Ver Código</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diagramas Estilo Referencia -->
+        <div class="category">
+            <h2 class="category-title">7️⃣ Diagramas Estilo Referencia (Solicitados)</h2>
+            <div class="diagrams-list">
+                <div class="diagram-item" style="border-left-color: #e83e8c;">
+                    <div class="diagram-name">09 - Casos de Uso (Estilo Cadena)</div>
+                    <div class="diagram-desc">Replica la estructura visual de tu imagen de referencia (Procesos
+                        encadenados).</div>
+                    <span class="complexity complexity-2">⭐⭐ Adaptado</span>
+                    <br>
+
+                    .stat-label {
+                    font-size: 0.9em;
+                    opacity: 0.9;
+                    }
+
+                    footer {
+                    text-align: center;
+                    margin-top: 40px;
+                    padding-top: 20px;
+                    border-top: 2px solid #e9ecef;
+                    color: #666;
+                    }
+                    </style>
+                    </head>
+
+                    <body>
+                        <div class="container">
+                            <header>
+                                <h1>📊 Diagramas Simplificados</h1>
+                                <p class="subtitle">Un proceso por diagrama - Fácil de entender</p>
+                            </header>
+
+                            <div class="stats">
+                                <div class="stat">
+                                    <div class="stat-number">15</div>
+                                    <div class="stat-label">Diagramas</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-number">30-80</div>
+                                    <div class="stat-label">Líneas/Diagrama</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-number">1-5</div>
+                                    <div class="stat-label">Min. Comprensión</div>
+                                </div>
+                            </div>
+
+                            <!-- Modelo de Datos -->
+                            <div class="category">
+                                <h2 class="category-title">1️⃣ Modelo de Datos (Entidad-Relación)</h2>
+                                <div class="diagrams-list">
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">01a - Estructura Core</div>
+                                        <div class="diagram-desc">Tabla items central + categorías específicas</div>
+                                        <span class="complexity complexity-2">⭐⭐ Simple</span>
+                                        <br>
+                                        <a href="01a_er_core_items.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">01b - Sistema de Favoritos</div>
+                                        <div class="diagram-desc">Usuario → Favorite → Items (multi-tipo)</div>
+                                        <span class="complexity complexity-2">⭐⭐ Simple</span>
+                                        <br>
+                                        <a href="01b_er_favoritos.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">01c - Registro de Actividades</div>
+                                        <div class="diagram-desc">Usuario → UserActivity → Items (para ML)</div>
+                                        <span class="complexity complexity-2">⭐⭐ Simple</span>
+                                        <br>
+                                        <a href="01c_er_actividades.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Diagramas de Secuencia -->
+                            <div class="category">
+                                <h2 class="category-title">2️⃣ Diagramas de Secuencia</h2>
+                                <div class="diagrams-list">
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">02a - Verificación de Caché</div>
+                                        <div class="diagram-desc">Usuario → Frontend → API → Redis</div>
+                                        <span class="complexity complexity-1">⭐ Muy Simple</span>
+                                        <br>
+                                        <a href="02a_secuencia_cache.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">02b - Generación ML</div>
+                                        <div class="diagram-desc">API → MLService → MySQL (algoritmo completo)</div>
+                                        <span class="complexity complexity-3">⭐⭐⭐ Moderado</span>
+                                        <br>
+                                        <a href="02b_secuencia_ml.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">02c - Fallback (Cold Start)</div>
+                                        <div class="diagram-desc">API → FallbackService → Items populares</div>
+                                        <span class="complexity complexity-2">⭐⭐ Simple</span>
+                                        <br>
+                                        <a href="02c_secuencia_fallback.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">02d - Registro de Actividad</div>
+                                        <div class="diagram-desc">Usuario → API → MySQL + invalidación caché</div>
+                                        <span class="complexity complexity-2">⭐⭐ Simple</span>
+                                        <br>
+                                        <a href="02d_secuencia_actividad.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Diagramas de Actividad -->
+                            <div class="category">
+                                <h2 class="category-title">3️⃣ Diagramas de Actividad</h2>
+                                <div class="diagrams-list">
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">03a - Verificación de Caché</div>
+                                        <div class="diagram-desc">Decisión: ¿Existe en caché?</div>
+                                        <span class="complexity complexity-1">⭐ Muy Simple</span>
+                                        <br>
+                                        <a href="03a_actividad_cache.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">03b - Algoritmo ML</div>
+                                        <div class="diagram-desc">Vectores → Similaridad → Predicción</div>
+                                        <span class="complexity complexity-3">⭐⭐⭐ Moderado</span>
+                                        <br>
+                                        <a href="03b_actividad_ml.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">03c - Fallback</div>
+                                        <div class="diagram-desc">Flujo para usuarios nuevos</div>
+                                        <span class="complexity complexity-1">⭐ Muy Simple</span>
+                                        <br>
+                                        <a href="03c_actividad_fallback.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Diagramas de Componentes -->
+                            <div class="category">
+                                <h2 class="category-title">4️⃣ Diagramas de Componentes</h2>
+                                <div class="diagrams-list">
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">04 - Sistema de Recomendaciones</div>
+                                        <div class="diagram-desc">Frontend → API → MLService → Persistencia</div>
+                                        <span class="complexity complexity-2">⭐⭐ Simple</span>
+                                        <br>
+                                        <a href="04_componentes_recomendaciones.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">05 - Sistema de Favoritos</div>
+                                        <div class="diagram-desc">Frontend → API → FavoritesService → MySQL</div>
+                                        <span class="complexity complexity-2">⭐⭐ Simple</span>
+                                        <br>
+                                        <a href="05_componentes_favoritos.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Diagramas de Clases -->
+                            <div class="category">
+                                <h2 class="category-title">5️⃣ Diagramas de Clases</h2>
+                                <div class="diagrams-list">
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">06 - Motor ML</div>
+                                        <div class="diagram-desc">MLRecommendationsService + modelos</div>
+                                        <span class="complexity complexity-3">⭐⭐⭐ Moderado</span>
+                                        <br>
+                                        <a href="06_clases_ml.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">07 - Sistema de Favoritos</div>
+                                        <div class="diagram-desc">FavoritesService + DTOs + Enums</div>
+                                        <span class="complexity complexity-2">⭐⭐ Simple</span>
+                                        <br>
+                                        <a href="07_clases_favoritos.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Diagrama de Despliegue -->
+                            <div class="category">
+                                <h2 class="category-title">6️⃣ Diagrama de Despliegue</h2>
+                                <div class="diagrams-list">
+                                    <div class="diagram-item">
+                                        <div class="diagram-name">08 - Arquitectura General</div>
+                                        <div class="diagram-desc">Cliente → Nginx → Node.js → Datos</div>
+                                        <span class="complexity complexity-2">⭐⭐ Simple</span>
+                                        <br>
+                                        <a href="08_despliegue.puml" class="btn-view">Ver Código</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Diagramas Estilo Referencia -->
+                            <div class="category">
+                                <h2 class="category-title">7️⃣ Diagramas Estilo Referencia (Solicitados)</h2>
+                                <div class="diagrams-list">
+                                    <div class="diagram-item" style="border-left-color: #e83e8c;">
+                                        <div class="diagram-name">09 - Casos de Uso (Estilo Cadena)</div>
+                                        <div class="diagram-desc">Replica la estructura visual de tu imagen de
+                                            referencia (Procesos
+                                            encadenados).</div>
+                                        <span class="complexity complexity-2">⭐⭐ Adaptado</span>
+                                        <br>
+                                        <a href="09_casos_uso_ref.puml" class="btn-view"
+                                            style="background: #e83e8c;">Ver
+                                            Código</a>
+                                    </div>
+                                    <div class="diagram-item" style="border-left-color: #e83e8c;">
+                                        <div class="diagram-name">10 - Actividad (Swimlanes)</div>
+                                        <div class="diagram-desc">Replica los carriles verticales de tu imagen de
+                                            referencia.</div>
+                                        <span class="complexity complexity-3">⭐⭐⭐ Completo</span>
+                                        <br>
+                                        <a href="10_actividad_swimlanes_ref.puml" class="btn-view"
+                                            style="background: #e83e8c;">Ver Código</a>
+                                    </div>
+                                    <div class="diagram-item" style="border-left-color: #e83e8c;">
+                                        <div class="diagram-name">13 - Clases (Estilo Ref)</div>
+                                        <div class="diagram-desc">Diagrama de Clases con atributos, métodos y herencia
+                                            visual.</div>
+                                        <span class="complexity complexity-3">⭐⭐⭐ Detallado</span>
+                                        <br>
+                                        <a href="13_clases_ref_style.puml" class="btn-view"
+                                            style="background: #e83e8c;">Ver
+                                            Código</a>
+                                    </div>
+                                    <div class="diagram-item" style="border-left-color: #e83e8c;">
+                                        <div class="diagram-name">14 - E.R. (Estilo Ref)</div>
+                                        <div class="diagram-desc">Diagrama ER con notación de herencia para Items y
+                                            categorías.</div>
+                                        <span class="complexity complexity-3">⭐⭐⭐ Detallado</span>
+                                        <br>
+                                        <a href="14_er_ref_style.puml" class="btn-view" style="background: #e83e8c;">Ver
+                                            Código</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <footer>
+                                <p><strong>CookSync - Diagramas Simplificados</strong></p>
+                                <p>Un proceso por diagrama | Fácil comprensión | Ideal para presentaciones</p>
+                                <p style="margin-top: 15px;">
+                                    📖 <a href="README.md" style="color: #667eea; text-decoration: none;">Ver
+                                        Documentación</a>
+                                </p>
+                            </footer>
+                        </div>
+                    </body>
+
+</html>

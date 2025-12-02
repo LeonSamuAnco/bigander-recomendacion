@@ -13,7 +13,7 @@ import { FavoriteFiltersDto } from './dto/favorite-filters.dto';
 export class FavoritesService {
   private readonly logger = new Logger(FavoritesService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Obtener todos los favoritos del usuario con filtros
@@ -44,6 +44,12 @@ export class FavoritesService {
 
     // Enriquecer con datos de las referencias
     const enrichedFavorites = await this.enrichFavoritesData(favorites);
+
+    // DEBUG: Log para ver qué datos estamos devolviendo
+    if (enrichedFavorites.length > 0) {
+      this.logger.log('📦 Ejemplo de favorito enriquecido:');
+      this.logger.log(JSON.stringify(enrichedFavorites[0], null, 2));
+    }
 
     return {
       data: enrichedFavorites,
@@ -391,22 +397,22 @@ export class FavoritesService {
         break;
       case FavoriteType.CELULAR:
         exists = !!(await this.prisma.celulares.findUnique({
-          where: { id: referenciaId },
+          where: { item_id: referenciaId },
         }));
         break;
       case FavoriteType.TORTA:
         exists = !!(await this.prisma.tortas.findUnique({
-          where: { id: referenciaId },
+          where: { item_id: referenciaId },
         }));
         break;
       case FavoriteType.LUGAR:
         exists = !!(await this.prisma.lugares.findUnique({
-          where: { id: referenciaId },
+          where: { item_id: referenciaId },
         }));
         break;
       case FavoriteType.DEPORTE:
         exists = !!(await this.prisma.deportes_equipamiento.findUnique({
-          where: { id: referenciaId },
+          where: { item_id: referenciaId },
         }));
         break;
     }
@@ -449,41 +455,45 @@ export class FavoritesService {
               break;
             case FavoriteType.CELULAR:
               data = await this.prisma.celulares.findUnique({
-                where: { id: fav.referenciaId },
+                where: { item_id: fav.referenciaId },
                 include: {
                   celular_marcas: true,
                   celular_sistemas_operativos: true,
                   celular_gamas: true,
+                  items: true,
                 },
               });
               break;
             case FavoriteType.TORTA:
               data = await this.prisma.tortas.findUnique({
-                where: { id: fav.referenciaId },
+                where: { item_id: fav.referenciaId },
                 include: {
                   torta_sabores: true,
                   torta_rellenos: true,
                   torta_coberturas: true,
                   torta_ocasiones: true,
+                  items: true,
                 },
               });
               break;
             case FavoriteType.LUGAR:
               data = await this.prisma.lugares.findUnique({
-                where: { id: fav.referenciaId },
+                where: { item_id: fav.referenciaId },
                 include: {
                   lugar_tipos: true,
                   lugar_rangos_precio: true,
+                  items: true,
                 },
               });
               break;
             case FavoriteType.DEPORTE:
               data = await this.prisma.deportes_equipamiento.findUnique({
-                where: { id: fav.referenciaId },
+                where: { item_id: fav.referenciaId },
                 include: {
                   deporte_marcas: true,
                   deporte_tipos: true,
                   deporte_equipamiento_tipos: true,
+                  items: true,
                 },
               });
               break;

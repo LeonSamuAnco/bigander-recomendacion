@@ -1,0 +1,38 @@
+@startuml
+title Flujo: Verificación de Caché
+
+actor Usuario
+participant Frontend
+participant API
+participant Redis
+
+Usuario -> Frontend: Solicita recomendaciones
+activate Frontend
+
+Frontend -> API: GET /api/recommendations?tipo=celular
+activate API
+
+API -> Redis: GET recommendations:userId:celular
+activate Redis
+
+alt Existe en caché
+    Redis --> API: Recomendaciones (JSON)
+    deactivate Redis
+    
+    API --> Frontend: 200 OK\n{ recommendations: [...] }
+    deactivate API
+    
+    Frontend --> Usuario: Mostrar recomendaciones
+    deactivate Frontend
+    
+else No existe en caché
+    Redis --> API: null
+    deactivate Redis
+    
+    note over API
+        Continuar con
+        generación ML
+    end note
+end
+
+@enduml

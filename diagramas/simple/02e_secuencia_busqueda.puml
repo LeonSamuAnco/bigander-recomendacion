@@ -1,0 +1,56 @@
+@startuml
+title Secuencia - Búsqueda de Productos
+
+skinparam sequence {
+    ArrowColor Black
+    ActorBorderColor Black
+    LifeLineBorderColor Black
+    ParticipantBorderColor Black
+    ParticipantBackgroundColor White
+    ActorBackgroundColor White
+}
+
+actor "Usuario" as User
+participant "Frontend" as Front
+participant "API (Node.js)" as API
+participant "Redis" as Cache
+database "Elasticsearch" as Elastic
+database "MySQL" as DB
+
+autonumber
+
+User -> Front: Ingresa término de búsqueda
+activate Front
+
+Front -> API: GET /api/search?q=term
+activate API
+
+API -> Cache: Verificar caché
+activate Cache
+Cache -->> API: Cache Miss (No encontrado)
+deactivate Cache
+
+API -> Elastic: Buscar IDs de productos
+activate Elastic
+Elastic -->> API: Devuelve IDs encontrados
+deactivate Elastic
+
+API -> DB: Obtener detalles de productos por IDs
+activate DB
+DB -->> API: Devuelve detalles completos
+deactivate DB
+
+API -> API: Formatear respuesta
+
+API -> Cache: Almacenar nuevos resultados
+activate Cache
+Cache -->> API: (Confirmación)
+deactivate Cache
+
+API -->> Front: Devuelve 200 OK (resultados)
+deactivate API
+
+Front -->> User: Mostrar resultados
+deactivate Front
+
+@enduml

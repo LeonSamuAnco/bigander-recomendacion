@@ -26,6 +26,7 @@ import LugarDetailPage from "./pages/LugarDetailPage";
 import DeportesPage from "./pages/DeportesPage";
 import DeporteDetailPage from "./pages/DeporteDetailPage";
 import RecommendationsPage from "./pages/RecommendationsPage";
+import StatisticsPage from "./pages/StatisticsPage";
 import SessionExpiredModal from "./components/SessionExpiredModal";
 import "./App.css";
 import "./utils/backendChecker";
@@ -199,6 +200,8 @@ const AppContent = () => {
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/activity" element={<ActivityPage />} />
         <Route path="/history" element={<ActivityPage />} />
+        <Route path="/statistics" element={<StatisticsPage />} />
+        <Route path="/estadisticas" element={<StatisticsPage />} />
         <Route path="/recommendations" element={<ProtectedRoute><RecommendationsPage /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/admin/*" element={<ProtectedRoute allowedRoles={['ADMIN']}><Dashboard /></ProtectedRoute>} />

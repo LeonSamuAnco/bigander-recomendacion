@@ -19,7 +19,7 @@ const LugarCard = ({ lugar }) => {
   useEffect(() => {
     const loadFavoriteStatus = async () => {
       try {
-        const result = await favoritesService.checkIsFavorite('lugar', lugar.id);
+        const result = await favoritesService.checkIsFavorite('lugar', lugar.item_id);
         setIsFavorite(result.isFavorite);
         setFavoriteId(result.favoriteId);
       } catch (error) {
@@ -30,11 +30,11 @@ const LugarCard = ({ lugar }) => {
     if (isAuthenticated) {
       loadFavoriteStatus();
     }
-  }, [isAuthenticated, lugar.id]);
+  }, [isAuthenticated, lugar.item_id]);
 
   const handleToggleFavorite = async (event) => {
     event.stopPropagation();
-    
+
     if (!isAuthenticated) {
       if (window.confirm('👉 Primero debes iniciar sesión para poder agregar a favoritos.\n\n¿Deseas ir a la página de inicio de sesión?')) {
         window.location.href = '/login';
@@ -50,7 +50,7 @@ const LugarCard = ({ lugar }) => {
         setIsFavorite(false);
         setFavoriteId(null);
       } else {
-        const result = await favoritesService.addToFavorites('lugar', lugar.id);
+        const result = await favoritesService.addToFavorites('lugar', lugar.item_id);
         setIsFavorite(true);
         setFavoriteId(result.id);
       }
@@ -65,7 +65,7 @@ const LugarCard = ({ lugar }) => {
   // Extraer datos del lugar
   const nombre = lugar.items?.nombre || 'Sin nombre';
   const descripcion = lugar.items?.descripcion || 'Sin descripción';
-  const imagen = lugar.items?.imagen_principal_url || 'https://via.placeholder.com/300x200?text=Sin+Imagen';
+  const imagen = lugar.items?.imagen_principal_url || 'https://placehold.co/300x200?text=Sin+Imagen';
   const tipo = lugar.lugar_tipos?.nombre || 'Sin tipo';
   const tipoIcono = lugar.lugar_tipos?.icono || 'fas fa-map-marker-alt';
   const rangoPrecio = lugar.lugar_rangos_precio?.simbolo || 'N/A';
@@ -97,13 +97,13 @@ const LugarCard = ({ lugar }) => {
             </span>
           )}
         </div>
-        
+
         {/* Botón de favoritos */}
         <button
           className="favorite-btn"
           onClick={handleToggleFavorite}
           disabled={toggling}
-          title={isAuthenticated 
+          title={isAuthenticated
             ? (isFavorite ? "Quitar de favoritos" : "Agregar a favoritos")
             : "Inicia sesión para agregar a favoritos"
           }
@@ -114,7 +114,7 @@ const LugarCard = ({ lugar }) => {
 
       <div className="lugar-card-content">
         <h3 className="lugar-card-title">{nombre}</h3>
-        
+
         <p className="lugar-card-description">{descripcion}</p>
 
         <div className="lugar-card-info">
@@ -133,8 +133,8 @@ const LugarCard = ({ lugar }) => {
           {telefono && (
             <div className="lugar-card-phone">
               <i className="fas fa-phone"></i>
-              <a 
-                href={`tel:${telefono}`} 
+              <a
+                href={`tel:${telefono}`}
                 onClick={(e) => e.stopPropagation()}
                 title="Llamar"
               >

@@ -1,0 +1,64 @@
+@startuml
+title Modelo de Datos - Registro de Actividades y Recomendaciones
+
+skinparam linetype ortho
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+class Usuario {
+    **PK: id_usuario**
+    nombre
+    email
+    preferencias_globales (JSON)
+}
+
+class UserActivity {
+    **PK: id_actividad**
+    <color:goldenrod>FK: id_usuario</color>
+    tipo_evento (VARCHAR)
+    referencia_id (INT)
+    fecha (DATETIME)
+    metadata (JSON)
+    duracion_segundos (INT)
+}
+
+class Items {
+    **PK: item_id**
+    nombre
+    tipo_item
+}
+
+class RecomendacionesCache {
+    **Key: Redis Key**
+    (recommendations:userId:tipo)
+    **Value: JSON**
+    - items: []
+    - generatedAt: Date
+    - source: 'ml' | 'fallback'
+    **TTL: 300s**
+}
+
+' Relaciones
+Usuario "1" -- "0..*" UserActivity : "genera >"
+UserActivity ..> Items : "interactúa con >"
+Usuario "1" .. "0..1" RecomendacionesCache : "tiene caché >"
+
+note right of UserActivity
+    **Tipos de Evento:**
+    - VIEW_ITEM
+    - ADD_FAVORITE
+    - SEARCH_QUERY
+    - CLICK_RECOMMENDATION
+    
+    **Metadata JSON:**
+    {
+      "device": "mobile",
+      "source": "search_results",
+      "time_spent": 45
+    }
+end note
+
+@enduml

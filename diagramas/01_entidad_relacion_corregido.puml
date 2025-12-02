@@ -1,0 +1,206 @@
+@startuml
+!define Table(name,desc) class name as "desc" << (T,#FFAAAA) >>
+!define primary_key(x) <b>PK: x</b>
+!define foreign_key(x) <color:goldenrod>FK: x</color>
+!define column(x) <color:black>x</color>
+
+skinparam linetype ortho
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+' ============================================
+' TABLAS PRINCIPALES
+' ============================================
+
+Table(Usuario, "Usuario") {
+    primary_key(id_usuario: INT)
+    column(nombre: VARCHAR)
+    column(email: VARCHAR)
+    column(password_hash: VARCHAR)
+    column(fecha_registro: DATETIME)
+    column(es_activo: BOOLEAN)
+}
+
+Table(Items, "Items\n(Tabla Central)") {
+    primary_key(item_id: INT)
+    column(nombre: VARCHAR)
+    column(descripcion: TEXT)
+    column(imagen_principal_url: VARCHAR)
+    column(imagen_url: VARCHAR)
+    column(es_activo: BOOLEAN)
+    column(fecha_creacion: DATETIME)
+}
+
+' ============================================
+' TABLAS ESPECÍFICAS POR CATEGORÍA
+' ============================================
+
+Table(Celulares, "Celulares") {
+    primary_key(celular_id: INT)
+    foreign_key(item_id: INT)
+    foreign_key(marca_id: INT)
+    foreign_key(sistema_operativo_id: INT)
+    foreign_key(gama_id: INT)
+    column(memoria_ram_gb: INT)
+    column(almacenamiento_interno_gb: INT)
+    column(pantalla_tamano_pulgadas: DECIMAL)
+    column(bateria_capacidad_mah: INT)
+    column(conectividad_5g: BOOLEAN)
+}
+
+Table(Tortas, "Tortas") {
+    primary_key(torta_id: INT)
+    foreign_key(item_id: INT)
+    foreign_key(sabor_id: INT)
+    foreign_key(relleno_id: INT)
+    foreign_key(cobertura_id: INT)
+    foreign_key(ocasion_id: INT)
+    column(es_personalizable: BOOLEAN)
+    column(tiempo_preparacion_dias: INT)
+}
+
+Table(Lugares, "Lugares") {
+    primary_key(lugar_id: INT)
+    foreign_key(item_id: INT)
+    foreign_key(tipo_id: INT)
+    foreign_key(rango_precio_id: INT)
+    column(ciudad: VARCHAR)
+    column(pais: VARCHAR)
+    column(direccion: VARCHAR)
+    column(telefono: VARCHAR)
+    column(sitio_web: VARCHAR)
+    column(latitud: DECIMAL)
+    column(longitud: DECIMAL)
+}
+
+Table(DeportesEquipamiento, "Deportes_Equipamiento") {
+    primary_key(deporte_id: INT)
+    foreign_key(item_id: INT)
+    foreign_key(marca_id: INT)
+    foreign_key(tipo_id: INT)
+    foreign_key(equipamiento_tipo_id: INT)
+    column(talla: VARCHAR)
+    column(color: VARCHAR)
+    column(material: VARCHAR)
+}
+
+Table(Recetas, "Recetas") {
+    primary_key(id_receta: INT)
+    foreign_key(id_usuario: INT)
+    foreign_key(categoria_id: INT)
+    foreign_key(dificultad_id: INT)
+    column(nombre: VARCHAR)
+    column(descripcion: TEXT)
+    column(imagen_url: VARCHAR)
+    column(tiempo_preparacion: INT)
+    column(porciones: INT)
+    column(calificacion_promedio: DECIMAL)
+    column(veces_preparada: INT)
+}
+
+' ============================================
+' TABLAS DE INTERACCIÓN Y FAVORITOS
+' ============================================
+
+Table(Favorite, "Favorite") {
+    primary_key(id: INT)
+    foreign_key(usuarioId: INT)
+    column(tipo: ENUM)
+    column(referenciaId: INT)
+    column(esActivo: BOOLEAN)
+    column(createdAt: DATETIME)
+}
+
+Table(UserActivity, "User_Activity") {
+    primary_key(id_actividad: INT)
+    foreign_key(id_usuario: INT)
+    column(tipo: VARCHAR)
+    column(referencia_id: INT)
+    column(fecha: DATETIME)
+    column(metadata: JSON)
+}
+
+' ============================================
+' TABLAS DE METADATOS
+' ============================================
+
+Table(CelularMarcas, "Celular_Marcas") {
+    primary_key(id: INT)
+    column(nombre: VARCHAR)
+    column(pais_origen: VARCHAR)
+}
+
+Table(TortaSabores, "Torta_Sabores") {
+    primary_key(id: INT)
+    column(nombre: VARCHAR)
+    column(descripcion: TEXT)
+}
+
+Table(LugarTipos, "Lugar_Tipos") {
+    primary_key(id: INT)
+    column(nombre: VARCHAR)
+    column(icono: VARCHAR)
+}
+
+Table(DeporteMarcas, "Deporte_Marcas") {
+    primary_key(id: INT)
+    column(nombre: VARCHAR)
+}
+
+' ============================================
+' RELACIONES
+' ============================================
+
+' Items como tabla central
+Items "1" -- "0..*" Celulares : "tiene >"
+Items "1" -- "0..*" Tortas : "tiene >"
+Items "1" -- "0..*" Lugares : "tiene >"
+Items "1" -- "0..*" DeportesEquipamiento : "tiene >"
+
+' Usuario con sus relaciones
+Usuario "1" -- "0..*" Favorite : "tiene >"
+Usuario "1" -- "0..*" UserActivity : "registra >"
+Usuario "1" -- "0..*" Recetas : "crea >"
+
+' Favoritos apuntan a cualquier item
+Favorite ..> Items : "referencia >"
+
+' Actividades apuntan a cualquier item
+UserActivity ..> Items : "referencia >"
+
+' Metadatos
+CelularMarcas "1" -- "0..*" Celulares : "categoriza >"
+TortaSabores "1" -- "0..*" Tortas : "categoriza >"
+LugarTipos "1" -- "0..*" Lugares : "categoriza >"
+DeporteMarcas "1" -- "0..*" DeportesEquipamiento : "categoriza >"
+
+note right of Items
+  **Tabla Central del Sistema**
+  Todos los productos (celulares, 
+  tortas, lugares, deportes) tienen
+  un registro en Items con datos
+  comunes (nombre, imagen, etc.)
+end note
+
+note right of Favorite
+  **Sistema de Favoritos**
+  - tipo: 'celular', 'torta', 
+    'lugar', 'deporte', 'receta'
+  - referenciaId: apunta al item_id
+  - esActivo: soft delete
+end note
+
+note right of UserActivity
+  **Registro de Actividades**
+  Usado por el sistema ML para
+  generar recomendaciones:
+  - CELULAR VISTO
+  - TORTA VISTA
+  - RECETA PREPARADA
+  - LUGAR VISITADO
+end note
+
+@enduml

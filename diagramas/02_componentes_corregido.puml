@@ -1,0 +1,178 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam linetype ortho
+
+package "Servidor Backend (Nest.js)" {
+    
+    [API REST Controller] as API
+    
+    package "Capa de Servicios" {
+        [MLRecommendationsService] as MLService <<ML Engine>>
+        [RecommendationsService] as RecService <<Fallback>>
+        [FavoritesService] as FavService
+        [AuthService] as AuthService
+        [ProductsService] as ProdService
+        [CelularesService] as CelService
+        [TortasService] as TortService
+        [LugaresService] as LugService
+        [DeportesService] as DepService
+        [UserActivityService] as ActService
+    }
+    
+    package "Modelos y DTOs" {
+        [UserVector] as UserVec <<Model>>
+        [ItemVector] as ItemVec <<Model>>
+        [PredictionResult] as PredRes <<Model>>
+        [CreateFavoriteDto] as FavDto <<DTO>>
+    }
+}
+
+package "Capa de Persistencia y Datos" {
+    database "MySQL\nDatabase" as MySQL {
+        [users]
+        [items]
+        [celulares]
+        [tortas]
+        [lugares]
+        [deportes_equipamiento]
+        [favorites]
+        [user_activity]
+        [recetas]
+    }
+    
+    database "Redis\nCache" as Redis {
+        [recommendations_cache]
+        [search_cache]
+        [session_cache]
+    }
+    
+    database "Elasticsearch\nMotor de Búsqueda" as Elastic {
+        [items_index]
+        [products_index]
+    }
+}
+
+package "Aplicación Cliente (Navegador Web)" {
+    [Frontend\n(React/Next.js)] as Frontend
+}
+
+' ============================================
+' RELACIONES FRONTEND -> API
+' ============================================
+
+Frontend -down-> API : "consume (HTTP/HTTPS)"
+
+' ============================================
+' RELACIONES API -> SERVICIOS
+' ============================================
+
+API -down-> MLService : "solicita\nrecomendaciones ML"
+API -down-> RecService : "fallback\nrecomendaciones"
+API -down-> FavService : "gestiona\nfavoritos"
+API -down-> AuthService : "valida\ncredenciales"
+API -down-> ProdService : "CRUD\nproductos"
+API -down-> CelService : "gestiona\ncelulares"
+API -down-> TortService : "gestiona\ntortas"
+API -down-> LugService : "gestiona\nlugares"
+API -down-> DepService : "gestiona\ndeportes"
+API -down-> ActService : "registra\nactividades"
+
+' ============================================
+' RELACIONES SERVICIOS -> MODELOS
+' ============================================
+
+MLService ..> UserVec : "usa"
+MLService ..> ItemVec : "usa"
+MLService ..> PredRes : "genera"
+FavService ..> FavDto : "usa"
+
+' ============================================
+' RELACIONES SERVICIOS -> PERSISTENCIA
+' ============================================
+
+' ML Service
+MLService -down-> user_activity : "lee historial"
+MLService -down-> items : "lee items"
+MLService -down-> Redis : "lee/escribe caché"
+
+' Recommendations Service (Fallback)
+RecService -down-> items : "lee items populares"
+RecService -down-> user_activity : "lee actividades"
+
+' Favorites Service
+FavService -down-> favorites : "CRUD"
+FavService -down-> items : "valida referencias"
+FavService -down-> celulares : "enriquece datos"
+FavService -down-> tortas : "enriquece datos"
+FavService -down-> lugares : "enriquece datos"
+FavService -down-> deportes_equipamiento : "enriquece datos"
+
+' Auth Service
+AuthService -down-> users : "valida\ncredenciales"
+AuthService -down-> Redis : "almacena\nsesiones"
+
+' Products Services
+ProdService -down-> items : "CRUD"
+CelService -down-> celulares : "CRUD"
+CelService -down-> items : "referencia"
+TortService -down-> tortas : "CRUD"
+TortService -down-> items : "referencia"
+LugService -down-> lugares : "CRUD"
+LugService -down-> items : "referencia"
+DepService -down-> deportes_equipamiento : "CRUD"
+DepService -down-> items : "referencia"
+
+' Activity Service
+ActService -down-> user_activity : "registra"
+
+' Elasticsearch
+ProdService -down-> Elastic : "indexa productos"
+
+' ============================================
+' NOTAS EXPLICATIVAS
+' ============================================
+
+note right of MLService
+  **Motor de Recomendaciones ML**
+  
+  Funciones principales:
+  1. Extraer características del usuario
+  2. Calcular vectores de usuario/item
+  3. Calcular similaridad coseno
+  4. Predecir ratings
+  5. Aplicar time-decay
+  6. Ordenar por relevancia
+  
+  Usa caché Redis (TTL: 5 min)
+end note
+
+note right of FavService
+  **Servicio de Favoritos**
+  
+  - Soporta múltiples tipos:
+    celular, torta, lugar, 
+    deporte, receta
+  - Valida que el item existe
+  - Enriquece con datos completos
+  - Usa soft delete (esActivo)
+end note
+
+note bottom of MySQL
+  **Base de Datos Principal**
+  
+  - Items: Tabla central
+  - Tablas específicas por categoría
+  - Favoritos multi-tipo
+  - Actividades de usuario
+  - Sistema de autenticación
+end note
+
+note bottom of Redis
+  **Caché de Alto Rendimiento**
+  
+  - Recomendaciones (5 min TTL)
+  - Búsquedas frecuentes
+  - Sesiones de usuario (JWT)
+end note
+
+@enduml
