@@ -642,7 +642,9 @@ const vendorService = {
         return await response.json();
       }
 
-      throw new Error('Failed to create product');
+      const errorData = await response.json().catch(() => ({}));
+      console.error('❌ Error del servidor al crear producto:', errorData);
+      throw new Error(errorData.message || 'Error al crear el producto');
     } catch (error) {
       console.error('Error creating store product:', error);
       throw error;
@@ -700,7 +702,7 @@ const vendorService = {
       const formData = new FormData();
       formData.append('image', file);
 
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
 
       if (!token) {
         throw new Error('No hay token de autenticación. Por favor, inicia sesión nuevamente.');

@@ -765,12 +765,20 @@ export class VendorsService {
       console.log('📦 Creando producto para userId:', userId);
       console.log('📦 Datos recibidos:', JSON.stringify(data, null, 2));
 
-      const vendor = await this.prisma.vendor.findUnique({
+      let vendor = await this.prisma.vendor.findUnique({
         where: { usuarioId: userId },
       });
 
+      // Si no se encuentra por usuarioId, intentar buscar por id (por si se envió el ID del vendedor)
       if (!vendor) {
-        throw new NotFoundException('Vendedor no encontrado');
+        vendor = await this.prisma.vendor.findUnique({
+          where: { id: userId },
+        });
+      }
+
+      if (!vendor) {
+        console.error(`❌ Vendedor no encontrado para ID: ${userId}`);
+        throw new NotFoundException('Vendedor no encontrado. Asegúrate de tener un perfil de vendedor activo.');
       }
 
       console.log('✅ Vendedor encontrado:', vendor.id);
@@ -784,28 +792,49 @@ export class VendorsService {
         throw new BadRequestException('El precio del producto es requerido y debe ser un número válido');
       }
 
-      // Verificar o crear categoría por defecto
-      let categoryId = data.categoryId ? parseInt(data.categoryId) : 1;
+      // Verificar o obtener categoría válida
+      let categoryId = data.categoryId ? parseInt(data.categoryId) : null;
 
-      // Verificar si la categoría existe
-      const categoryExists = await this.prisma.productCategory.findUnique({
-        where: { id: categoryId },
-      });
+      // Si se especificó una categoría, verificar que exista
+      if (categoryId) {
+        const categoryExists = await this.prisma.productCategory.findUnique({
+          where: { id: categoryId },
+        });
+        if (!categoryExists) {
+          categoryId = null; // No existe, buscaremos una por defecto
+        }
+      }
 
-      if (!categoryExists) {
-        console.log(`⚠️ Categoría ${categoryId} no existe, creando categoría por defecto...`);
+      // Si no hay categoría válida, buscar o crear una por defecto
+      if (!categoryId) {
+        console.log('⚠️ Buscando categoría por defecto...');
 
-        // Crear categoría "Productos de Tienda" por defecto
-        const defaultCategory = await this.prisma.productCategory.create({
-          data: {
-            nombre: 'Productos de Tienda',
-            descripcion: 'Categoría por defecto para productos físicos de vendedores',
-            esActivo: true,
-          },
+        // Primero buscar si ya existe una categoría "Productos de Tienda"
+        let defaultCategory = await this.prisma.productCategory.findFirst({
+          where: { nombre: 'Productos de Tienda' },
         });
 
+        // Si no existe, buscar cualquier categoría activa
+        if (!defaultCategory) {
+          defaultCategory = await this.prisma.productCategory.findFirst({
+            where: { esActivo: true },
+          });
+        }
+
+        // Si no hay ninguna categoría, crear una nueva
+        if (!defaultCategory) {
+          console.log('📦 Creando categoría por defecto...');
+          defaultCategory = await this.prisma.productCategory.create({
+            data: {
+              nombre: 'Productos de Tienda',
+              descripcion: 'Categoría por defecto para productos físicos de vendedores',
+              esActivo: true,
+            },
+          });
+        }
+
         categoryId = defaultCategory.id;
-        console.log(`✅ Categoría por defecto creada con ID: ${categoryId}`);
+        console.log(`✅ Usando categoría ID: ${categoryId}`);
       }
 
       // Preparar datos con valores por defecto
@@ -817,7 +846,7 @@ export class VendorsService {
         categoriaId: categoryId,
         vendedorId: vendor.id,
         imagenUrl: data.image || null,
-        sku: data.sku?.trim() || null,
+        sku: data.sku && data.sku.trim() !== '' ? data.sku.trim() : null,
         esActivo: true,
       };
 
@@ -848,7 +877,9 @@ export class VendorsService {
       }
 
       if (error.code === 'P2002') {
-        throw new BadRequestException('Error: Ya existe un producto con ese SKU. Por favor, usa un SKU diferente.');
+        const target = error.meta?.target || 'campo desconocido';
+        console.error('❌ P2002 - Campo duplicado:', target);
+        throw new BadRequestException(`Error: Valor duplicado en ${target}. Por favor, usa un valor diferente.`);
       }
 
       throw new BadRequestException(`Error al crear el producto: ${error.message}`);
@@ -947,7 +978,7 @@ export class VendorsService {
           stock: data.stock ? parseInt(data.stock) : undefined,
           categoriaId: data.categoryId ? parseInt(data.categoryId) : undefined,
           imagenUrl: data.image,
-          sku: data.sku,
+          sku: data.sku && data.sku.trim() !== '' ? data.sku.trim() : null,
         },
       });
 

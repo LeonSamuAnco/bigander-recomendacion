@@ -421,7 +421,7 @@ const VendorProfile = ({ user }) => {
       setUploadingImage(true);
 
       // Verificar si hay token
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       if (!token) {
         showNotification('Por favor, cierra sesión y vuelve a entrar para subir imágenes', 'warning');
         setUploadingImage(false);
@@ -632,31 +632,41 @@ const VendorProfile = ({ user }) => {
               <div key={product.id} className="product-card">
                 <div className="product-image">
                   {product.image ? (
-                    <img src={product.image} alt={product.name} />
-                  ) : (
-                    <div className="image-placeholder">🛍️</div>
-                  )}
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className="image-placeholder" style={{ display: product.image ? 'none' : 'flex' }}>
+                    🛍️
+                  </div>
+                  <span className={`product-status-badge ${product.status}`}>
+                    {product.status === 'active' ? 'ACTIVO' : 'INACTIVO'}
+                  </span>
                 </div>
                 <div className="product-info">
                   <h4>{product.name}</h4>
-                  <p>S/ {product.price.toFixed(2)}</p>
-                  <p className="stock-info">Stock: {product.stock}</p>
-                  <span className={`product-status ${product.status}`}>
-                    {product.status === 'active' ? 'Activo' : 'Inactivo'}
-                  </span>
+                  <div className="product-price-stock">
+                    <span className="price">S/ {product.price?.toFixed(2) || '0.00'}</span>
+                    <span className="stock">Stock: {product.stock}</span>
+                  </div>
                 </div>
                 <div className="product-actions">
                   <button
                     className="edit-btn"
                     onClick={() => handleOpenProductModal(product)}
                   >
-                    Editar
+                    ✏️ Editar
                   </button>
                   <button
-                    className="toggle-btn"
+                    className={`toggle-btn ${product.status === 'active' ? 'deactivate' : 'activate'}`}
                     onClick={() => handleToggleProduct(product.id)}
                   >
-                    {product.status === 'active' ? 'Desactivar' : 'Activar'}
+                    {product.status === 'active' ? '⏸️ Desactivar' : '▶️ Activar'}
                   </button>
                 </div>
               </div>

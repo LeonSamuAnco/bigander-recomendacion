@@ -67,10 +67,6 @@ model User {
   fechaNacimiento    DateTime?            @map("fecha_nacimiento") @db.Date
   genero             Gender?              @default(O)
   fotoPerfil         String?              @map("foto_perfil") @db.VarChar(500)
-  direccion          String?              @db.VarChar(500)
-  bio                String?              @db.Text
-  ciudad             String?              @db.VarChar(100)
-  pais               String?              @db.VarChar(100)
   emailVerificado    Boolean?             @default(false) @map("email_verificado")
   telefonoVerificado Boolean?             @default(false) @map("telefono_verificado")
   tokenVerificacion  String?              @map("token_verificacion") @db.VarChar(100)
@@ -85,9 +81,12 @@ model User {
   ipUltimoAcceso     String?              @map("ip_ultimo_acceso") @db.VarChar(45)
   createdAt          DateTime             @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt          DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  bio                String?              @db.Text
+  ciudad             String?              @db.VarChar(100)
+  direccion          String?              @db.VarChar(500)
+  pais               String?              @db.VarChar(100)
   actividades        UserActivity[]
   cliente            Client?
-  vendedor           Vendor?
   favoritos          Favorite[]
   listaCompras       ShoppingList[]
   notificaciones     Notification[]
@@ -96,6 +95,7 @@ model User {
   recetasFavoritas   UserFavoriteRecipe[]
   rol                Role                 @relation(fields: [rolId], references: [id])
   tipoDocumento      DocumentType         @relation(fields: [tipoDocumentoId], references: [id])
+  vendedor           Vendor?
 
   @@unique([tipoDocumentoId, numeroDocumento], name: "uk_documento")
   @@index([rolId], map: "usuarios_rol_id_fkey")
@@ -103,12 +103,12 @@ model User {
 }
 
 model ProductCategory {
-  id          Int       @id @default(autoincrement())
-  nombre      String    @unique @db.VarChar(100)
-  descripcion String?   @db.Text
-  esActivo    Boolean   @default(true) @map("es_activo")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id          Int              @id @default(autoincrement())
+  nombre      String           @unique @db.VarChar(100)
+  descripcion String?          @db.Text
+  esActivo    Boolean          @default(true) @map("es_activo")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
   products    Product[]
   vendedores  VendorCategory[]
 
@@ -162,46 +162,42 @@ model Client {
 }
 
 model Vendor {
-  id            Int      @id @default(autoincrement())
-  usuarioId     Int      @unique @map("usuario_id")
-  nombreTienda  String?  @map("nombre_tienda") @db.VarChar(100)
-  descripcion   String?  @db.Text
-  ruc           String?  @db.VarChar(20)
-  direccion     String?  @db.VarChar(255)
-  sitioWeb      String?  @map("sitio_web") @db.VarChar(255)
-  esVerificado    Boolean? @default(false) @map("es_verificado")
-  calificacion    Decimal? @default(0.00) @db.Decimal(3, 2)
-  
-  // Nuevos campos para "Dónde Comprar"
-  latitud         Decimal? @db.Decimal(10, 8)
-  longitud        Decimal? @db.Decimal(11, 8)
-  horarioAtencion String?  @map("horario_atencion") @db.VarChar(255)
-  metodosPago     String?  @map("metodos_pago") @db.VarChar(255)
-  tipoServicio    String?  @map("tipo_servicio") @db.VarChar(255)
-  whatsapp        String?  @db.VarChar(20)
-  instagram       String?  @db.VarChar(255)
-  facebook        String?  @db.VarChar(255)
-  logoUrl         String?  @map("logo_url") @db.VarChar(500)
-
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-  
-  usuario         User     @relation(fields: [usuarioId], references: [id])
-  categorias      VendorCategory[]
+  id              Int              @id @default(autoincrement())
+  usuarioId       Int              @unique @map("usuario_id")
+  nombreTienda    String?          @map("nombre_tienda") @db.VarChar(100)
+  descripcion     String?          @db.Text
+  ruc             String?          @db.VarChar(20)
+  direccion       String?          @db.VarChar(255)
+  sitioWeb        String?          @map("sitio_web") @db.VarChar(255)
+  esVerificado    Boolean?         @default(false) @map("es_verificado")
+  calificacion    Decimal?         @default(0.00) @db.Decimal(3, 2)
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  facebook        String?          @db.VarChar(255)
+  horarioAtencion String?          @map("horario_atencion") @db.VarChar(255)
+  instagram       String?          @db.VarChar(255)
+  logoUrl         String?          @map("logo_url") @db.VarChar(500)
+  metodosPago     String?          @map("metodos_pago") @db.VarChar(255)
+  tipoServicio    String?          @map("tipo_servicio") @db.VarChar(255)
+  whatsapp        String?          @db.VarChar(20)
+  latitud         Decimal?         @db.Decimal(10, 8)
+  longitud        Decimal?         @db.Decimal(11, 8)
   products        Product[]
+  usuario         User             @relation(fields: [usuarioId], references: [id])
+  categorias      VendorCategory[]
 
   @@map("vendedores")
 }
 
 model VendorCategory {
-  id          Int      @id @default(autoincrement())
-  vendedorId  Int      @map("vendedor_id")
-  categoriaId Int      @map("categoria_id")
-  
-  vendedor    Vendor          @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
+  id          Int             @id @default(autoincrement())
+  vendedorId  Int             @map("vendedor_id")
+  categoriaId Int             @map("categoria_id")
   categoria   ProductCategory @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  vendedor    Vendor          @relation(fields: [vendedorId], references: [id], onDelete: Cascade)
 
   @@unique([vendedorId, categoriaId])
+  @@index([categoriaId], map: "vendedores_categorias_categoria_id_fkey")
   @@map("vendedores_categorias")
 }
 
@@ -629,10 +625,12 @@ model items {
   es_activo             Boolean                 @default(true)
   fecha_creacion        DateTime                @default(now()) @db.Timestamp(0)
   fecha_actualizacion   DateTime                @default(now()) @db.Timestamp(0)
+  accesorios_celular    accesorios_celular?
   celular_camaras       celular_camaras[]
   celulares             celulares?
   deporte_variaciones   deporte_variaciones[]
   deportes_equipamiento deportes_equipamiento?
+  laptops               laptops?
   lugar_horarios        lugar_horarios[]
   lugar_tiene_servicios lugar_tiene_servicios[]
   lugares               lugares?
@@ -858,6 +856,82 @@ model deportes_equipamiento {
   @@index([equipamiento_tipo_id], map: "fk_deporte_equip_tipo")
   @@index([marca_id], map: "fk_deporte_marca")
   @@index([deporte_tipo_id], map: "fk_deporte_tipo")
+}
+
+model accesorio_marcas {
+  id                 Int                  @id @default(autoincrement())
+  nombre             String               @unique(map: "uk_accesorio_marcas_nombre") @db.VarChar(100)
+  accesorios_celular accesorios_celular[]
+}
+
+model accesorio_tipos {
+  id                 Int                  @id @default(autoincrement())
+  nombre             String               @unique(map: "uk_accesorio_tipos_nombre") @db.VarChar(100)
+  icono              String?              @db.VarChar(50)
+  accesorios_celular accesorios_celular[]
+}
+
+model accesorios_celular {
+  id                Int              @id @default(autoincrement())
+  item_id           Int              @unique(map: "uk_accesorios_celular_item")
+  tipo_id           Int
+  marca_id          Int
+  modelo_compatible String?          @db.VarChar(255)
+  material          String?          @db.VarChar(50)
+  color             String?          @db.VarChar(50)
+  es_original       Boolean?         @default(false)
+  conectividad      String?          @db.VarChar(50)
+  items             items            @relation(fields: [item_id], references: [id], onDelete: Cascade, map: "fk_accesorio_item")
+  accesorio_marcas  accesorio_marcas @relation(fields: [marca_id], references: [id], map: "fk_accesorio_marca")
+  accesorio_tipos   accesorio_tipos  @relation(fields: [tipo_id], references: [id], map: "fk_accesorio_tipo")
+
+  @@index([marca_id], map: "idx_accesorio_marca")
+  @@index([tipo_id], map: "idx_accesorio_tipo")
+}
+
+model laptop_marcas {
+  id       Int       @id @default(autoincrement())
+  nombre   String    @unique(map: "uk_laptop_marcas_nombre") @db.VarChar(100)
+  logo_url String?   @db.VarChar(500)
+  laptops  laptops[]
+}
+
+model laptop_procesadores {
+  id      Int       @id @default(autoincrement())
+  nombre  String    @unique(map: "uk_laptop_procesadores_nombre") @db.VarChar(100)
+  marca   String?   @db.VarChar(50)
+  laptops laptops[]
+}
+
+model laptop_tipos_almacenamiento {
+  id      Int       @id @default(autoincrement())
+  nombre  String    @unique(map: "uk_laptop_tipos_almacenamiento_nombre") @db.VarChar(50)
+  laptops laptops[]
+}
+
+model laptops {
+  id                          Int                         @id @default(autoincrement())
+  item_id                     Int                         @unique(map: "uk_laptops_item")
+  marca_id                    Int
+  procesador_id               Int
+  memoria_ram_gb              Int
+  almacenamiento_gb           Int
+  tipo_almacenamiento_id      Int
+  tarjeta_grafica             String?                     @db.VarChar(100)
+  pantalla_pulgadas           Decimal                     @db.Decimal(3, 1)
+  tasa_refresco_hz            Int?                        @default(60)
+  bateria_wh                  Int?
+  peso_kg                     Decimal?                    @db.Decimal(4, 2)
+  es_gamer                    Boolean?                    @default(false)
+  sistema_operativo           String?                     @db.VarChar(50)
+  laptop_tipos_almacenamiento laptop_tipos_almacenamiento @relation(fields: [tipo_almacenamiento_id], references: [id], map: "fk_laptop_almacenamiento")
+  items                       items                       @relation(fields: [item_id], references: [id], onDelete: Cascade, map: "fk_laptop_item")
+  laptop_marcas               laptop_marcas               @relation(fields: [marca_id], references: [id], map: "fk_laptop_marca")
+  laptop_procesadores         laptop_procesadores         @relation(fields: [procesador_id], references: [id], map: "fk_laptop_procesador")
+
+  @@index([tipo_almacenamiento_id], map: "fk_laptop_almacenamiento")
+  @@index([marca_id], map: "idx_laptop_marca")
+  @@index([procesador_id], map: "idx_laptop_procesador")
 }
 
 enum Gender {
