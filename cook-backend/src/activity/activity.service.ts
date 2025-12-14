@@ -12,7 +12,7 @@ import { ActivityFiltersDto } from './dto/activity-filters.dto';
 export class ActivityService {
   private readonly logger = new Logger(ActivityService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Registrar actividad del usuario
@@ -28,6 +28,7 @@ export class ActivityService {
         referenciaId: createDto.referenciaId,
         referenciaTipo: createDto.referenciaTipo,
         metadata: createDto.metadata,
+        esActivo: true, // Forzar explícitamente para asegurar visibilidad
       },
     });
 
@@ -251,8 +252,8 @@ export class ActivityService {
     // Actividad más común
     const actividadMasComun = porTipo.length > 0
       ? porTipo.reduce((prev, current) =>
-          prev._count > current._count ? prev : current
-        ).tipo
+        prev._count > current._count ? prev : current
+      ).tipo
       : null;
 
     return {
@@ -305,6 +306,9 @@ export class ActivityService {
       },
       orderBy: { fecha: 'desc' },
       take: limit,
+      include: {
+        // Incluir detalles si es necesario para depuración
+      }
     });
   }
 

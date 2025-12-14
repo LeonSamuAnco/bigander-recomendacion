@@ -1029,6 +1029,7 @@ enum ActivityType {
   LOGOUT
   PERFIL_ACTUALIZADO
   LISTA_CREADA
+  PRODUCTO_VISTO
 }
 
 enum lugar_horarios_dia_semana {
